@@ -1,0 +1,6 @@
+# Configuração local do projeto Clube04 CRM
+
+approval_policy = "on-request"
+
+[sandbox]
+mode = "workspace-write"
