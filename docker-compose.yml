@@ -72,7 +72,7 @@ services:
         condition: service_healthy
 
   n8n:
-    image: n8nio/n8n:1.95.3
+    image: docker.n8n.io/n8nio/n8n:${N8N_VERSION:-2.22.4}
     container_name: clube04-n8n
     restart: unless-stopped
     env_file:

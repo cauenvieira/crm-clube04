@@ -135,10 +135,30 @@ A documentacao das tabelas esta em `docs/database/schema.md`.
 - URL local do n8n: `http://localhost:5678`
 - Fluxo minimo de teste inbound WhatsApp: `docs/integrations/n8n-whatsapp-inbound.md`
 - Workflow importavel versionado: `infra/n8n/workflows/whatsapp-inbound-test.json`
+- Guia de manutencao e atualizacao: `docs/integrations/n8n-maintenance.md`
 - URL interna (dentro do n8n em Docker) para chamar a API:
   - `http://crm-api:3000/api/webhooks/whatsapp/inbound`
 - Header obrigatorio no `HTTP Request`:
   - `x-crm-api-key: <valor de CRM_API_SECRET>`
+
+### Atualizacao controlada do n8n
+
+O projeto usa imagem oficial:
+
+- `docker.n8n.io/n8nio/n8n`
+
+Versao e fixada por variavel:
+
+- `N8N_VERSION` no `.env` (com exemplo em `.env.example`)
+
+Fluxo recomendado de update:
+
+```bash
+docker compose down
+docker compose pull n8n
+docker compose up -d --build
+docker compose exec n8n n8n --version
+```
 
 ## Organizacao de codigo
 

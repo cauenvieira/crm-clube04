@@ -12,6 +12,8 @@ Receber um webhook manual no n8n e encaminhar payload normalizado para:
 
 - URL do editor n8n local: `http://localhost:5678`
 - Usuario e senha padrao local (se nao alterado no `.env`): `admin` / `admin_local_only`
+- Imagem Docker oficial: `docker.n8n.io/n8nio/n8n`
+- Versao local controlada por `N8N_VERSION` no `.env`
 
 ## URL da API dentro da rede Docker
 
