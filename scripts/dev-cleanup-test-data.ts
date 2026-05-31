@@ -1,13 +1,18 @@
 import type { PoolClient } from "pg";
 
 import {
+  type AmbiguousSample,
   assertLocalSafeEnvironment,
   closeDbContext,
+  countQuery,
   createDbContext,
   formatCount,
   parseCliFlags,
+  printAmbiguousSamples,
   printMode,
-  requireApplyConfirmation
+  requireApplyConfirmation,
+  selectIds,
+  uniqueIds
 } from "./dev-data-helpers.js";
 
 const explicitSourceMarkers = [
@@ -26,15 +31,8 @@ const explicitCampaignMarkers = [
   "verify-action-items",
   "verify-operational-summary",
   "verify-operational-worklist",
-  "dev_seed_dashboard"
-];
-
-const explicitContactNamePatterns = [
-  "Smoke Test%",
-  "Smoke WhatsApp%",
-  "Verify %",
-  "Tutor Teste API%",
-  "Dev Seed %"
+  "dev_seed_dashboard",
+  "n8n_direct_test"
 ];
 
 const explicitConversationPatterns = [
@@ -54,6 +52,12 @@ const explicitProviderMessagePatterns = [
   "n8n_test_%"
 ];
 
+const explicitPayloadSourceMarkers = [
+  ...explicitSourceMarkers,
+  "powershell-direct-test",
+  "n8n_direct_test"
+];
+
 type CleanupTargets = {
   contactIds: string[];
   leadIds: string[];
@@ -61,12 +65,18 @@ type CleanupTargets = {
   messageIds: string[];
   actionItemIds: string[];
   interactionIds: string[];
+  blockedContactIds: string[];
 };
 
 type AmbiguousReport = {
   contacts: number;
   leads: number;
   messages: number;
+  samples: {
+    contacts: AmbiguousSample[];
+    leads: AmbiguousSample[];
+    messages: AmbiguousSample[];
+  };
 };
 
 const { apply, confirmLocalDev } = parseCliFlags(process.argv);
@@ -86,7 +96,6 @@ async function main() {
   try {
     const targets = await collectTargets(client);
     const ambiguous = await collectAmbiguous(client, targets);
-
     printSummary(targets, ambiguous);
 
     if (!apply) {
@@ -108,17 +117,6 @@ async function main() {
 }
 
 async function collectTargets(client: PoolClient): Promise<CleanupTargets> {
-  const contactIds = await selectIds(
-    client,
-    `
-      select id
-      from contacts
-      where source = any($1::text[])
-         or name ilike any($2::text[])
-    `,
-    [explicitSourceMarkers, explicitContactNamePatterns]
-  );
-
   const leadIds = await selectIds(
     client,
     `
@@ -126,34 +124,73 @@ async function collectTargets(client: PoolClient): Promise<CleanupTargets> {
       from leads
       where source = any($1::text[])
          or campaign = any($2::text[])
-         or contact_id = any($3::uuid[])
     `,
-    [explicitSourceMarkers, explicitCampaignMarkers, contactIds]
+    [explicitSourceMarkers, explicitCampaignMarkers]
   );
 
-  const conversationIds = await selectIds(
+  const candidateContactIds = uniqueIds([
+    ...(await selectIds(
+      client,
+      "select id from contacts where source = any($1::text[])",
+      [explicitSourceMarkers]
+    )),
+    ...(await selectIds(
+      client,
+      "select distinct contact_id as id from leads where id = any($1::uuid[]) and contact_id is not null",
+      [leadIds]
+    ))
+  ]);
+
+  const safeContactIds = await selectIds(
     client,
     `
-      select id
-      from conversations
-      where provider_conversation_id ilike any($1::text[])
-         or contact_id = any($2::uuid[])
+      select c.id
+      from contacts c
+      where c.id = any($1::uuid[])
+        and not exists (
+          select 1
+          from leads l
+          where l.contact_id = c.id
+            and l.id <> all($2::uuid[])
+        )
     `,
-    [explicitConversationPatterns, contactIds]
+    [candidateContactIds, leadIds]
   );
 
-  const messageIds = await selectIds(
-    client,
-    `
-      select id
-      from messages
-      where provider_message_id ilike any($1::text[])
-         or coalesce(raw_payload->>'source', '') = any($2::text[])
-         or contact_id = any($3::uuid[])
-         or conversation_id = any($4::uuid[])
-    `,
-    [explicitProviderMessagePatterns, explicitSourceMarkers, contactIds, conversationIds]
-  );
+  const conversationIds = uniqueIds([
+    ...(await selectIds(
+      client,
+      `
+        select id
+        from conversations
+        where provider_conversation_id ilike any($1::text[])
+      `,
+      [explicitConversationPatterns]
+    )),
+    ...(await selectIds(
+      client,
+      "select id from conversations where contact_id = any($1::uuid[])",
+      [safeContactIds]
+    ))
+  ]);
+
+  const messageIds = uniqueIds([
+    ...(await selectIds(
+      client,
+      `
+        select id
+        from messages
+        where provider_message_id ilike any($1::text[])
+           or coalesce(raw_payload->>'source', '') = any($2::text[])
+      `,
+      [explicitProviderMessagePatterns, explicitPayloadSourceMarkers]
+    )),
+    ...(await selectIds(
+      client,
+      "select id from messages where conversation_id = any($1::uuid[])",
+      [conversationIds]
+    ))
+  ]);
 
   const actionItemIds = await selectIds(
     client,
@@ -162,10 +199,9 @@ async function collectTargets(client: PoolClient): Promise<CleanupTargets> {
       from action_items
       where type like 'dev_seed_%'
          or lead_id = any($1::uuid[])
-         or contact_id = any($2::uuid[])
-         or title ilike 'Dev Seed %'
+         or (contact_id = any($2::uuid[]) and title ilike 'Dev Seed %')
     `,
-    [leadIds, contactIds]
+    [leadIds, safeContactIds]
   );
 
   const interactionIds = await selectIds(
@@ -178,10 +214,33 @@ async function collectTargets(client: PoolClient): Promise<CleanupTargets> {
          or lead_id = any($1::uuid[])
          or contact_id = any($2::uuid[])
     `,
-    [leadIds, contactIds]
+    [leadIds, safeContactIds]
   );
 
-  return { contactIds, leadIds, conversationIds, messageIds, actionItemIds, interactionIds };
+  const deletableContactIds = await selectIds(
+    client,
+    `
+      select c.id
+      from contacts c
+      where c.id = any($1::uuid[])
+        and not exists (select 1 from leads l where l.contact_id = c.id and l.id <> all($2::uuid[]))
+        and not exists (select 1 from conversations cv where cv.contact_id = c.id and cv.id <> all($3::uuid[]))
+        and not exists (select 1 from messages m where m.contact_id = c.id and m.id <> all($4::uuid[]))
+        and not exists (select 1 from action_items ai where ai.contact_id = c.id and ai.id <> all($5::uuid[]))
+        and not exists (select 1 from crm_interactions ci where ci.contact_id = c.id and ci.id <> all($6::uuid[]))
+    `,
+    [candidateContactIds, leadIds, conversationIds, messageIds, actionItemIds, interactionIds]
+  );
+
+  return {
+    contactIds: deletableContactIds,
+    leadIds,
+    conversationIds,
+    messageIds,
+    actionItemIds,
+    interactionIds,
+    blockedContactIds: candidateContactIds.filter((id) => !deletableContactIds.includes(id))
+  };
 }
 
 async function collectAmbiguous(client: PoolClient, targets: CleanupTargets): Promise<AmbiguousReport> {
@@ -189,14 +248,12 @@ async function collectAmbiguous(client: PoolClient, targets: CleanupTargets): Pr
     client,
     `
       select count(*)::int as count
-      from contacts
+      from contacts c
       where (
-        name ilike '%test%'
-        or name ilike '%verify%'
-        or coalesce(source, '') ilike '%test%'
-        or coalesce(source, '') ilike '%verify%'
+        c.name ilike '%teste%' or c.name ilike '%verify%'
+        or c.source ilike '%test%' or c.source ilike '%verify%'
       )
-      and id <> all($1::uuid[])
+      and c.id <> all($1::uuid[])
     `,
     [targets.contactIds]
   );
@@ -205,14 +262,12 @@ async function collectAmbiguous(client: PoolClient, targets: CleanupTargets): Pr
     client,
     `
       select count(*)::int as count
-      from leads
+      from leads l
       where (
-        coalesce(source, '') ilike '%test%'
-        or coalesce(source, '') ilike '%verify%'
-        or coalesce(campaign, '') ilike '%test%'
-        or coalesce(campaign, '') ilike '%verify%'
+        l.campaign ilike '%test%' or l.campaign ilike '%verify%'
+        or l.source ilike '%test%' or l.source ilike '%verify%'
       )
-      and id <> all($1::uuid[])
+      and l.id <> all($1::uuid[])
     `,
     [targets.leadIds]
   );
@@ -221,19 +276,25 @@ async function collectAmbiguous(client: PoolClient, targets: CleanupTargets): Pr
     client,
     `
       select count(*)::int as count
-      from messages
+      from messages m
       where (
-        coalesce(provider_message_id, '') ilike '%test%'
-        or coalesce(provider_message_id, '') ilike '%verify%'
-        or coalesce(raw_payload->>'source', '') ilike '%test%'
-        or coalesce(raw_payload->>'source', '') ilike '%verify%'
+        coalesce(m.provider_message_id, '') ilike '%test%'
+        or coalesce(m.provider_message_id, '') ilike '%verify%'
+        or coalesce(m.raw_payload->>'source', '') ilike '%test%'
+        or coalesce(m.raw_payload->>'source', '') ilike '%verify%'
       )
-      and id <> all($1::uuid[])
+      and m.id <> all($1::uuid[])
     `,
     [targets.messageIds]
   );
 
-  return { contacts, leads, messages };
+  const samples = {
+    contacts: await selectContactAmbiguousSamples(client, targets.contactIds),
+    leads: await selectLeadAmbiguousSamples(client, targets.leadIds),
+    messages: await selectMessageAmbiguousSamples(client, targets.messageIds)
+  };
+
+  return { contacts, leads, messages, samples };
 }
 
 function printSummary(targets: CleanupTargets, ambiguous: AmbiguousReport) {
@@ -244,11 +305,15 @@ function printSummary(targets: CleanupTargets, ambiguous: AmbiguousReport) {
   console.log(`- ${formatCount("conversations", targets.conversationIds.length)}`);
   console.log(`- ${formatCount("leads", targets.leadIds.length)}`);
   console.log(`- ${formatCount("contacts", targets.contactIds.length)}`);
+  console.log(`- ${formatCount("contacts_blocked_non_test_dependencies", targets.blockedContactIds.length)}`);
   console.log("");
   console.log("Registros ambiguos (somente reporte, sem apagar):");
   console.log(`- ${formatCount("contacts", ambiguous.contacts)}`);
   console.log(`- ${formatCount("leads", ambiguous.leads)}`);
   console.log(`- ${formatCount("messages", ambiguous.messages)}`);
+  printAmbiguousSamples("contacts", ambiguous.samples.contacts);
+  printAmbiguousSamples("leads", ambiguous.samples.leads);
+  printAmbiguousSamples("messages", ambiguous.samples.messages);
 }
 
 async function deleteTargets(client: PoolClient, targets: CleanupTargets) {
@@ -260,12 +325,102 @@ async function deleteTargets(client: PoolClient, targets: CleanupTargets) {
   await client.query("delete from contacts where id = any($1::uuid[])", [targets.contactIds]);
 }
 
-async function selectIds(client: PoolClient, queryText: string, params: unknown[]): Promise<string[]> {
-  const result = await client.query<{ id: string }>(queryText, params);
-  return result.rows.map((row) => row.id);
+async function selectContactAmbiguousSamples(
+  client: PoolClient,
+  excludedIds: string[]
+): Promise<AmbiguousSample[]> {
+  const result = await client.query<{
+    id: string;
+    name: string | null;
+    normalized_phone: string | null;
+    source: string | null;
+  }>(
+    `
+      select id, name, normalized_phone, source
+      from contacts
+      where (
+        name ilike '%teste%' or name ilike '%verify%'
+        or source ilike '%test%' or source ilike '%verify%'
+      )
+      and id <> all($1::uuid[])
+      order by created_at desc
+      limit 10
+    `,
+    [excludedIds]
+  );
+  return result.rows.map((row) => ({
+    table: "contacts",
+    id: row.id,
+    name: row.name,
+    phone: row.normalized_phone,
+    source: row.source,
+    reason: "name/source parece teste mas sem marcador explicito de remocao",
+    suggestion: "review marker before deleting"
+  }));
 }
 
-async function countQuery(client: PoolClient, queryText: string, params: unknown[]): Promise<number> {
-  const result = await client.query<{ count: number }>(queryText, params);
-  return Number(result.rows[0]?.count ?? 0);
+async function selectLeadAmbiguousSamples(
+  client: PoolClient,
+  excludedIds: string[]
+): Promise<AmbiguousSample[]> {
+  const result = await client.query<{
+    id: string;
+    source: string | null;
+    campaign: string | null;
+  }>(
+    `
+      select id, source, campaign
+      from leads
+      where (
+        campaign ilike '%test%' or campaign ilike '%verify%'
+        or source ilike '%test%' or source ilike '%verify%'
+      )
+      and id <> all($1::uuid[])
+      order by created_at desc
+      limit 10
+    `,
+    [excludedIds]
+  );
+  return result.rows.map((row) => ({
+    table: "leads",
+    id: row.id,
+    source: row.source,
+    campaign: row.campaign,
+    reason: "source/campaign parece teste mas sem marcador explicito de remocao",
+    suggestion: "review marker before deleting"
+  }));
+}
+
+async function selectMessageAmbiguousSamples(
+  client: PoolClient,
+  excludedIds: string[]
+): Promise<AmbiguousSample[]> {
+  const result = await client.query<{
+    id: string;
+    provider: string | null;
+    provider_message_id: string | null;
+  }>(
+    `
+      select id, provider, provider_message_id
+      from messages
+      where (
+        coalesce(provider_message_id, '') ilike '%test%'
+        or coalesce(provider_message_id, '') ilike '%verify%'
+        or coalesce(raw_payload->>'source', '') ilike '%test%'
+        or coalesce(raw_payload->>'source', '') ilike '%verify%'
+      )
+      and id <> all($1::uuid[])
+      order by created_at desc
+      limit 10
+    `,
+    [excludedIds]
+  );
+  return result.rows.map((row) => ({
+    table: "messages",
+    id: row.id,
+    provider: row.provider,
+    providerMessageId: row.provider_message_id,
+    reason: "provider_message_id/raw_payload parece teste mas sem marcador explicito de remocao",
+    suggestion: "review marker before deleting"
+  }));
 }

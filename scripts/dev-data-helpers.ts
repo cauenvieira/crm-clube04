@@ -1,3 +1,4 @@
+import type { PoolClient } from "pg";
 import pg from "pg";
 
 import { loadDotEnv } from "./smoke-api-helpers.js";
@@ -16,6 +17,19 @@ type DbConfig = {
 export type DbContext = {
   pool: pg.Pool;
   config: DbConfig;
+};
+
+export type AmbiguousSample = {
+  table: "contacts" | "leads" | "messages";
+  id: string;
+  name?: string | null;
+  phone?: string | null;
+  source?: string | null;
+  campaign?: string | null;
+  provider?: string | null;
+  providerMessageId?: string | null;
+  reason: string;
+  suggestion: string;
 };
 
 export function parseCliFlags(argv: string[]) {
@@ -97,6 +111,43 @@ export async function closeDbContext(ctx: DbContext): Promise<void> {
 
 export function formatCount(label: string, value: number): string {
   return `${label}: ${value}`;
+}
+
+export function printAmbiguousSamples(
+  table: "contacts" | "leads" | "messages",
+  samples: AmbiguousSample[]
+) {
+  console.log("");
+  console.log(`Amostras ambiguas (${table}) - max ${samples.length}:`);
+  if (samples.length === 0) {
+    console.log("- none");
+    return;
+  }
+  for (const sample of samples) {
+    console.log(`- ${JSON.stringify(sample)}`);
+  }
+}
+
+export async function selectIds(
+  client: PoolClient,
+  queryText: string,
+  params: unknown[]
+): Promise<string[]> {
+  const result = await client.query<{ id: string }>(queryText, params);
+  return result.rows.map((row) => row.id);
+}
+
+export async function countQuery(
+  client: PoolClient,
+  queryText: string,
+  params: unknown[]
+): Promise<number> {
+  const result = await client.query<{ count: number }>(queryText, params);
+  return Number(result.rows[0]?.count ?? 0);
+}
+
+export function uniqueIds(values: string[]): string[] {
+  return [...new Set(values.filter((value) => value))];
 }
 
 function isLocalHost(host: string): boolean {

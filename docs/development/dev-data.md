@@ -28,8 +28,17 @@ Regras de seguranca:
 Marcadores explicitos de limpeza:
 
 - `source`/`campaign` de smoke/verify/dev-seed
-- nomes com prefixos de teste (`Smoke`, `Verify`, `Dev Seed`, `Tutor Teste API`)
+- `campaign = n8n_direct_test`
 - `provider_message_id` e `provider_conversation_id` com prefixos de teste conhecidos
+- `raw_payload.source` conhecido de testes locais (ex.: `powershell-direct-test`)
+
+Relatorio de ambiguos no dry-run:
+
+- mostra contagens por tabela (`contacts`, `leads`, `messages`);
+- imprime ate 10 amostras por tabela com campos de apoio;
+- inclui motivo da ambiguidade e sugestao:
+  - `review marker before deleting`
+- ambiguos continuam somente em reporte, sem delecao automatica.
 
 ## Como funciona o seed
 
