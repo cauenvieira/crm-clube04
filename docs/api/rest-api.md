@@ -143,3 +143,20 @@ curl.exe "$base/api/action-items" -H "x-crm-api-key: $apiKey"
 ```
 
 Nesta etapa a API apenas lista `action_items`; a geracao automatica ainda nao foi implementada.
+
+## Smoke Test
+
+Para validar automaticamente o fluxo basico da API local:
+
+```powershell
+npm run smoke:api
+```
+
+Variaveis usadas:
+
+```powershell
+$env:API_BASE_URL = "http://localhost:3000"
+$env:CRM_API_SECRET = "troque_por_um_valor_local_forte"
+```
+
+Se `CRM_API_SECRET` tambem estiver no `.env`, o script carrega esse valor automaticamente.

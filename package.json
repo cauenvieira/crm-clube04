@@ -12,7 +12,8 @@
     "build": "npm run build -w @clube04/shared && npm run build -w @clube04/api && npm run build -w @clube04/worker && npm run build -w @clube04/web",
     "start": "npm run start -w @clube04/api",
     "worker": "npm run dev -w @clube04/worker",
-    "lint": "npm run lint -w @clube04/shared && npm run lint -w @clube04/api && npm run lint -w @clube04/worker && npm run lint -w @clube04/web"
+    "lint": "npm run lint -w @clube04/shared && npm run lint -w @clube04/api && npm run lint -w @clube04/worker && npm run lint -w @clube04/web",
+    "smoke:api": "tsx scripts/smoke-api.ts"
   },
   "engines": {
     "node": ">=20.0.0"

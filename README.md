@@ -104,6 +104,7 @@ npm run worker
 - `npm run start`: inicia a API compilada.
 - `npm run worker`: executa o health check basico do worker.
 - `npm run lint`: executa checagem TypeScript nos workspaces configurados.
+- `npm run smoke:api`: executa um smoke test HTTP contra a API local.
 
 ## Banco de dados
 
@@ -157,6 +158,16 @@ Exemplo rapido:
 ```bash
 curl -H "x-crm-api-key: troque_por_um_valor_local_forte" http://localhost:3000/api/leads?status=novo_lead
 ```
+
+## Smoke test da API
+
+Com o Docker Compose rodando, execute:
+
+```bash
+npm run smoke:api
+```
+
+O script usa `API_BASE_URL` quando definido, com padrao `http://localhost:3000`. Se `CRM_API_SECRET` estiver definido no ambiente ou no `.env`, ele envia o header `x-crm-api-key` nos endpoints `/api/*`.
 
 ## Escopo desta etapa
 
