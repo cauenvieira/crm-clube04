@@ -114,6 +114,13 @@ npm run worker
 - `npm run verify:action-items`: valida o ciclo de vida de action_items.
 - `npm run verify:operational-summary`: valida o endpoint de resumo operacional.
 - `npm run verify:operational-worklist`: valida o endpoint de worklist operacional.
+- `npm run verify:dashboard`: valida o painel web local.
+- `npm run verify:all`: executa a bateria completa recomendada antes de commit.
+
+Observacao importante sobre validacao:
+
+- Os scripts `smoke:api` e `verify:*` usam o mesmo banco local e devem rodar em sequencia.
+- Nao execute esses scripts em paralelo, em jobs de background ou em terminais concorrentes.
 
 ## Banco de dados
 
@@ -216,7 +223,12 @@ Rotas principais desta etapa:
 - `POST /api/action-items/:id/cancel`
 - `GET /api/operational-summary`
 - `GET /api/operational-worklist`
+- `GET /dashboard`
 - `POST /api/webhooks/whatsapp/inbound`
+
+Painel web local:
+
+- `http://localhost:3000/dashboard`
 
 Exemplo rapido:
 

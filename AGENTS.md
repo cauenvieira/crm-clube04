@@ -169,6 +169,15 @@ Ela deve mostrar:
 - O Codex deve executar os testes previstos antes de declarar conclusao.
 - Quando houver script `verify:*` para o fluxo alterado, ele deve ser executado junto das validacoes obrigatorias.
 
+## Regra de validacao sequencial
+
+- Nunca executar `smoke:api` e `verify:*` em paralelo quando usam o banco local compartilhado.
+- Nao usar jobs em background, terminais paralelos, concorrencia, `npm-run-all` paralelo, `concurrently`, PowerShell jobs ou chamadas simultaneas para esses scripts.
+- A bateria final deve rodar em sequencia deterministica.
+- Se algum teste falhar apos execucao paralela, a falha nao e conclusiva; repetir toda a bateria em sequencia antes de diagnosticar bug real.
+- O relatorio final deve informar explicitamente que a bateria foi executada em sequencia.
+- Scripts de teste devem usar dados unicos por execucao sempre que possivel.
+
 ## Template obrigatorio de relatorio final
 
 Todo relatorio final do Codex deve incluir, nesta ordem:

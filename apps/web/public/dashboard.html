@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CRM Clube04 - Painel Operacional</title>
+    <link rel="stylesheet" href="/dashboard/styles.css" />
+  </head>
+  <body>
+    <main class="layout">
+      <header class="panel-header">
+        <div>
+          <h1>CRM Clube04</h1>
+          <p class="subtitle">Painel Operacional</p>
+        </div>
+        <div class="meta" id="summary-meta">
+          <div><strong>businessDate:</strong> <span id="meta-business-date">-</span></div>
+          <div><strong>timezone:</strong> <span id="meta-timezone">-</span></div>
+          <div><strong>generatedAt:</strong> <span id="meta-generated-at">-</span></div>
+        </div>
+      </header>
+
+      <section class="controls">
+        <label>
+          API key
+          <input id="api-key" type="password" placeholder="Informe x-crm-api-key" />
+        </label>
+        <label>
+          Limit
+          <input id="limit" type="number" min="1" max="50" value="10" />
+        </label>
+        <div class="buttons">
+          <button id="btn-update" type="button">Atualizar</button>
+          <button id="btn-clear-key" type="button">Limpar API key</button>
+        </div>
+      </section>
+
+      <section class="status">
+        <p id="loading" class="hidden">Carregando...</p>
+        <p id="error" class="error hidden"></p>
+      </section>
+
+      <section class="summary-grid" id="summary-cards"></section>
+
+      <section class="list-grid">
+        <article>
+          <h2>Acoes pendentes</h2>
+          <div id="list-action-pending"></div>
+        </article>
+        <article>
+          <h2>Acoes vencidas</h2>
+          <div id="list-action-overdue"></div>
+        </article>
+        <article>
+          <h2>Leads com follow-up vencido</h2>
+          <div id="list-leads-overdue"></div>
+        </article>
+        <article>
+          <h2>Leads sem interacao 24h</h2>
+          <div id="list-leads-no-interaction"></div>
+        </article>
+        <article>
+          <h2>Ultimas mensagens inbound</h2>
+          <div id="list-messages-inbound"></div>
+        </article>
+      </section>
+    </main>
+    <script src="/dashboard/app.js"></script>
+  </body>
+</html>

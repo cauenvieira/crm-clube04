@@ -342,6 +342,16 @@ Criterios de ordenacao:
 - `leads.semInteracao24h`: `last_interaction_at asc nulls first`, `created_at asc`
 - `messages.ultimasInbound`: `created_at desc`
 
+## Dashboard
+
+Painel web local/dev servido pela API:
+
+- `GET /dashboard`
+
+Guia de uso:
+
+- `docs/web/dashboard.md`
+
 ## Webhook WhatsApp Inbound
 
 Endpoint:
