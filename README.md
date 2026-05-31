@@ -16,7 +16,8 @@ apps/
 packages/
   shared/   utilitarios e tipos compartilhados
 infra/
-  db/init/  scripts iniciais do PostgreSQL
+  db/             scripts executados pelo Docker na criacao do banco
+  db/migrations/  migrations SQL versionadas
 ```
 
 ## Ambiente local
@@ -95,6 +96,24 @@ npm run worker
 - `npm run start`: inicia a API compilada.
 - `npm run worker`: executa o health check basico do worker.
 - `npm run lint`: executa checagem TypeScript nos workspaces configurados.
+
+## Banco de dados
+
+O schema inicial fica em:
+
+- `infra/db/migrations/001_initial_crm_schema.sql`
+
+Em um banco novo, o Docker aplica a migration automaticamente ao criar o volume do PostgreSQL.
+O arquivo `infra/db/001_apply_migrations.sql` fica na raiz montada em `/docker-entrypoint-initdb.d/`, que e o local executado pelo entrypoint oficial do Postgres. Ele chama a migration versionada em `infra/db/migrations`.
+
+Para aplicar/verificar manualmente em um banco local ja existente:
+
+```bash
+docker compose exec -T postgres psql -U clube04 -d clube04_crm -f /docker-entrypoint-initdb.d/migrations/001_initial_crm_schema.sql
+docker compose exec -T postgres psql -U clube04 -d clube04_crm -c "\dt"
+```
+
+A documentacao das tabelas esta em `docs/database/schema.md`.
 
 ## Escopo desta etapa
 
