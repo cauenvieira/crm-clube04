@@ -13,7 +13,8 @@ export const env = {
   redis: {
     host: process.env.REDIS_HOST ?? "localhost",
     port: toNumber(process.env.REDIS_PORT, 6379)
-  }
+  },
+  crmApiSecret: process.env.CRM_API_SECRET?.trim() || undefined
 };
 
 function toNumber(value: string | undefined, fallback: number): number {

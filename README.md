@@ -38,6 +38,14 @@ cp .env.example .env
 
 Nao coloque credenciais reais no codigo. O arquivo `.env` deve ficar fora do Git.
 
+Para proteger os endpoints internos, defina:
+
+```bash
+CRM_API_SECRET=troque_por_um_valor_local_forte
+```
+
+Quando `CRM_API_SECRET` estiver definido, todas as rotas `/api/*` exigem o header `x-crm-api-key`. A rota `/health` continua publica.
+
 ## Rodando dependencias locais
 
 Suba PostgreSQL e Redis:
@@ -143,7 +151,7 @@ Rotas principais desta etapa:
 Exemplo rapido:
 
 ```bash
-curl http://localhost:3000/api/leads?status=novo_lead
+curl -H "x-crm-api-key: troque_por_um_valor_local_forte" http://localhost:3000/api/leads?status=novo_lead
 ```
 
 ## Escopo desta etapa
