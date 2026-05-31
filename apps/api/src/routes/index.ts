@@ -7,6 +7,7 @@ import { registerCrmInteractionRoutes } from "./crm-interactions.js";
 import { registerHealthRoutes } from "./health.js";
 import { registerLeadRoutes } from "./leads.js";
 import { registerMessageRoutes } from "./messages.js";
+import { registerWhatsappWebhookRoutes } from "./whatsapp-webhook.js";
 
 export async function registerRoutes(app: FastifyInstance): Promise<void> {
   await registerHealthRoutes(app);
@@ -16,4 +17,5 @@ export async function registerRoutes(app: FastifyInstance): Promise<void> {
   await registerMessageRoutes(app);
   await registerCrmInteractionRoutes(app);
   await registerActionItemRoutes(app);
+  await registerWhatsappWebhookRoutes(app);
 }

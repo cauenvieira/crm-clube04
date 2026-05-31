@@ -144,6 +144,36 @@ curl.exe "$base/api/action-items" -H "x-crm-api-key: $apiKey"
 
 Nesta etapa a API apenas lista `action_items`; a geracao automatica ainda nao foi implementada.
 
+## Webhook WhatsApp Inbound
+
+Endpoint:
+
+```text
+POST /api/webhooks/whatsapp/inbound
+```
+
+Objetivo:
+
+- receber mensagem inbound ja normalizada pelo n8n;
+- encontrar ou criar contato por telefone normalizado;
+- encontrar ou criar conversa por `provider + providerConversationId`;
+- criar mensagem com idempotencia por `provider + providerMessageId`;
+- criar lead com status `novo_lead` apenas quando nao houver lead ativo para o contato.
+
+Exemplo:
+
+```powershell
+curl.exe -X POST "$base/api/webhooks/whatsapp/inbound" -H "Content-Type: application/json" -H "x-crm-api-key: $apiKey" -d "{\"provider\":\"waha\",\"providerMessageId\":\"msg_123\",\"providerConversationId\":\"5511999999999\",\"fromNumber\":\"5511999999999\",\"toNumber\":\"5511470000000\",\"contactName\":\"Maria\",\"body\":\"Ola, gostaria de saber valores de banho\",\"messageType\":\"text\",\"direction\":\"inbound\",\"timestamp\":\"2026-05-31T10:00:00.000Z\",\"source\":\"whatsapp\",\"campaign\":\"meta_ads_maio\",\"rawPayload\":{}}"
+```
+
+Resposta inclui:
+
+- `contact`
+- `conversation`
+- `message`
+- `lead`
+- `created` com flags de `contact`, `conversation`, `message` e `lead`
+
 ## Smoke Test
 
 Para validar automaticamente o fluxo basico da API local:

@@ -152,11 +152,22 @@ Rotas principais desta etapa:
 - `POST /api/crm-interactions`
 - `GET /api/crm-interactions`
 - `GET /api/action-items`
+- `POST /api/webhooks/whatsapp/inbound`
 
 Exemplo rapido:
 
 ```bash
 curl -H "x-crm-api-key: troque_por_um_valor_local_forte" http://localhost:3000/api/leads?status=novo_lead
+```
+
+Exemplo webhook inbound:
+
+```bash
+curl -X POST \
+  -H "Content-Type: application/json" \
+  -H "x-crm-api-key: troque_por_um_valor_local_forte" \
+  -d '{"provider":"waha","providerMessageId":"msg_123","providerConversationId":"5511999999999","fromNumber":"5511999999999","toNumber":"5511470000000","contactName":"Maria","body":"Ola, gostaria de saber valores de banho","messageType":"text","direction":"inbound","timestamp":"2026-05-31T10:00:00.000Z","source":"whatsapp","campaign":"meta_ads_maio","rawPayload":{}}' \
+  http://localhost:3000/api/webhooks/whatsapp/inbound
 ```
 
 ## Smoke test da API

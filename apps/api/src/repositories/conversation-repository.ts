@@ -31,6 +31,19 @@ export async function findConversationById(id: string) {
   return result.rows[0] ?? null;
 }
 
+export async function findConversationByProviderConversationId(
+  provider: string,
+  providerConversationId: string
+) {
+  const result = await postgresPool.query(
+    `select * from conversations
+      where provider = $1 and provider_conversation_id = $2
+      limit 1`,
+    [provider, providerConversationId]
+  );
+  return result.rows[0] ?? null;
+}
+
 export async function listConversations(query: ConversationListQuery) {
   const conditions: string[] = [];
   const values: unknown[] = [];

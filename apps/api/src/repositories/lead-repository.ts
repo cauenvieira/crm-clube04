@@ -133,3 +133,15 @@ export async function updateLeadAfterInteraction(
 
   return result.rows[0] ?? null;
 }
+
+export async function findLatestActiveLeadByContact(contactId: string) {
+  const result = await postgresPool.query(
+    `select * from leads
+      where contact_id = $1 and status = any($2::lead_status[])
+      order by coalesce(last_interaction_at, created_at) desc, created_at desc
+      limit 1`,
+    [contactId, activeLeadStatuses]
+  );
+
+  return result.rows[0] ?? null;
+}

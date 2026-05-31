@@ -1,16 +1,24 @@
-import { existsSync, readFileSync } from "node:fs";
-import { resolve } from "node:path";
-
-type HttpResult = {
-  status: number;
-  body: unknown;
-};
+import {
+  asArray,
+  asRecord,
+  asString,
+  assert,
+  assertOneOfStatus,
+  assertStatus,
+  loadDotEnv,
+  request,
+  required
+} from "./smoke-api-helpers.js";
 
 type TestContext = {
   contactId?: string;
   leadId?: string;
   conversationId?: string;
   providerMessageId?: string;
+  webhookContactId?: string;
+  webhookLeadId?: string;
+  webhookProviderConversationId?: string;
+  webhookFromNumber?: string;
 };
 
 loadDotEnv();
@@ -31,7 +39,9 @@ const tests: Array<[string, () => Promise<void>]> = [
   ["POST /api/messages repetido nao duplica", testMessageIdempotency],
   ["GET /api/conversations/:id/messages retorna uma mensagem", testConversationMessages],
   ["POST /api/crm-interactions registra interacao", testCreateCrmInteraction],
-  ["GET /api/action-items retorna lista", testActionItems]
+  ["GET /api/action-items retorna lista", testActionItems],
+  ["POST /api/webhooks/whatsapp/inbound cria fluxo inbound", testWhatsappInboundCreate],
+  ["POST /api/webhooks/whatsapp/inbound repetido e idempotente", testWhatsappInboundIdempotency]
 ];
 
 main().catch((error) => {
@@ -63,12 +73,12 @@ async function main() {
 }
 
 async function testHealth() {
-  const response = await request("GET", "/health", { auth: false });
+  const response = await request(apiBaseUrl, apiSecret, "GET", "/health", { auth: false });
   assertStatus(response, 200);
 }
 
 async function testContactsWithoutHeader() {
-  const response = await request("GET", "/api/contacts", { auth: false });
+  const response = await request(apiBaseUrl, apiSecret, "GET", "/api/contacts", { auth: false });
   if (apiSecret) {
     assertStatus(response, 401);
   } else {
@@ -78,7 +88,7 @@ async function testContactsWithoutHeader() {
 
 async function testCreateContact() {
   const stamp = Date.now();
-  const response = await request("POST", "/api/contacts", {
+  const response = await request(apiBaseUrl, apiSecret, "POST", "/api/contacts", {
     body: {
       name: "Smoke Test Tutor",
       phone: `1198888${stamp}`,
@@ -94,7 +104,7 @@ async function testCreateContact() {
 }
 
 async function testCreateLead() {
-  const response = await request("POST", "/api/leads", {
+  const response = await request(apiBaseUrl, apiSecret, "POST", "/api/leads", {
     body: {
       contact_id: required(context.contactId, "contactId"),
       pet_name: "Smoke",
@@ -111,7 +121,7 @@ async function testCreateLead() {
 }
 
 async function testListLeadByStatus() {
-  const response = await request("GET", "/api/leads?status=novo_lead");
+  const response = await request(apiBaseUrl, apiSecret, "GET", "/api/leads?status=novo_lead");
   assertStatus(response, 200);
   const data = asArray(asRecord(response.body).data);
   const found = data.some((item) => asRecord(item).id === context.leadId);
@@ -120,7 +130,7 @@ async function testListLeadByStatus() {
 
 async function testCreateConversation() {
   const stamp = Date.now();
-  const response = await request("POST", "/api/conversations", {
+  const response = await request(apiBaseUrl, apiSecret, "POST", "/api/conversations", {
     body: {
       contact_id: required(context.contactId, "contactId"),
       channel: "whatsapp",
@@ -151,6 +161,8 @@ async function testMessageIdempotency() {
 
 async function testConversationMessages() {
   const response = await request(
+    apiBaseUrl,
+    apiSecret,
     "GET",
     `/api/conversations/${required(context.conversationId, "conversationId")}/messages`
   );
@@ -163,7 +175,7 @@ async function testConversationMessages() {
 }
 
 async function testCreateCrmInteraction() {
-  const response = await request("POST", "/api/crm-interactions", {
+  const response = await request(apiBaseUrl, apiSecret, "POST", "/api/crm-interactions", {
     body: {
       contact_id: required(context.contactId, "contactId"),
       lead_id: required(context.leadId, "leadId"),
@@ -181,13 +193,116 @@ async function testCreateCrmInteraction() {
 }
 
 async function testActionItems() {
-  const response = await request("GET", "/api/action-items");
+  const response = await request(apiBaseUrl, apiSecret, "GET", "/api/action-items");
   assertStatus(response, 200);
   asArray(asRecord(response.body).data);
 }
 
+async function testWhatsappInboundCreate() {
+  const stamp = Date.now();
+  const payload = {
+    provider: "waha",
+    providerMessageId: `wh-smoke-msg-${stamp}`,
+    providerConversationId: `55119999${stamp}`,
+    fromNumber: `55119999${stamp}`,
+    toNumber: "5511470000000",
+    contactName: "Smoke WhatsApp",
+    body: "Ola, gostaria de saber valores de banho",
+    messageType: "text",
+    direction: "inbound",
+    timestamp: new Date().toISOString(),
+    source: "whatsapp",
+    campaign: "smoke_webhook",
+    rawPayload: { source: "smoke-api-webhook" }
+  };
+
+  const response = await request(
+    apiBaseUrl,
+    apiSecret,
+    "POST",
+    "/api/webhooks/whatsapp/inbound",
+    { body: payload }
+  );
+  assertStatus(response, 201);
+  const data = asRecord(asRecord(response.body).data);
+  const created = asRecord(data.created);
+
+  assert(created.message === true, "Webhook inbound inicial deveria criar mensagem");
+  assert(created.lead === true, "Webhook inbound inicial deveria criar lead");
+
+  context.webhookContactId = asString(asRecord(data.contact).id, "webhook.contact.id");
+  context.webhookLeadId = asString(asRecord(data.lead).id, "webhook.lead.id");
+  context.webhookProviderConversationId = payload.providerConversationId;
+  context.webhookFromNumber = payload.fromNumber;
+
+  context.providerMessageId = payload.providerMessageId;
+  context.conversationId = asString(asRecord(data.conversation).id, "webhook.conversation.id");
+}
+
+async function testWhatsappInboundIdempotency() {
+  const providerMessageId = required(context.providerMessageId, "providerMessageId");
+  const fromNumber = required(context.webhookFromNumber, "webhookFromNumber");
+
+  const payload = {
+    provider: "waha",
+    providerMessageId,
+    providerConversationId: required(
+      context.webhookProviderConversationId,
+      "webhookProviderConversationId"
+    ),
+    fromNumber,
+    toNumber: "5511470000000",
+    contactName: "Smoke WhatsApp",
+    body: "Mensagem repetida",
+    messageType: "text",
+    direction: "inbound",
+    timestamp: new Date().toISOString(),
+    source: "whatsapp",
+    campaign: "smoke_webhook",
+    rawPayload: { source: "smoke-api-webhook-repeat" }
+  };
+
+  const response = await request(
+    apiBaseUrl,
+    apiSecret,
+    "POST",
+    "/api/webhooks/whatsapp/inbound",
+    { body: payload }
+  );
+  assertStatus(response, 200);
+
+  const data = asRecord(asRecord(response.body).data);
+  const created = asRecord(data.created);
+  assert(created.message === false, "Webhook inbound repetido nao deveria duplicar mensagem");
+  assert(created.lead === false, "Webhook inbound repetido nao deveria criar novo lead ativo");
+
+  const activeStatuses = [
+    "novo_lead",
+    "em_atendimento",
+    "aguardando_resposta",
+    "em_negociacao",
+    "agendado",
+    "reativar_depois"
+  ];
+
+  let activeLeadsForContact = 0;
+  for (const status of activeStatuses) {
+    const list = await request(apiBaseUrl, apiSecret, "GET", `/api/leads?status=${status}`);
+    assertStatus(list, 200);
+    const leads = asArray(asRecord(list.body).data);
+    activeLeadsForContact += leads.filter(
+      (lead) => asRecord(lead).contact_id === context.webhookContactId
+    ).length;
+  }
+
+  assert(
+    activeLeadsForContact <= 1,
+    `Esperava no maximo 1 lead ativo para o contato do webhook, encontrou ${activeLeadsForContact}`
+  );
+}
+
 async function createSmokeMessage() {
-  return request("POST", "/api/messages", {
+  return request(apiBaseUrl, apiSecret, "POST", "/api/messages", {
     body: {
       conversation_id: required(context.conversationId, "conversationId"),
       provider: "manual",
@@ -201,74 +316,4 @@ async function createSmokeMessage() {
       raw_payload: { source: "smoke-api" }
     }
   });
-}
-
-async function request(
-  method: string,
-  path: string,
-  options: { body?: unknown; auth?: boolean } = {}
-): Promise<HttpResult> {
-  const headers: Record<string, string> = {};
-  const useAuth = options.auth ?? true;
-
-  if (options.body !== undefined) headers["content-type"] = "application/json";
-  if (useAuth && apiSecret) headers["x-crm-api-key"] = apiSecret;
-
-  const response = await fetch(`${apiBaseUrl}${path}`, {
-    method,
-    headers,
-    body: options.body === undefined ? undefined : JSON.stringify(options.body)
-  });
-
-  const text = await response.text();
-  const body = text ? JSON.parse(text) : null;
-  return { status: response.status, body };
-}
-
-function loadDotEnv() {
-  const envPath = resolve(process.cwd(), ".env");
-  if (!existsSync(envPath)) return;
-
-  for (const line of readFileSync(envPath, "utf8").split(/\r?\n/)) {
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith("#")) continue;
-    const separatorIndex = trimmed.indexOf("=");
-    if (separatorIndex === -1) continue;
-
-    const key = trimmed.slice(0, separatorIndex).trim();
-    const value = trimmed.slice(separatorIndex + 1).trim();
-    process.env[key] ??= value;
-  }
-}
-
-function assertStatus(response: HttpResult, expected: number) {
-  assert(response.status === expected, `Esperava HTTP ${expected}, recebeu ${response.status}`);
-}
-
-function assertOneOfStatus(response: HttpResult, expected: number[]) {
-  assert(expected.includes(response.status), `Esperava HTTP ${expected.join(" ou ")}, recebeu ${response.status}`);
-}
-
-function assert(condition: unknown, message: string): asserts condition {
-  if (!condition) throw new Error(message);
-}
-
-function required(value: string | undefined, label: string): string {
-  assert(value, `${label} nao foi definido por teste anterior`);
-  return value;
-}
-
-function asRecord(value: unknown): Record<string, unknown> {
-  assert(typeof value === "object" && value !== null && !Array.isArray(value), "Resposta JSON nao e objeto");
-  return value as Record<string, unknown>;
-}
-
-function asArray(value: unknown): unknown[] {
-  assert(Array.isArray(value), "Resposta JSON nao e lista");
-  return value;
-}
-
-function asString(value: unknown, label: string): string {
-  assert(typeof value === "string" && value.length > 0, `${label} nao e string valida`);
-  return value;
 }
