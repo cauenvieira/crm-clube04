@@ -1,0 +1,171 @@
+{
+  "name": "whatsapp-inbound-test",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "whatsapp-inbound-test",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "Webhook_WhatsApp_Inbound_Test",
+      "name": "Webhook WhatsApp Inbound Test",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        240,
+        300
+      ],
+      "webhookId": "whatsapp-inbound-test"
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "duplicateItem": false,
+        "assignments": {
+          "assignments": [
+            {
+              "name": "provider",
+              "type": "string",
+              "value": "n8n-test"
+            },
+            {
+              "name": "providerMessageId",
+              "type": "string",
+              "value": "={{ $json.body.providerMessageId || $execution.id }}"
+            },
+            {
+              "name": "providerConversationId",
+              "type": "string",
+              "value": "={{ $json.body.fromNumber }}"
+            },
+            {
+              "name": "fromNumber",
+              "type": "string",
+              "value": "={{ $json.body.fromNumber }}"
+            },
+            {
+              "name": "toNumber",
+              "type": "string",
+              "value": "5511470000000"
+            },
+            {
+              "name": "contactName",
+              "type": "string",
+              "value": "={{ $json.body.contactName }}"
+            },
+            {
+              "name": "body",
+              "type": "string",
+              "value": "={{ $json.body.body }}"
+            },
+            {
+              "name": "messageType",
+              "type": "string",
+              "value": "text"
+            },
+            {
+              "name": "direction",
+              "type": "string",
+              "value": "inbound"
+            },
+            {
+              "name": "timestamp",
+              "type": "string",
+              "value": "={{ $now.toISO() }}"
+            },
+            {
+              "name": "source",
+              "type": "string",
+              "value": "whatsapp"
+            },
+            {
+              "name": "campaign",
+              "type": "string",
+              "value": "n8n_manual_test"
+            },
+            {
+              "name": "rawPayload",
+              "type": "object",
+              "value": "={{ $json }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "Set_Normalized_Payload",
+      "name": "Set Normalized Payload",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        520,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://crm-api:3000/api/webhooks/whatsapp/inbound",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "x-crm-api-key",
+              "value": "={{ $env.CRM_API_SECRET || 'SET_CRM_API_SECRET' }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "jsonBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "HTTP_Request_CRM_Inbound",
+      "name": "HTTP Request CRM Inbound",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        800,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook WhatsApp Inbound Test": {
+      "main": [
+        [
+          {
+            "node": "Set Normalized Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Normalized Payload": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request CRM Inbound",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "versionId": "1",
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

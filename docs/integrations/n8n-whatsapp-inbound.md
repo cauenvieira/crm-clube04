@@ -23,59 +23,114 @@ Header obrigatorio:
 
 - `x-crm-api-key: <valor de CRM_API_SECRET>`
 
-## Workflow minimo (manual)
+## Workflow versionado no repositorio
 
-1. Criar node `Webhook`
-2. Criar node `Set` (ou `Edit Fields`) para normalizar payload
-3. Criar node `HTTP Request` para chamar a API do CRM
+Arquivo importavel:
 
-### 1) Node Webhook
+- `infra/n8n/workflows/whatsapp-inbound-test.json`
 
-- Method: `POST`
-- Path: `whatsapp-inbound-test`
-- Response: `Last node`
+Fluxo:
 
-### 2) Node Set/Edit Fields
+Webhook n8n -> payload normalizado -> HTTP Request CRM inbound
 
-Mapear para o formato esperado pelo endpoint:
+## Como importar o workflow no n8n
+
+1. Abrir `http://localhost:5678`
+2. Entrar no editor do n8n
+3. Clicar em `Import from File`
+4. Selecionar `infra/n8n/workflows/whatsapp-inbound-test.json`
+5. Salvar o workflow importado
+
+## Como o payload e normalizado no workflow
+
+O node `Set Normalized Payload` envia:
 
 ```json
 {
-  "provider": "waha",
-  "providerMessageId": "msg_123",
-  "providerConversationId": "5511999999999",
-  "fromNumber": "5511999999999",
+  "provider": "n8n-test",
+  "providerMessageId": "{{$json.body.providerMessageId || $execution.id}}",
+  "providerConversationId": "{{$json.body.fromNumber}}",
+  "fromNumber": "{{$json.body.fromNumber}}",
   "toNumber": "5511470000000",
-  "contactName": "Maria",
-  "body": "Ola, gostaria de saber valores de banho",
+  "contactName": "{{$json.body.contactName}}",
+  "body": "{{$json.body.body}}",
   "messageType": "text",
   "direction": "inbound",
-  "timestamp": "2026-05-31T10:00:00.000Z",
+  "timestamp": "{{$now.toISO()}}",
   "source": "whatsapp",
-  "campaign": "meta_ads_maio",
-  "rawPayload": {}
+  "campaign": "n8n_manual_test",
+  "rawPayload": "{{$json}}"
 }
 ```
 
-### 3) Node HTTP Request
+## Como configurar o header x-crm-api-key
 
-- Method: `POST`
+No node `HTTP Request CRM Inbound`:
+
 - URL: `http://crm-api:3000/api/webhooks/whatsapp/inbound`
-- Send Body: `JSON`
-- Body: usar o output do node anterior
-- Headers:
-  - `Content-Type: application/json`
-  - `x-crm-api-key: <valor de CRM_API_SECRET>`
+- Header `Content-Type`: `application/json`
+- Header `x-crm-api-key`: usar o segredo local
+
+Opcao recomendada:
+
+- Definir `CRM_API_SECRET` no ambiente do servico n8n e usar expressao:
+  - `{{$env.CRM_API_SECRET}}`
+
+Opcao manual:
+
+- Preencher o header no node com o mesmo valor de `CRM_API_SECRET` usado pela API.
+
+Importante:
+
+- Nao versionar segredo real no JSON do workflow.
 
 ## Teste manual rapido
 
-Com workflow ativo, chamar o webhook de teste do n8n (URL gerada pelo node Webhook).
+No workflow importado:
+
+1. Clique em `Execute workflow` para abrir o webhook de teste
+2. Use a URL de teste no formato `http://localhost:5678/webhook-test/whatsapp-inbound-test`
+3. Envie o payload abaixo
+
+Payload de exemplo para chamar o webhook do n8n:
+
+```json
+{
+  "fromNumber": "5511999999999",
+  "contactName": "Maria Teste n8n",
+  "body": "Ola, gostaria de saber valores de banho",
+  "providerMessageId": "n8n_test_001"
+}
+```
 
 Exemplo por `curl.exe` no host:
 
 ```powershell
-curl.exe -X POST "http://localhost:5678/webhook-test/whatsapp-inbound-test" -H "Content-Type: application/json" -d "{\"provider\":\"waha\",\"providerMessageId\":\"msg_123\",\"providerConversationId\":\"5511999999999\",\"fromNumber\":\"5511999999999\",\"toNumber\":\"5511470000000\",\"contactName\":\"Maria\",\"body\":\"Ola, gostaria de saber valores de banho\",\"messageType\":\"text\",\"direction\":\"inbound\",\"timestamp\":\"2026-05-31T10:00:00.000Z\",\"source\":\"whatsapp\",\"campaign\":\"meta_ads_maio\",\"rawPayload\":{}}"
+curl.exe -X POST "http://localhost:5678/webhook-test/whatsapp-inbound-test" -H "Content-Type: application/json" -d "{\"fromNumber\":\"5511999999999\",\"contactName\":\"Maria Teste n8n\",\"body\":\"Ola, gostaria de saber valores de banho\",\"providerMessageId\":\"n8n_test_001\"}"
 ```
+
+## Como verificar se o CRM recebeu lead/mensagem
+
+1. Verificar saude da API:
+
+```powershell
+curl.exe "http://localhost:3000/health"
+```
+
+2. Listar leads:
+
+```powershell
+$apiKey = "troque_por_um_valor_local_forte"
+curl.exe "http://localhost:3000/api/leads?source=whatsapp" -H "x-crm-api-key: $apiKey"
+```
+
+3. Listar mensagens:
+
+```powershell
+curl.exe "http://localhost:3000/api/messages" -H "x-crm-api-key: $apiKey"
+```
+
+4. Validar no retorno se a mensagem foi criada sem duplicacao ao reenviar mesmo `providerMessageId`.
 
 ## Observacoes
 
