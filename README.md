@@ -115,6 +115,37 @@ docker compose exec -T postgres psql -U clube04 -d clube04_crm -c "\dt"
 
 A documentacao das tabelas esta em `docs/database/schema.md`.
 
+## API REST
+
+A documentacao dos endpoints esta em `docs/api/rest-api.md`.
+
+Rotas principais desta etapa:
+
+- `GET /health`
+- `POST /api/contacts`
+- `GET /api/contacts`
+- `GET /api/contacts/:id`
+- `PATCH /api/contacts/:id`
+- `POST /api/leads`
+- `GET /api/leads`
+- `GET /api/leads/:id`
+- `PATCH /api/leads/:id`
+- `POST /api/conversations`
+- `GET /api/conversations`
+- `GET /api/conversations/:id`
+- `POST /api/messages`
+- `GET /api/messages`
+- `GET /api/conversations/:id/messages`
+- `POST /api/crm-interactions`
+- `GET /api/crm-interactions`
+- `GET /api/action-items`
+
+Exemplo rapido:
+
+```bash
+curl http://localhost:3000/api/leads?status=novo_lead
+```
+
 ## Escopo desta etapa
 
 Implementado:

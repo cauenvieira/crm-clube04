@@ -2,7 +2,7 @@
 
 Este documento descreve o schema inicial do PostgreSQL para o Clube04 CRM.
 
-As migrations ficam em `infra/db/migrations`. O ambiente Docker inicializa o banco executando os scripts em `infra/db/init`, que chamam as migrations versionadas.
+As migrations ficam em `infra/db/migrations`. O ambiente Docker inicializa o banco executando `infra/db/001_apply_migrations.sql`, montado na raiz de `/docker-entrypoint-initdb.d/`, que chama as migrations versionadas.
 
 ## Padroes
 
