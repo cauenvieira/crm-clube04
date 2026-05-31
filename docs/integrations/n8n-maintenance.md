@@ -67,6 +67,20 @@ npm run n8n:list:workflows
 
 O import usa os arquivos em `infra/n8n/workflows` montados no container em `/workflows`.
 
+## Regra de ID estavel (evitar duplicidade)
+
+- O `n8n import:workflow` usa o campo `id` do JSON para sobrescrever workflow existente.
+- O nome do workflow (`name`) **nao** e chave de sobrescrita.
+- O arquivo versionado `infra/n8n/workflows/whatsapp-inbound-test.json` deve manter ID estavel:
+  - `52RxSSXMQ4Zaitnw`
+- Nao remover e nao trocar esse `id` no arquivo versionado sem migracao planejada.
+
+Se surgirem duplicados com mesmo nome:
+
+1. apagar duplicados pela UI do n8n (manter apenas o workflow oficial);
+2. confirmar com `npm run n8n:list:workflows`;
+3. reimportar com `npm run n8n:import:workflows`.
+
 ## Cuidado para futuro com dados reais
 
 - Nao usar reset de volume em ambiente com workflows/credenciais reais sem backup.

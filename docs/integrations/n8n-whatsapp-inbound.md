@@ -54,6 +54,13 @@ Comando equivalente:
 docker compose exec -T n8n n8n import:workflow --separate --input=/workflows
 ```
 
+Importante sobre duplicidade:
+
+- O import sobrescreve por `id` do workflow JSON, nao por `name`.
+- O arquivo versionado `infra/n8n/workflows/whatsapp-inbound-test.json` deve manter `id` estavel.
+- ID oficial atual: `52RxSSXMQ4Zaitnw`.
+- Se houver duplicados com mesmo nome, remover duplicados pela UI e manter apenas o workflow com ID oficial antes de reimportar.
+
 Para listar workflows importados:
 
 ```bash

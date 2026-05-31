@@ -1,4 +1,5 @@
 {
+  "id": "52RxSSXMQ4Zaitnw",
   "name": "whatsapp-inbound-test",
   "nodes": [
     {
@@ -32,17 +33,17 @@
             {
               "name": "providerMessageId",
               "type": "string",
-              "value": "={{ $json.body.providerMessageId || $execution.id }}"
+              "value": "={{ $json.body?.providerMessageId || $json.providerMessageId || $execution.id }}"
             },
             {
               "name": "providerConversationId",
               "type": "string",
-              "value": "={{ $json.body.fromNumber }}"
+              "value": "={{ $json.body?.fromNumber || $json.fromNumber }}"
             },
             {
               "name": "fromNumber",
               "type": "string",
-              "value": "={{ $json.body.fromNumber }}"
+              "value": "={{ $json.body?.fromNumber || $json.fromNumber }}"
             },
             {
               "name": "toNumber",
@@ -52,12 +53,12 @@
             {
               "name": "contactName",
               "type": "string",
-              "value": "={{ $json.body.contactName }}"
+              "value": "={{ $json.body?.contactName || $json.contactName }}"
             },
             {
               "name": "body",
               "type": "string",
-              "value": "={{ $json.body.body }}"
+              "value": "={{ $json.body?.body || $json.body }}"
             },
             {
               "name": "messageType",
@@ -72,7 +73,7 @@
             {
               "name": "timestamp",
               "type": "string",
-              "value": "={{ $now.toISO() }}"
+              "value": "={{ new Date().toISOString() }}"
             },
             {
               "name": "source",
@@ -87,7 +88,7 @@
             {
               "name": "rawPayload",
               "type": "object",
-              "value": "={{ $json }}"
+              "value": "={{ $json.body || $json }}"
             }
           ]
         },
@@ -115,13 +116,69 @@
             },
             {
               "name": "x-crm-api-key",
-              "value": "={{ $env.CRM_API_SECRET || 'SET_CRM_API_SECRET' }}"
+              "value": "={{ $env.CRM_API_SECRET }}"
             }
           ]
         },
         "sendBody": true,
         "contentType": "json",
-        "jsonBody": "={{ $json }}",
+        "specifyBody": "keypair",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "provider",
+              "value": "={{ $json.provider }}"
+            },
+            {
+              "name": "providerMessageId",
+              "value": "={{ $json.providerMessageId }}"
+            },
+            {
+              "name": "providerConversationId",
+              "value": "={{ $json.providerConversationId }}"
+            },
+            {
+              "name": "fromNumber",
+              "value": "={{ $json.fromNumber }}"
+            },
+            {
+              "name": "toNumber",
+              "value": "={{ $json.toNumber }}"
+            },
+            {
+              "name": "contactName",
+              "value": "={{ $json.contactName }}"
+            },
+            {
+              "name": "body",
+              "value": "={{ $json.body }}"
+            },
+            {
+              "name": "messageType",
+              "value": "={{ $json.messageType }}"
+            },
+            {
+              "name": "direction",
+              "value": "={{ $json.direction }}"
+            },
+            {
+              "name": "timestamp",
+              "value": "={{ new Date().toISOString() }}"
+            },
+            {
+              "name": "source",
+              "value": "={{ $json.source }}"
+            },
+            {
+              "name": "campaign",
+              "value": "={{ $json.campaign }}"
+            },
+            {
+              "name": "rawPayload",
+              "value": "={{ JSON.stringify($json.rawPayload ?? {}) }}"
+            }
+          ]
+        },
         "options": {}
       },
       "id": "HTTP_Request_CRM_Inbound",
@@ -160,7 +217,8 @@
   },
   "active": false,
   "settings": {
-    "executionOrder": "v1"
+    "executionOrder": "v1",
+    "availableInMCP": true
   },
   "pinData": {},
   "versionId": "1",
