@@ -1,246 +1,144 @@
-\# AGENTS.md — Clube04 CRM
+# AGENTS.md - Clube04 CRM
 
-
-
-\## Objetivo
-
-
+## Objetivo
 
 Criar um CRM operacional para o Clube04 Mogi das Cruzes.
 
-
-
 O sistema deve:
 
-\- receber leads e mensagens do WhatsApp via n8n/WAHA;
+- receber leads e mensagens do WhatsApp via n8n/WAHA;
+- salvar conversas em banco de dados;
+- sincronizar dados do sistema Clube04 por scraping autorizado;
+- calcular frequencia cadastrada, frequencia real, retorno previsto e atraso;
+- controlar clientes por faixa: 0-30, 31-60, 61-90 e +90;
+- controlar pacotes ativos, pacotes perto de acabar e pacotes nao renovados;
+- gerar uma tela de Acao do Dia para a equipe;
+- gerar dashboard operacional e comercial.
 
-\- salvar conversas em banco de dados;
+## Regras obrigatorias
 
-\- sincronizar dados do sistema Clube04 por scraping autorizado;
+- Nunca salvar credenciais reais no codigo.
+- Usar `.env` para segredos.
+- Manter `.env` fora do Git.
+- Nao alterar dados no sistema Clube04.
+- O scraping deve ser somente leitura.
+- Nao cadastrar, cancelar, remarcar ou excluir dados no sistema Clube04.
+- Priorizar acesso HTTP direto sem interface grafica.
+- Usar Playwright headless apenas quando necessario para login, descoberta ou fallback.
+- Priorizar ferramentas open-source.
+- Usar Docker Compose para ambiente local.
+- Separar dados importados do sistema oficial dos dados preenchidos pela equipe.
+- Preservar historico de interacoes, mensagens e alteracoes.
 
-\- calcular frequência cadastrada, frequência real, retorno previsto e atraso;
+## Stack preferida
 
-\- controlar clientes por faixa: 0-30, 31-60, 61-90 e +90;
+- Node.js
+- TypeScript, se viavel
+- PostgreSQL
+- Redis
+- Docker Compose
+- Express ou Fastify
+- Playwright para scraping quando necessario
+- n8n para automacoes
+- WAHA para WhatsApp
+- Interface web simples para MVP
 
-\- controlar pacotes ativos, pacotes perto de acabar e pacotes não renovados;
+## Modulos do sistema
 
-\- gerar uma tela de Ação do Dia para a equipe;
+1. CRM API
+2. CRM Web
+3. CRM Worker
+4. Banco PostgreSQL
+5. Redis
+6. Integracao n8n
+7. Integracao WAHA
+8. Scraper Clube04
+9. Motor de classificacao CRM
+10. Dashboard
 
-\- gerar dashboard operacional e comercial.
+## Conceitos principais
 
+### Lead
 
+Pessoa que entrou pelo WhatsApp, Meta, Instagram, indicacao ou outro canal, mas ainda nao virou cliente confirmado.
 
-\## Regras obrigatórias
+### Cliente
 
+Tutor ja identificado ou atendido.
 
+### Pet
 
-\- Nunca salvar credenciais reais no código.
+Unidade principal de recorrencia. A frequencia deve ser calculada por pet, nao apenas por tutor.
 
-\- Usar `.env` para segredos.
+### Frequencia cadastrada
 
-\- Manter `.env` fora do Git.
+Frequencia ideal definida manualmente pela equipe ou inferida pelo pacote.
 
-\- Não alterar dados no sistema Clube04.
+### Frequencia real
 
-\- O scraping deve ser somente leitura.
+Frequencia media calculada a partir dos atendimentos finalizados importados do sistema Clube04.
 
-\- Não cadastrar, cancelar, remarcar ou excluir dados no sistema Clube04.
+### Retorno previsto
 
-\- Priorizar acesso HTTP direto sem interface gráfica.
+Ultima visita + frequencia cadastrada. Se nao houver frequencia cadastrada, usar frequencia real. Se nao houver historico suficiente, usar padrao de 30 dias.
 
-\- Usar Playwright headless apenas quando necessário para login, descoberta ou fallback.
+### Pacotes
 
-\- Priorizar ferramentas open-source.
+Controlar pacotes ativos, saldo restante, pacote parado, pacote perto de acabar e pacote finalizado sem renovacao.
 
-\- Usar Docker Compose para ambiente local.
+## Tela principal
 
-\- Separar dados importados do sistema oficial dos dados preenchidos pela equipe.
-
-\- Preservar histórico de interações, mensagens e alterações.
-
-
-
-\## Stack preferida
-
-
-
-\- Node.js
-
-\- TypeScript, se viável
-
-\- PostgreSQL
-
-\- Redis
-
-\- Docker Compose
-
-\- Express ou Fastify
-
-\- Playwright para scraping quando necessário
-
-\- n8n para automações
-
-\- WAHA para WhatsApp
-
-\- Interface web simples para MVP
-
-
-
-\## Módulos do sistema
-
-
-
-1\. CRM API
-
-2\. CRM Web
-
-3\. CRM Worker
-
-4\. Banco PostgreSQL
-
-5\. Redis
-
-6\. Integração n8n
-
-7\. Integração WAHA
-
-8\. Scraper Clube04
-
-9\. Motor de classificação CRM
-
-10\. Dashboard
-
-
-
-\## Conceitos principais
-
-
-
-\### Lead
-
-
-
-Pessoa que entrou pelo WhatsApp, Meta, Instagram, indicação ou outro canal, mas ainda não virou cliente confirmado.
-
-
-
-\### Cliente
-
-
-
-Tutor já identificado ou atendido.
-
-
-
-\### Pet
-
-
-
-Unidade principal de recorrência. A frequência deve ser calculada por pet, não apenas por tutor.
-
-
-
-\### Frequência cadastrada
-
-
-
-Frequência ideal definida manualmente pela equipe ou inferida pelo pacote.
-
-
-
-\### Frequência real
-
-
-
-Frequência média calculada a partir dos atendimentos finalizados importados do sistema Clube04.
-
-
-
-\### Retorno previsto
-
-
-
-Última visita + frequência cadastrada. Se não houver frequência cadastrada, usar frequência real. Se não houver histórico suficiente, usar padrão de 30 dias.
-
-
-
-\### Pacotes
-
-
-
-Controlar pacotes ativos, saldo restante, pacote parado, pacote perto de acabar e pacote finalizado sem renovação.
-
-
-
-\## Tela principal
-
-
-
-A tela mais importante é "Ação do Dia".
-
-
+A tela mais importante e "Acao do Dia".
 
 Ela deve mostrar:
 
-\- leads novos;
+- leads novos;
+- leads com proxima acao vencida;
+- clientes com retorno vencido;
+- clientes sem proximo agendamento;
+- clientes com pacote ativo sem agenda;
+- clientes com pacote perto de acabar;
+- clientes com pacote finalizado sem renovacao;
+- clientes 61-90 dias;
+- clientes +90 dias.
 
-\- leads com próxima ação vencida;
+## Estrategia de sincronizacao
 
-\- clientes com retorno vencido;
+- Fazer carga historica inicial uma unica vez.
+- Depois usar sincronizacao incremental.
+- Usar janelas moveis:
+  - agenda: hoje ate D+30;
+  - atendimentos: D-7 ate hoje;
+  - pacotes: ativos, usados recentemente e perto de acabar;
+  - mensagens WhatsApp: eventos em tempo real via webhook.
+- Usar upsert.
+- Usar hash de conteudo para evitar atualizacao desnecessaria.
+- Usar tabela sync_state para controlar ultima execucao.
+- Nao reprocessar tudo diariamente.
 
-\- clientes sem próximo agendamento;
+## Desenvolvimento
 
-\- clientes com pacote ativo sem agenda;
+- Trabalhar em etapas pequenas.
+- Nao implementar tudo de uma vez.
+- Criar testes ou dados mockados antes de depender do sistema real.
+- Sempre explicar alteracoes relevantes.
+- Sempre manter o projeto executavel com Docker Compose.
 
-\- clientes com pacote perto de acabar;
+## Organizacao de codigo
 
-\- clientes com pacote finalizado sem renovação;
-
-\- clientes 61-90 dias;
-
-\- clientes +90 dias.
-
-
-
-\## Estratégia de sincronização
-
-
-
-\- Fazer carga histórica inicial uma única vez.
-
-\- Depois usar sincronização incremental.
-
-\- Usar janelas móveis:
-
-&#x20; - agenda: hoje até D+30;
-
-&#x20; - atendimentos: D-7 até hoje;
-
-&#x20; - pacotes: ativos, usados recentemente e perto de acabar;
-
-&#x20; - mensagens WhatsApp: eventos em tempo real via webhook.
-
-\- Usar upsert.
-
-\- Usar hash de conteúdo para evitar atualização desnecessária.
-
-\- Usar tabela sync\_state para controlar última execução.
-
-\- Não reprocessar tudo diariamente.
-
-
-
-\## Desenvolvimento
-
-
-
-\- Trabalhar em etapas pequenas.
-
-\- Não implementar tudo de uma vez.
-
-\- Criar testes ou dados mockados antes de depender do sistema real.
-
-\- Sempre explicar alterações relevantes.
-
-\- Sempre manter o projeto executável com Docker Compose.
-
+- Manter mudancas pequenas, incrementais e com escopo limitado.
+- Evitar arquivos de codigo acima de 250 a 300 linhas; se passar disso, propor divisao antes de continuar.
+- Evitar funcoes longas ou com responsabilidades misturadas.
+- Evitar arquivos genericos como `utils.ts`; preferir utilitarios com proposito claro, como `phone.ts`, `sql.ts` ou `api-error.ts`.
+- `routes` devem conter apenas validacao de entrada, chamada de servico e formatacao simples de resposta.
+- `routes` nao devem conter SQL direto.
+- `routes` nao devem conter regra de negocio complexa.
+- `services` concentram regra de negocio, orquestracao entre repositorios e decisoes de fluxo.
+- `repositories` concentram acesso ao banco, SQL, queries e detalhes de persistencia.
+- `validation` ou `schemas` concentram validacao de payload, params e query string.
+- `config` concentra leitura e normalizacao de variaveis de ambiente.
+- `plugins` ou middlewares concentram hooks de Fastify, seguranca interna e comportamento transversal.
+- `integrations` concentram comunicacao com sistemas externos como Clube04, n8n e WAHA.
+- `worker` deve rodar jobs segmentados por dominio e nao virar monolito.
+- `packages/shared` deve conter apenas tipos e utilitarios realmente compartilhados entre apps.
+- Logs e erros devem ser claros, controlados e faceis de rastrear por modulo.

@@ -123,6 +123,10 @@ docker compose exec -T postgres psql -U clube04 -d clube04_crm -c "\dt"
 
 A documentacao das tabelas esta em `docs/database/schema.md`.
 
+## Organizacao de codigo
+
+As regras de separacao entre routes, services, repositories, validation, plugins, jobs e integrations estao em `docs/architecture/code-organization.md`.
+
 ## API REST
 
 A documentacao dos endpoints esta em `docs/api/rest-api.md`.
