@@ -167,3 +167,22 @@ Ela deve mostrar:
 - Para mudancas de API, nao basta build/lint/smoke generico: deve existir teste operacional ou smoke cobrindo fluxo feliz, idempotencia e erro/validacao relevante.
 - Exemplos de documentacao devem ser copiaveis/executaveis sem depender de placeholder sem instrucao de obtencao.
 - O Codex deve executar os testes previstos antes de declarar conclusao.
+- Quando houver script `verify:*` para o fluxo alterado, ele deve ser executado junto das validacoes obrigatorias.
+
+## Template obrigatorio de relatorio final
+
+Todo relatorio final do Codex deve incluir, nesta ordem:
+
+1. Resumo objetivo da mudanca.
+2. Arquivos alterados por categoria (codigo, scripts, documentacao, config).
+3. Regras de negocio implementadas/alteradas.
+4. Decisoes tecnicas tomadas.
+5. Problemas encontrados e contornos aplicados.
+6. Limitacoes ou assumptions conhecidas.
+7. Migrations/schema: sim ou nao, com justificativa curta.
+8. Impacto em API, n8n, docker e MCP.
+9. Testes automatizados executados com resultado.
+10. Testes manuais recomendados com comandos copiaveis.
+11. Como visualizar o resultado operacionalmente.
+12. Riscos antes do commit.
+13. Proximo passo recomendado.

@@ -111,6 +111,8 @@ npm run worker
 - `npm run worker`: executa o health check basico do worker.
 - `npm run lint`: executa checagem TypeScript nos workspaces configurados.
 - `npm run smoke:api`: executa um smoke test HTTP contra a API local.
+- `npm run verify:action-items`: valida o ciclo de vida de action_items.
+- `npm run verify:operational-summary`: valida o endpoint de resumo operacional.
 
 ## Banco de dados
 
@@ -211,6 +213,7 @@ Rotas principais desta etapa:
 - `POST /api/action-items/generate`
 - `POST /api/action-items/:id/complete`
 - `POST /api/action-items/:id/cancel`
+- `GET /api/operational-summary`
 - `POST /api/webhooks/whatsapp/inbound`
 
 Exemplo rapido:

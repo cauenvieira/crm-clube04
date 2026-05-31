@@ -231,6 +231,64 @@ Invoke-RestMethod `
   -Body "{}"
 ```
 
+## Operational Summary
+
+Endpoint somente leitura:
+
+```text
+GET /api/operational-summary
+```
+
+Exemplo PowerShell:
+
+```powershell
+$apiKey = (Get-Content .env | Where-Object { $_ -match '^CRM_API_SECRET=' }) -replace '^CRM_API_SECRET=', ''
+
+Invoke-RestMethod `
+  -Uri "http://localhost:3000/api/operational-summary" `
+  -Method Get `
+  -Headers @{ "x-crm-api-key" = $apiKey }
+```
+
+Exemplo de resposta:
+
+```json
+{
+  "generatedAt": "2026-05-31T15:00:00.000Z",
+  "timezone": "America/Sao_Paulo",
+  "businessDate": "2026-05-31",
+  "window": {
+    "start": "2026-05-31T03:00:00.000Z",
+    "end": "2026-06-01T03:00:00.000Z"
+  },
+  "actionItems": {
+    "pendente": 4,
+    "emAndamento": 1,
+    "concluidoHoje": 3,
+    "ignoradoHoje": 1,
+    "vencidos": 2
+  },
+  "leads": {
+    "novoLead": 5,
+    "comFollowUpVencido": 2,
+    "semInteracao24h": 3
+  },
+  "messages": {
+    "inboundHoje": 8,
+    "ultimaInboundEm": "2026-05-31T14:58:10.000Z"
+  }
+}
+```
+
+Criterio usado para "hoje":
+
+- timezone operacional: `America/Sao_Paulo`.
+- `businessDate` representa a data local em Sao Paulo.
+- `window.start` e `window.end` representam a janela do dia operacional em Sao Paulo, serializada em ISO UTC.
+- `actionItems.concluidoHoje`: `status=concluido` com `completed_at` na janela.
+- `actionItems.ignoradoHoje`: `status=ignorado` com `coalesce(completed_at, updated_at)` na janela.
+- `messages.inboundHoje`: `direction=inbound` com `created_at` na janela.
+
 ## Webhook WhatsApp Inbound
 
 Endpoint:
