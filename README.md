@@ -209,6 +209,8 @@ Rotas principais desta etapa:
 - `GET /api/crm-interactions`
 - `GET /api/action-items`
 - `POST /api/action-items/generate`
+- `POST /api/action-items/:id/complete`
+- `POST /api/action-items/:id/cancel`
 - `POST /api/webhooks/whatsapp/inbound`
 
 Exemplo rapido:

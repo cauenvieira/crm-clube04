@@ -1,4 +1,5 @@
 import { notFound } from "../utils/api-error.js";
+import * as actionItems from "./action-item-service.js";
 import * as interactions from "../repositories/crm-interaction-repository.js";
 import * as leads from "../repositories/lead-repository.js";
 import type { CrmInteractionCreateInput, CrmInteractionListQuery } from "../validation/crm-interaction-schemas.js";
@@ -16,6 +17,10 @@ export async function createCrmInteraction(input: CrmInteractionCreateInput) {
       next_action_at: input.next_action_at,
       increment_attempts: input.increment_attempts
     });
+  }
+
+  if (input.lead_id) {
+    await actionItems.completeOpenFollowUpActionItemsByLead(input.lead_id);
   }
 
   return interaction;

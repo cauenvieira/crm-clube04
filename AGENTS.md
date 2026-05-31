@@ -161,3 +161,9 @@ Ela deve mostrar:
 - Ao alterar workflow n8n, executar `npm run n8n:import:workflows` e `npm run n8n:list:workflows`.
 - Antes de concluir qualquer alteracao, executar `npm run build`, `npm run lint` e `npm run smoke:api`.
 - Manter mudancas pequenas e modulares; evitar arquivos grandes e responsabilidades misturadas.
+
+## Definition of Done para API
+
+- Para mudancas de API, nao basta build/lint/smoke generico: deve existir teste operacional ou smoke cobrindo fluxo feliz, idempotencia e erro/validacao relevante.
+- Exemplos de documentacao devem ser copiaveis/executaveis sem depender de placeholder sem instrucao de obtencao.
+- O Codex deve executar os testes previstos antes de declarar conclusao.

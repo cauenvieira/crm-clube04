@@ -128,6 +128,12 @@ Registrar interacao:
 curl.exe -X POST "$base/api/crm-interactions" -H "Content-Type: application/json" -H "x-crm-api-key: $apiKey" -d "{\"contact_id\":\"CONTACT_ID\",\"lead_id\":\"LEAD_ID\",\"interaction_type\":\"whatsapp\",\"channel\":\"manual\",\"responsible\":\"equipe\",\"result\":\"respondeu\",\"notes\":\"Cliente pediu valores.\",\"next_action_at\":\"2026-06-01T13:00:00.000Z\",\"increment_attempts\":true}"
 ```
 
+Quando `lead_id` for enviado, a API conclui automaticamente action_items abertos do lead para os tipos:
+
+- `follow_up_lead`
+- `follow_up_agendado`
+- `lead_sem_interacao`
+
 Listar interacoes:
 
 ```powershell
@@ -165,11 +171,64 @@ Listar itens da Acao do Dia:
 curl.exe "$base/api/action-items" -H "x-crm-api-key: $apiKey"
 ```
 
+Status validos de `action_items`:
+
+- `pendente`
+- `em_andamento`
+- `concluido`
+- `ignorado`
+- `reagendado`
+
 Filtros suportados:
 
 ```powershell
 curl.exe "$base/api/action-items?status=pendente&type=follow_up_lead&priority=90" -H "x-crm-api-key: $apiKey"
 curl.exe "$base/api/action-items?lead_id=LEAD_ID&type=follow_up_lead" -H "x-crm-api-key: $apiKey"
+```
+
+Como obter `action_item_id` real antes de `complete/cancel`:
+
+```powershell
+$apiKey = (Get-Content .env | Where-Object { $_ -match '^CRM_API_SECRET=' }) -replace '^CRM_API_SECRET=', ''
+$leadId = "COLE_O_LEAD_ID_AQUI"
+
+$pendingItems = Invoke-RestMethod `
+  -Uri "http://localhost:3000/api/action-items?lead_id=$leadId&status=pendente&limit=100" `
+  -Method Get `
+  -Headers @{ "x-crm-api-key" = $apiKey }
+
+if (-not $pendingItems.data -or $pendingItems.data.Count -eq 0) {
+  throw "Nenhum action_item pendente encontrado para esse lead_id."
+}
+
+$actionItemId = $pendingItems.data[0].id
+$actionItemId
+```
+
+Concluir action item:
+
+```powershell
+$apiKey = (Get-Content .env | Where-Object { $_ -match '^CRM_API_SECRET=' }) -replace '^CRM_API_SECRET=', ''
+
+Invoke-RestMethod `
+  -Uri "http://localhost:3000/api/action-items/$actionItemId/complete" `
+  -Method Post `
+  -Headers @{ "x-crm-api-key" = $apiKey } `
+  -ContentType "application/json" `
+  -Body "{}"
+```
+
+Cancelar action item (compatibilidade com schema atual: `cancel` usa status `ignorado`):
+
+```powershell
+$apiKey = (Get-Content .env | Where-Object { $_ -match '^CRM_API_SECRET=' }) -replace '^CRM_API_SECRET=', ''
+
+Invoke-RestMethod `
+  -Uri "http://localhost:3000/api/action-items/$actionItemId/cancel" `
+  -Method Post `
+  -Headers @{ "x-crm-api-key" = $apiKey } `
+  -ContentType "application/json" `
+  -Body "{}"
 ```
 
 ## Webhook WhatsApp Inbound

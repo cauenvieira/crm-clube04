@@ -10,9 +10,16 @@ import {
   required
 } from "./smoke-api-helpers.js";
 import {
+  assertActionItemsLifecycleStatuses,
+  assertActionItemStatus,
+  cancelActionItem,
+  cancelActionItemIdempotency,
+  completeActionItem,
+  completeActionItemIdempotency,
+  createCancelableActionItemForLead,
+  createOpenFollowUpLeadActionItem,
   generateActionItemsCreate,
-  generateActionItemsIdempotency,
-  listGeneratedActionItem
+  generateActionItemsIdempotency
 } from "./smoke-action-items.js";
 import { runWhatsappInboundCreate, runWhatsappInboundIdempotency } from "./smoke-whatsapp-inbound.js";
 
@@ -20,6 +27,8 @@ type TestContext = {
   contactId?: string;
   leadId?: string;
   leadActionItemId?: string;
+  cancelActionItemId?: string;
+  autoCloseActionItemId?: string;
   conversationId?: string;
   providerMessageId?: string;
   webhookContactId?: string;
@@ -42,12 +51,16 @@ const tests: Array<[string, () => Promise<void>]> = [
   ["POST /api/leads cria lead ligado ao contato", testCreateLead],
   ["POST /api/action-items/generate cria acao para novo lead", testGenerateActionItemsCreate],
   ["POST /api/action-items/generate repetido nao duplica acao aberta", testGenerateActionItemsIdempotency],
+  ["POST /api/action-items/:id/complete conclui item", testCompleteActionItem],
+  ["POST /api/action-items/:id/complete repetido e idempotente", testCompleteActionItemIdempotency],
+  ["POST /api/action-items/:id/cancel cancela item", testCancelActionItem],
+  ["POST /api/action-items/:id/cancel repetido e idempotente", testCancelActionItemIdempotency],
   ["GET /api/leads?status=novo_lead lista o lead criado", testListLeadByStatus],
   ["POST /api/conversations cria conversa", testCreateConversation],
   ["POST /api/messages cria mensagem", testCreateMessage],
   ["POST /api/messages repetido nao duplica", testMessageIdempotency],
   ["GET /api/conversations/:id/messages retorna uma mensagem", testConversationMessages],
-  ["POST /api/crm-interactions registra interacao", testCreateCrmInteraction],
+  ["POST /api/crm-interactions fecha follow-up aberto do lead", testCreateCrmInteraction],
   ["GET /api/action-items retorna lista", testActionItems],
   ["POST /api/webhooks/whatsapp/inbound cria fluxo inbound", testWhatsappInboundCreate],
   ["POST /api/webhooks/whatsapp/inbound repetido e idempotente", testWhatsappInboundIdempotency]
@@ -146,6 +159,58 @@ async function testGenerateActionItemsIdempotency() {
   });
 }
 
+async function testCompleteActionItem() {
+  await completeActionItem({
+    apiBaseUrl,
+    apiSecret,
+    leadId: required(context.leadId, "leadId"),
+    actionItemId: required(context.leadActionItemId, "leadActionItemId")
+  });
+}
+
+async function testCompleteActionItemIdempotency() {
+  await completeActionItemIdempotency({
+    apiBaseUrl,
+    apiSecret,
+    leadId: required(context.leadId, "leadId"),
+    actionItemId: required(context.leadActionItemId, "leadActionItemId")
+  });
+}
+
+async function testCancelActionItem() {
+  const cancelable = await createCancelableActionItemForLead({
+    apiBaseUrl,
+    apiSecret,
+    leadId: required(context.leadId, "leadId")
+  });
+
+  context.cancelActionItemId = cancelable.actionItemId;
+
+  await cancelActionItem({
+    apiBaseUrl,
+    apiSecret,
+    leadId: required(context.leadId, "leadId"),
+    actionItemId: required(context.cancelActionItemId, "cancelActionItemId")
+  });
+}
+
+async function testCancelActionItemIdempotency() {
+  await cancelActionItemIdempotency({
+    apiBaseUrl,
+    apiSecret,
+    leadId: required(context.leadId, "leadId"),
+    actionItemId: required(context.cancelActionItemId, "cancelActionItemId")
+  });
+
+  const openForAutoClose = await createOpenFollowUpLeadActionItem({
+    apiBaseUrl,
+    apiSecret,
+    leadId: required(context.leadId, "leadId")
+  });
+
+  context.autoCloseActionItemId = openForAutoClose.actionItemId;
+}
+
 async function testListLeadByStatus() {
   const response = await request(apiBaseUrl, apiSecret, "GET", "/api/leads?status=novo_lead");
   assertStatus(response, 200);
@@ -216,14 +281,26 @@ async function testCreateCrmInteraction() {
   });
 
   assertStatus(response, 201);
-}
 
-async function testActionItems() {
-  await listGeneratedActionItem({
+  await assertActionItemStatus({
     apiBaseUrl,
     apiSecret,
     leadId: required(context.leadId, "leadId"),
-    actionItemId: required(context.leadActionItemId, "leadActionItemId")
+    actionItemId: required(context.autoCloseActionItemId, "autoCloseActionItemId"),
+    expectedStatus: "concluido"
+  });
+}
+
+async function testActionItems() {
+  await assertActionItemsLifecycleStatuses({
+    apiBaseUrl,
+    apiSecret,
+    leadId: required(context.leadId, "leadId"),
+    completedFollowUpLeadIds: [
+      required(context.leadActionItemId, "leadActionItemId"),
+      required(context.autoCloseActionItemId, "autoCloseActionItemId")
+    ],
+    ignoredFollowUpScheduledId: required(context.cancelActionItemId, "cancelActionItemId")
   });
 }
 
