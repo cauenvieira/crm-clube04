@@ -142,3 +142,15 @@ Ela deve mostrar:
 - `worker` deve rodar jobs segmentados por dominio e nao virar monolito.
 - `packages/shared` deve conter apenas tipos e utilitarios realmente compartilhados entre apps.
 - Logs e erros devem ser claros, controlados e faceis de rastrear por modulo.
+
+## Regras operacionais para Codex
+
+- Git e a fonte da verdade para codigo, docs e workflows versionados.
+- Nunca commitar segredos, tokens, dumps, exports internos ou dados sensiveis.
+- Nunca commitar `.env`, `.tmp`, arquivos temporarios locais ou credenciais.
+- Nao alterar API, schema ou endpoints sem autorizacao explicita do usuario.
+- Workflows n8n versionados devem ficar em `infra/n8n/workflows`.
+- Workflow n8n versionado deve manter `id` estavel para evitar duplicidade no import.
+- Ao alterar workflow n8n, executar `npm run n8n:import:workflows` e `npm run n8n:list:workflows`.
+- Antes de concluir qualquer alteracao, executar `npm run build`, `npm run lint` e `npm run smoke:api`.
+- Manter mudancas pequenas e modulares; evitar arquivos grandes e responsabilidades misturadas.
