@@ -1,0 +1,76 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: clube04-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-clube04_crm}
+      POSTGRES_USER: ${POSTGRES_USER:-clube04}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-clube04_dev_password}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./infra/db/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-clube04} -d ${POSTGRES_DB:-clube04_crm}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: clube04-redis
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  crm-api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: clube04-crm-api
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      APP_PORT: ${APP_PORT:-3000}
+      POSTGRES_HOST: postgres
+      REDIS_HOST: redis
+    ports:
+      - "${APP_PORT:-3000}:${APP_PORT:-3000}"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  crm-worker:
+    build:
+      context: .
+      dockerfile: apps/worker/Dockerfile
+    container_name: clube04-crm-worker
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      POSTGRES_HOST: postgres
+      REDIS_HOST: redis
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  redis_data:

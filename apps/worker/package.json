@@ -1,0 +1,16 @@
+{
+  "name": "@clube04/worker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js",
+    "lint": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@clube04/shared": "file:../../packages/shared",
+    "dotenv": "^16.4.5"
+  }
+}

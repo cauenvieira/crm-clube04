@@ -1,0 +1,14 @@
+node_modules
+dist
+build
+coverage
+.git
+.env
+.env.local
+.env.*.local
+logs
+storage
+uploads
+tmp
+playwright-report
+test-results

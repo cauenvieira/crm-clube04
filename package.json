@@ -1,0 +1,25 @@
+{
+  "name": "clube04-crm",
+  "version": "0.1.0",
+  "private": true,
+  "description": "CRM operacional do Clube04 Mogi das Cruzes.",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev -w @clube04/api",
+    "build": "npm run build -w @clube04/shared && npm run build -w @clube04/api && npm run build -w @clube04/worker && npm run build -w @clube04/web",
+    "start": "npm run start -w @clube04/api",
+    "worker": "npm run dev -w @clube04/worker",
+    "lint": "npm run lint -w @clube04/shared && npm run lint -w @clube04/api && npm run lint -w @clube04/worker && npm run lint -w @clube04/web"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.10",
+    "tsx": "^4.16.2",
+    "typescript": "^5.5.3"
+  }
+}

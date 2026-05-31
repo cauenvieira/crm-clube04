@@ -1,0 +1,12 @@
+{
+  "name": "@clube04/web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "echo \"CRM Web ainda nao implementado nesta etapa\"",
+    "build": "echo \"CRM Web ainda nao implementado nesta etapa\"",
+    "start": "echo \"CRM Web ainda nao implementado nesta etapa\"",
+    "lint": "echo \"CRM Web ainda nao implementado nesta etapa\""
+  }
+}
