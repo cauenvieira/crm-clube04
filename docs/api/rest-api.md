@@ -289,6 +289,59 @@ Criterio usado para "hoje":
 - `actionItems.ignoradoHoje`: `status=ignorado` com `coalesce(completed_at, updated_at)` na janela.
 - `messages.inboundHoje`: `direction=inbound` com `created_at` na janela.
 
+## Operational Worklist
+
+Endpoint somente leitura:
+
+```text
+GET /api/operational-worklist
+```
+
+Query params opcionais:
+
+- `limit` (default `10`, max `50`)
+
+Exemplo PowerShell:
+
+```powershell
+$apiKey = (Get-Content .env | Where-Object { $_ -match '^CRM_API_SECRET=' }) -replace '^CRM_API_SECRET=', ''
+
+Invoke-RestMethod `
+  -Uri "http://localhost:3000/api/operational-worklist?limit=10" `
+  -Method Get `
+  -Headers @{ "x-crm-api-key" = $apiKey }
+```
+
+Exemplo resumido de resposta:
+
+```json
+{
+  "generatedAt": "2026-05-31T15:00:00.000Z",
+  "timezone": "America/Sao_Paulo",
+  "businessDate": "2026-05-31",
+  "limit": 10,
+  "actionItems": {
+    "pendentes": [],
+    "vencidos": []
+  },
+  "leads": {
+    "followUpVencido": [],
+    "semInteracao24h": []
+  },
+  "messages": {
+    "ultimasInbound": []
+  }
+}
+```
+
+Criterios de ordenacao:
+
+- `actionItems.pendentes`: `priority desc`, `due_at asc nulls last`, `created_at asc`
+- `actionItems.vencidos`: `due_at asc`, `priority desc`, `created_at asc`
+- `leads.followUpVencido`: `next_action_at asc`, `created_at asc`
+- `leads.semInteracao24h`: `last_interaction_at asc nulls first`, `created_at asc`
+- `messages.ultimasInbound`: `created_at desc`
+
 ## Webhook WhatsApp Inbound
 
 Endpoint:
