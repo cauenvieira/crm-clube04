@@ -18,14 +18,14 @@ Habilitar MCP instance-level do n8n local para inspecao e apoio tecnico no ajust
 - Nao alterar credenciais via MCP.
 - Nao executar fluxo com dados reais sem aprovacao.
 
-## Variaveis de ambiente locais no n8n
+## Modo local (UI manual)
 
-No ambiente local via Docker Compose:
+No ambiente local/dev, o projeto usa configuracao manual pela UI do n8n para MCP:
 
-- `N8N_MCP_MANAGED_BY_ENV=true`
-- `N8N_MCP_ACCESS_ENABLED=true`
+- `N8N_MCP_MANAGED_BY_ENV=false`
+- `N8N_MCP_ACCESS_ENABLED=false`
 
-Essas variaveis habilitam o acesso MCP na instancia local para desenvolvimento controlado.
+Com isso, a tela `Settings > Instance-level MCP` fica editavel e permite abrir `Connection details` para gerar token.
 
 ## Validacao rapida
 
@@ -36,5 +36,18 @@ docker compose exec n8n printenv N8N_MCP_ACCESS_ENABLED
 
 Resultado esperado:
 
-- `true`
-- `true`
+- `false`
+- `false`
+
+## Fluxo recomendado para habilitar MCP na UI local
+
+1. Abrir `http://localhost:5678`
+2. Ir em `Settings > Instance-level MCP`
+3. Ativar `Enable MCP access`
+4. Abrir `Connection details`
+5. Copiar token e detalhes de conexao para uso local no cliente MCP
+
+Importante:
+
+- Nao commitar token no repositorio.
+- Configuracao do cliente MCP deve ficar no arquivo local do usuario (exemplo: `config.toml`), nao no Git.
