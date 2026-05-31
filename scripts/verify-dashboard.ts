@@ -16,6 +16,12 @@ async function main() {
   const dashboard = await getText("/dashboard");
   assertStatus(dashboard, 200);
   assert(dashboard.body.includes("Painel Operacional"), "Dashboard nao contem titulo esperado");
+  assert(dashboard.body.includes('id="api-key"'), "Dashboard sem campo de API key");
+  assert(dashboard.body.includes('id="btn-update"'), "Dashboard sem botao Atualizar");
+  assert(dashboard.body.includes('id="limit"'), "Dashboard sem campo de limit");
+  assert(dashboard.body.includes("Agora / Prioridade"), "Dashboard sem secao Agora / Prioridade");
+  assert(dashboard.body.includes("Leads em risco"), "Dashboard sem secao Leads em risco");
+  assert(dashboard.body.includes("Movimento recente"), "Dashboard sem secao Movimento recente");
 
   const appJs = await getText("/dashboard/app.js");
   assertStatus(appJs, 200);
@@ -41,12 +47,13 @@ async function main() {
   );
 
   console.log("OK - /dashboard responde 200 e contem Painel Operacional");
+  console.log("OK - dashboard contem controles e secoes principais");
   console.log("OK - /dashboard/app.js responde 200");
   console.log("OK - /dashboard/styles.css responde 200");
   console.log("OK - Sem segredo/API key hardcoded detectado");
   console.log("OK - app.js contem chamadas de summary/worklist e header x-crm-api-key");
   console.log("");
-  console.log("Resumo verify:dashboard: 5/5 passos OK");
+  console.log("Resumo verify:dashboard: 6/6 passos OK");
 }
 
 async function getText(path: string): Promise<HttpResult> {

@@ -1,61 +1,80 @@
 const STORAGE_KEY = "crm_api_key";
-const defaultLimit = 10;
-const maxLimit = 50;
+const DEFAULT_LIMIT = 10;
+const MAX_LIMIT = 50;
+const TIME_ZONE = "America/Sao_Paulo";
 
-const apiKeyInput = document.getElementById("api-key");
-const limitInput = document.getElementById("limit");
-const updateButton = document.getElementById("btn-update");
-const clearKeyButton = document.getElementById("btn-clear-key");
-const loadingElement = document.getElementById("loading");
-const errorElement = document.getElementById("error");
+const dateTimeFormatter = new Intl.DateTimeFormat("pt-BR", {
+  timeZone: TIME_ZONE,
+  day: "2-digit",
+  month: "2-digit",
+  year: "numeric",
+  hour: "2-digit",
+  minute: "2-digit"
+});
 
-const metaBusinessDate = document.getElementById("meta-business-date");
-const metaTimezone = document.getElementById("meta-timezone");
-const metaGeneratedAt = document.getElementById("meta-generated-at");
-const summaryCards = document.getElementById("summary-cards");
-
-const listActionPending = document.getElementById("list-action-pending");
-const listActionOverdue = document.getElementById("list-action-overdue");
-const listLeadsOverdue = document.getElementById("list-leads-overdue");
-const listLeadsNoInteraction = document.getElementById("list-leads-no-interaction");
-const listMessagesInbound = document.getElementById("list-messages-inbound");
+const ui = {
+  apiKey: document.getElementById("api-key"),
+  limit: document.getElementById("limit"),
+  update: document.getElementById("btn-update"),
+  clearKey: document.getElementById("btn-clear-key"),
+  loading: document.getElementById("loading"),
+  error: document.getElementById("error"),
+  feedback: document.getElementById("feedback"),
+  summaryCards: document.getElementById("summary-cards"),
+  metaBusinessDate: document.getElementById("meta-business-date"),
+  metaTimezone: document.getElementById("meta-timezone"),
+  metaGeneratedAt: document.getElementById("meta-generated-at"),
+  metaWindow: document.getElementById("meta-window"),
+  listActionPending: document.getElementById("list-action-pending"),
+  listActionOverdue: document.getElementById("list-action-overdue"),
+  listLeadsOverdue: document.getElementById("list-leads-overdue"),
+  listLeadsNoInteraction: document.getElementById("list-leads-no-interaction"),
+  listMessagesInbound: document.getElementById("list-messages-inbound")
+};
 
 bootstrap();
 
 function bootstrap() {
   const savedKey = localStorage.getItem(STORAGE_KEY) ?? "";
-  apiKeyInput.value = savedKey;
-  limitInput.value = String(defaultLimit);
+  ui.apiKey.value = savedKey;
+  ui.limit.value = String(DEFAULT_LIMIT);
 
-  updateButton.addEventListener("click", () => refreshDashboard());
-  clearKeyButton.addEventListener("click", () => {
-    localStorage.removeItem(STORAGE_KEY);
-    apiKeyInput.value = "";
-    showError("API key removida do navegador local.");
-  });
+  ui.update.addEventListener("click", () => refreshDashboard({ manual: true }));
+  ui.clearKey.addEventListener("click", clearApiKey);
+  ui.apiKey.addEventListener("change", persistApiKey);
+  ui.apiKey.addEventListener("blur", persistApiKey);
 
-  apiKeyInput.addEventListener("change", () => {
-    const key = apiKeyInput.value.trim();
-    if (key) localStorage.setItem(STORAGE_KEY, key);
-  });
-
-  refreshDashboard();
+  if (savedKey) refreshDashboard({ manual: false });
+  else renderWithoutApiKey();
 }
 
-async function refreshDashboard() {
-  const apiKey = apiKeyInput.value.trim();
-  const limit = parseLimit(limitInput.value);
+function clearApiKey() {
+  localStorage.removeItem(STORAGE_KEY);
+  ui.apiKey.value = "";
+  renderWithoutApiKey();
+  showSuccess("API key removida do navegador local.");
+}
 
-  clearError();
+function persistApiKey() {
+  const apiKey = ui.apiKey.value.trim();
+  if (apiKey) localStorage.setItem(STORAGE_KEY, apiKey);
+  else localStorage.removeItem(STORAGE_KEY);
+}
+
+async function refreshDashboard(options) {
+  const apiKey = ui.apiKey.value.trim();
+  const limit = parseLimit(ui.limit.value);
+
+  clearMessages();
   setLoading(true);
 
   try {
     if (!apiKey) {
+      renderWithoutApiKey();
       throw new Error("Informe a API key para carregar o painel.");
     }
 
     localStorage.setItem(STORAGE_KEY, apiKey);
-
     const [summary, worklist] = await Promise.all([
       fetchJson("/api/operational-summary", apiKey),
       fetchJson(`/api/operational-worklist?limit=${limit}`, apiKey)
@@ -63,177 +82,187 @@ async function refreshDashboard() {
 
     renderSummary(summary);
     renderWorklist(worklist);
+    if (options.manual) showSuccess("Painel atualizado com sucesso.");
   } catch (error) {
-    showError(error instanceof Error ? error.message : "Erro ao carregar dados.");
+    showError(toUserMessage(error));
   } finally {
     setLoading(false);
   }
 }
 
 function parseLimit(value) {
-  const numeric = Number.parseInt(value, 10);
-  if (Number.isNaN(numeric) || numeric < 1) return defaultLimit;
-  if (numeric > maxLimit) return maxLimit;
-  return numeric;
+  const parsed = Number.parseInt(value, 10);
+  if (Number.isNaN(parsed) || parsed < 1) return DEFAULT_LIMIT;
+  if (parsed > MAX_LIMIT) return MAX_LIMIT;
+  return parsed;
 }
 
 async function fetchJson(path, apiKey) {
-  const response = await fetch(path, {
-    headers: {
-      "x-crm-api-key": apiKey
-    }
-  });
-
+  const response = await fetch(path, { headers: { "x-crm-api-key": apiKey } });
   const body = await response.json().catch(() => ({}));
   if (!response.ok) {
-    const message = body?.message ? String(body.message) : `Falha HTTP ${response.status}`;
-    throw new Error(message);
+    const error = new Error(body?.message ? String(body.message) : `Falha HTTP ${response.status}`);
+    error.status = response.status;
+    throw error;
   }
   return body;
 }
 
-function renderSummary(summary) {
-  metaBusinessDate.textContent = summary.businessDate ?? "-";
-  metaTimezone.textContent = summary.timezone ?? "-";
-  metaGeneratedAt.textContent = summary.generatedAt ?? "-";
+function renderWithoutApiKey() {
+  ui.metaBusinessDate.textContent = "-";
+  ui.metaTimezone.textContent = TIME_ZONE;
+  ui.metaGeneratedAt.textContent = "Sem registro";
+  ui.metaWindow.textContent = "Sem registro";
+  renderSummary(null);
+  const message = "Informe a API key para carregar dados.";
+  renderList(ui.listActionPending, [], () => null, message);
+  renderList(ui.listActionOverdue, [], () => null, message);
+  renderList(ui.listLeadsOverdue, [], () => null, message);
+  renderList(ui.listLeadsNoInteraction, [], () => null, message);
+  renderList(ui.listMessagesInbound, [], () => null, message);
+}
 
-  const metrics = [
-    ["Action items pendentes", summary?.actionItems?.pendente],
-    ["Action items vencidos", summary?.actionItems?.vencidos],
-    ["Concluidos hoje", summary?.actionItems?.concluidoHoje],
-    ["Ignorados hoje", summary?.actionItems?.ignoradoHoje],
-    ["Novos leads", summary?.leads?.novoLead],
-    ["Follow-up vencido", summary?.leads?.comFollowUpVencido],
-    ["Sem interacao 24h", summary?.leads?.semInteracao24h],
-    ["Mensagens inbound hoje", summary?.messages?.inboundHoje]
+function renderSummary(summary) {
+  const actionItems = summary?.actionItems ?? {};
+  const leads = summary?.leads ?? {};
+  const messages = summary?.messages ?? {};
+
+  ui.metaBusinessDate.textContent = summary?.businessDate ?? "-";
+  ui.metaTimezone.textContent = summary?.timezone ?? TIME_ZONE;
+  ui.metaGeneratedAt.textContent = formatDateTime(summary?.generatedAt);
+  ui.metaWindow.textContent = formatWindow(summary?.window);
+
+  const cards = [
+    ["Acoes pendentes", "Fila ativa para atendimento", actionItems.pendente, "tone-warning"],
+    ["Acoes vencidas", "Prioridade imediata", actionItems.vencidos, "tone-danger"],
+    ["Concluidos hoje", "Entregas no dia", actionItems.concluidoHoje, ""],
+    ["Ignorados hoje", "Acoes marcadas como ignorado", actionItems.ignoradoHoje, ""],
+    ["Novos leads", "Entrada recente", leads.novoLead, "tone-info"],
+    ["Follow-up vencido", "Leads aguardando retorno", leads.comFollowUpVencido, "tone-warning"],
+    ["Sem interacao 24h", "Leads esfriando", leads.semInteracao24h, "tone-danger"],
+    ["Inbound hoje", `Ultima: ${formatDateTime(messages.ultimaInboundEm)}`, messages.inboundHoje, "tone-info"]
   ];
 
-  summaryCards.innerHTML = "";
-  for (const [label, value] of metrics) {
-    const card = document.createElement("div");
-    card.className = "summary-card";
-    card.innerHTML = `<h3>${escapeHtml(label)}</h3><p>${Number(value ?? 0)}</p>`;
-    summaryCards.appendChild(card);
+  ui.summaryCards.innerHTML = "";
+  for (const [title, subtitle, value, tone] of cards) {
+    const card = document.createElement("article");
+    card.className = `summary-card ${tone}`.trim();
+    card.innerHTML =
+      `<p class="summary-title">${escapeHtml(title)}</p>` +
+      `<p class="summary-value">${Number(value ?? 0)}</p>` +
+      `<p class="summary-subtitle">${escapeHtml(subtitle)}</p>`;
+    ui.summaryCards.appendChild(card);
   }
 }
 
 function renderWorklist(worklist) {
-  renderActionItems(listActionPending, worklist?.actionItems?.pendentes ?? []);
-  renderActionItems(listActionOverdue, worklist?.actionItems?.vencidos ?? []);
-  renderLeads(listLeadsOverdue, worklist?.leads?.followUpVencido ?? []);
-  renderLeads(listLeadsNoInteraction, worklist?.leads?.semInteracao24h ?? []);
-  renderMessages(listMessagesInbound, worklist?.messages?.ultimasInbound ?? []);
+  renderActionItems(ui.listActionOverdue, worklist?.actionItems?.vencidos ?? [], "vencido");
+  renderActionItems(ui.listActionPending, worklist?.actionItems?.pendentes ?? [], "pendente");
+  renderLeads(ui.listLeadsOverdue, worklist?.leads?.followUpVencido ?? [], "follow_up");
+  renderLeads(ui.listLeadsNoInteraction, worklist?.leads?.semInteracao24h ?? [], "interacao");
+  renderMessages(ui.listMessagesInbound, worklist?.messages?.ultimasInbound ?? []);
 }
 
-function renderActionItems(target, items) {
+function renderActionItems(target, items, mode) {
   renderList(target, items, (item) => {
-    const status = item.status ?? "-";
-    const type = item.type ?? "-";
-    const title = item.title ?? "Sem titulo";
-    const contact = item.contactName ?? "Sem contato";
-    const phone = item.normalizedPhone ?? "-";
-    const dueAt = item.dueAt ?? "-";
-    const createdAt = item.createdAt ?? "-";
-
-    const wrapper = document.createElement("div");
-    wrapper.className = "item";
-    wrapper.innerHTML = `
-      <div class="item-title">${escapeHtml(title)}</div>
-      <div class="item-meta">
-        <div><strong>Contato:</strong> ${escapeHtml(contact)} (${escapeHtml(phone)})</div>
-        <div><strong>Type:</strong> ${escapeHtml(type)} | <strong>Status:</strong> ${escapeHtml(status)} | <strong>Priority:</strong> ${Number(item.priority ?? 0)}</div>
-        <div><strong>dueAt:</strong> ${escapeHtml(dueAt)} | <strong>createdAt:</strong> ${escapeHtml(createdAt)}</div>
-        <div><strong>id:</strong> ${escapeHtml(item.id ?? "-")} | <strong>leadId:</strong> ${escapeHtml(item.leadId ?? "-")}</div>
-      </div>
-    `;
-
+    const wrapper = baseItem(
+      item.title ?? "Sem titulo",
+      `${item.contactName ?? "Sem contato"} | ${formatPhone(item.normalizedPhone)}`,
+      `${mode === "vencido" ? "Vencido em" : "Prazo"} ${formatDateTime(item.dueAt)}`,
+      `Status: ${item.status ?? "-"} | Tipo: ${item.type ?? "-"} | Prioridade: ${Number(item.priority ?? 0)}`
+    );
     if (item.id) {
       const actions = document.createElement("div");
       actions.className = "item-actions";
-
-      const completeButton = document.createElement("button");
-      completeButton.type = "button";
-      completeButton.textContent = "Concluir";
-      completeButton.addEventListener("click", () => mutateActionItem(item.id, "complete"));
-
-      const cancelButton = document.createElement("button");
-      cancelButton.type = "button";
-      cancelButton.textContent = "Ignorar";
-      cancelButton.addEventListener("click", () => mutateActionItem(item.id, "cancel"));
-
-      actions.appendChild(completeButton);
-      actions.appendChild(cancelButton);
+      actions.appendChild(makeButton("Concluir", "btn-action", () => mutateActionItem(item.id, "complete")));
+      actions.appendChild(makeButton("Ignorar", "btn-action btn-ignore", () => mutateActionItem(item.id, "cancel")));
       wrapper.appendChild(actions);
     }
-
+    wrapper.appendChild(makeDebugDetails({ id: item.id, leadId: item.leadId, contactId: item.contactId }));
     return wrapper;
   });
 }
 
-function renderLeads(target, items) {
+function renderLeads(target, items, mode) {
   renderList(target, items, (item) => {
-    const wrapper = document.createElement("div");
-    wrapper.className = "item";
-    wrapper.innerHTML = `
-      <div class="item-title">${escapeHtml(item.contactName ?? "Sem contato")}</div>
-      <div class="item-meta">
-        <div><strong>Telefone:</strong> ${escapeHtml(item.normalizedPhone ?? "-")}</div>
-        <div><strong>Status:</strong> ${escapeHtml(item.status ?? "-")} | <strong>Source:</strong> ${escapeHtml(item.source ?? "-")}</div>
-        <div><strong>nextActionAt:</strong> ${escapeHtml(item.nextActionAt ?? "-")}</div>
-        <div><strong>lastInteractionAt:</strong> ${escapeHtml(item.lastInteractionAt ?? "-")}</div>
-        <div><strong>leadId:</strong> ${escapeHtml(item.id ?? "-")} | <strong>contactId:</strong> ${escapeHtml(item.contactId ?? "-")}</div>
-      </div>
-    `;
+    const whenText = mode === "follow_up" ? formatDateTime(item.nextActionAt) : formatDateTime(item.lastInteractionAt);
+    const label = mode === "follow_up" ? "Proximo contato" : "Ultima interacao";
+    const wrapper = baseItem(
+      item.contactName ?? "Sem contato",
+      formatPhone(item.normalizedPhone),
+      `${label} ${whenText}`,
+      `Status: ${item.status ?? "-"} | Source: ${item.source ?? "-"}`
+    );
+    wrapper.appendChild(makeDebugDetails({ leadId: item.id, contactId: item.contactId }));
     return wrapper;
   });
 }
 
 function renderMessages(target, items) {
   renderList(target, items, (item) => {
-    const wrapper = document.createElement("div");
-    wrapper.className = "item";
-    wrapper.innerHTML = `
-      <div class="item-title">${escapeHtml(item.contactName ?? "Sem contato")}</div>
-      <div class="item-meta">
-        <div><strong>Telefone:</strong> ${escapeHtml(item.normalizedPhone ?? "-")}</div>
-        <div><strong>Mensagem:</strong> ${escapeHtml(truncate(item.body ?? "", 160))}</div>
-        <div><strong>provider:</strong> ${escapeHtml(item.provider ?? "-")} | <strong>providerMessageId:</strong> ${escapeHtml(item.providerMessageId ?? "-")}</div>
-        <div><strong>createdAt:</strong> ${escapeHtml(item.createdAt ?? "-")}</div>
-        <div><strong>id:</strong> ${escapeHtml(item.id ?? "-")} | <strong>conversationId:</strong> ${escapeHtml(item.conversationId ?? "-")}</div>
-      </div>
-    `;
+    const wrapper = baseItem(
+      item.contactName ?? "Sem contato",
+      formatPhone(item.normalizedPhone),
+      `Recebida em ${formatDateTime(item.createdAt)}`,
+      truncate(item.body ?? "Sem mensagem", 180),
+      true
+    );
+    wrapper.appendChild(makeDebugDetails({
+      messageId: item.id, conversationId: item.conversationId, provider: item.provider, providerMessageId: item.providerMessageId
+    }));
     return wrapper;
   });
 }
 
-function renderList(target, items, renderItem) {
+function baseItem(title, phone, metaLine, fourthLine, isBody = false) {
+  const wrapper = document.createElement("article");
+  wrapper.className = "item";
+  wrapper.innerHTML =
+    `<p class="item-title">${escapeHtml(title)}</p>` +
+    `<p class="item-phone">${escapeHtml(phone)}</p>` +
+    `<p class="item-meta">${escapeHtml(metaLine)}</p>` +
+    `<p class="${isBody ? "item-body" : "item-meta"}">${escapeHtml(fourthLine)}</p>`;
+  return wrapper;
+}
+
+function renderList(target, items, renderer, emptyText = "Sem itens para este bloco.") {
   target.innerHTML = "";
   if (!Array.isArray(items) || items.length === 0) {
-    target.innerHTML = '<p class="empty">Sem itens.</p>';
+    target.innerHTML = `<p class="empty">${escapeHtml(emptyText)}</p>`;
     return;
   }
+  for (const item of items) target.appendChild(renderer(item));
+}
 
-  for (const item of items) {
-    target.appendChild(renderItem(item));
-  }
+function makeButton(label, className, onClick) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = className;
+  button.textContent = label;
+  button.addEventListener("click", onClick);
+  return button;
+}
+
+function makeDebugDetails(data) {
+  const details = document.createElement("details");
+  details.className = "item-details";
+  details.innerHTML = `<summary>Debug</summary><pre>${escapeHtml(JSON.stringify(data, null, 2))}</pre>`;
+  return details;
 }
 
 async function mutateActionItem(actionItemId, action) {
-  const apiKey = apiKeyInput.value.trim();
-  if (!apiKey) {
-    showError("Informe a API key para atualizar itens.");
-    return;
-  }
+  const apiKey = ui.apiKey.value.trim();
+  if (!apiKey) return showError("Informe a API key para atualizar itens.");
+  if (action === "cancel" && !window.confirm("Confirmar ignorar este action item?")) return;
 
-  const endpoint = action === "complete" ? "complete" : "cancel";
+  clearMessages();
+  setLoading(true);
   try {
-    setLoading(true);
-    clearError();
-
-    await fetchJsonWithBody(`/api/action-items/${actionItemId}/${endpoint}`, apiKey, {});
-    await refreshDashboard();
+    await fetchJsonWithBody(`/api/action-items/${actionItemId}/${action === "complete" ? "complete" : "cancel"}`, apiKey, {});
+    await refreshDashboard({ manual: false });
+    showSuccess(action === "complete" ? "Action item concluido." : "Action item ignorado.");
   } catch (error) {
-    showError(error instanceof Error ? error.message : "Falha ao atualizar action item.");
+    showError(toUserMessage(error));
   } finally {
     setLoading(false);
   }
@@ -242,45 +271,70 @@ async function mutateActionItem(actionItemId, action) {
 async function fetchJsonWithBody(path, apiKey, body) {
   const response = await fetch(path, {
     method: "POST",
-    headers: {
-      "content-type": "application/json",
-      "x-crm-api-key": apiKey
-    },
+    headers: { "content-type": "application/json", "x-crm-api-key": apiKey },
     body: JSON.stringify(body)
   });
-
   const payload = await response.json().catch(() => ({}));
   if (!response.ok) {
-    const message = payload?.message ? String(payload.message) : `Falha HTTP ${response.status}`;
-    throw new Error(message);
+    const error = new Error(payload?.message ? String(payload.message) : `Falha HTTP ${response.status}`);
+    error.status = response.status;
+    throw error;
   }
-  return payload;
 }
 
 function setLoading(isLoading) {
-  loadingElement.classList.toggle("hidden", !isLoading);
+  ui.loading.classList.toggle("hidden", !isLoading);
+}
+
+function toUserMessage(error) {
+  if (error && typeof error === "object" && error.status === 401) return "API key invalida ou sem permissao para acessar /api.";
+  return error instanceof Error ? error.message : "Erro inesperado ao carregar dados.";
 }
 
 function showError(message) {
-  errorElement.textContent = message;
-  errorElement.classList.remove("hidden");
+  ui.error.textContent = message;
+  ui.error.classList.remove("hidden");
 }
 
-function clearError() {
-  errorElement.textContent = "";
-  errorElement.classList.add("hidden");
+function showSuccess(message) {
+  ui.feedback.textContent = message;
+  ui.feedback.classList.remove("hidden");
+}
+
+function clearMessages() {
+  ui.error.textContent = "";
+  ui.error.classList.add("hidden");
+  ui.feedback.textContent = "";
+  ui.feedback.classList.add("hidden");
+}
+
+function formatDateTime(value) {
+  if (!value) return "Sem registro";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Sem registro";
+  return dateTimeFormatter.format(date);
+}
+
+function formatWindow(windowRange) {
+  if (!windowRange?.start || !windowRange?.end) return "Sem registro";
+  return `${formatDateTime(windowRange.start)} ate ${formatDateTime(windowRange.end)}`;
+}
+
+function formatPhone(rawValue) {
+  const raw = String(rawValue ?? "").trim();
+  if (!raw) return "Sem registro";
+  const digits = raw.replace(/\D/g, "");
+  if (digits.length === 13 && digits.startsWith("55")) return `+55 (${digits.slice(2, 4)}) ${digits.slice(4, 9)}-${digits.slice(9, 13)}`;
+  if (digits.length === 12 && digits.startsWith("55")) return `+55 (${digits.slice(2, 4)}) ${digits.slice(4, 8)}-${digits.slice(8, 12)}`;
+  if (digits.length === 11) return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7, 11)}`;
+  if (digits.length === 10) return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6, 10)}`;
+  return raw;
 }
 
 function escapeHtml(value) {
-  return String(value)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#39;");
+  return String(value).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#39;");
 }
 
 function truncate(value, maxLength) {
-  if (value.length <= maxLength) return value;
-  return `${value.slice(0, maxLength)}...`;
+  return value.length <= maxLength ? value : `${value.slice(0, maxLength)}...`;
 }

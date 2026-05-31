@@ -8,59 +8,93 @@
   </head>
   <body>
     <main class="layout">
-      <header class="panel-header">
-        <div>
+      <header class="panel-header panel-card">
+        <div class="brand">
+          <p class="brand-tag">Clube04 CRM</p>
           <h1>CRM Clube04</h1>
           <p class="subtitle">Painel Operacional</p>
         </div>
         <div class="meta" id="summary-meta">
-          <div><strong>businessDate:</strong> <span id="meta-business-date">-</span></div>
-          <div><strong>timezone:</strong> <span id="meta-timezone">-</span></div>
-          <div><strong>generatedAt:</strong> <span id="meta-generated-at">-</span></div>
+          <div class="meta-item">
+            <span class="meta-label">Data operacional</span>
+            <strong id="meta-business-date">-</strong>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Timezone</span>
+            <strong id="meta-timezone">-</strong>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Atualizado em</span>
+            <strong id="meta-generated-at">-</strong>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Janela do dia</span>
+            <strong id="meta-window">-</strong>
+          </div>
         </div>
       </header>
 
-      <section class="controls">
-        <label>
-          API key
-          <input id="api-key" type="password" placeholder="Informe x-crm-api-key" />
-        </label>
-        <label>
-          Limit
-          <input id="limit" type="number" min="1" max="50" value="10" />
-        </label>
-        <div class="buttons">
-          <button id="btn-update" type="button">Atualizar</button>
-          <button id="btn-clear-key" type="button">Limpar API key</button>
+      <section class="controls panel-card">
+        <div class="control-fields">
+          <label>
+            API key
+            <input id="api-key" type="password" placeholder="Informe x-crm-api-key" />
+          </label>
+          <label>
+            Limite por lista
+            <input id="limit" type="number" min="1" max="50" value="10" />
+          </label>
         </div>
+        <div class="buttons">
+          <button id="btn-update" type="button" class="btn-primary">Atualizar</button>
+          <button id="btn-clear-key" type="button" class="btn-secondary">Limpar API key</button>
+        </div>
+        <p class="help-text">
+          Sem API key valida, o painel nao carrega dados de /api.
+        </p>
       </section>
 
       <section class="status">
-        <p id="loading" class="hidden">Carregando...</p>
-        <p id="error" class="error hidden"></p>
+        <p id="loading" class="status-line hidden">Carregando dados...</p>
+        <p id="error" class="status-line status-error hidden"></p>
+        <p id="feedback" class="status-line status-success hidden"></p>
       </section>
 
-      <section class="summary-grid" id="summary-cards"></section>
+      <section class="summary-block">
+        <h2>Resumo rapido</h2>
+        <div class="summary-grid" id="summary-cards"></div>
+      </section>
 
       <section class="list-grid">
-        <article>
-          <h2>Acoes pendentes</h2>
-          <div id="list-action-pending"></div>
+        <article class="panel-card section-card">
+          <h2>Agora / Prioridade</h2>
+          <div class="split-column">
+            <section>
+              <h3>Acoes vencidas</h3>
+              <div id="list-action-overdue"></div>
+            </section>
+            <section>
+              <h3>Acoes pendentes</h3>
+              <div id="list-action-pending"></div>
+            </section>
+          </div>
         </article>
-        <article>
-          <h2>Acoes vencidas</h2>
-          <div id="list-action-overdue"></div>
+        <article class="panel-card section-card">
+          <h2>Leads em risco</h2>
+          <div class="split-column">
+            <section>
+              <h3>Follow-up vencido</h3>
+              <div id="list-leads-overdue"></div>
+            </section>
+            <section>
+              <h3>Sem interacao 24h</h3>
+              <div id="list-leads-no-interaction"></div>
+            </section>
+          </div>
         </article>
-        <article>
-          <h2>Leads com follow-up vencido</h2>
-          <div id="list-leads-overdue"></div>
-        </article>
-        <article>
-          <h2>Leads sem interacao 24h</h2>
-          <div id="list-leads-no-interaction"></div>
-        </article>
-        <article>
-          <h2>Ultimas mensagens inbound</h2>
+        <article class="panel-card section-card">
+          <h2>Movimento recente</h2>
+          <h3>Ultimas mensagens inbound</h3>
           <div id="list-messages-inbound"></div>
         </article>
       </section>
