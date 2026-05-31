@@ -136,13 +136,41 @@ curl.exe "$base/api/crm-interactions?lead_id=LEAD_ID" -H "x-crm-api-key: $apiKey
 
 ## Action Items
 
-Listar itens existentes da Acao do Dia:
+Gerar Acao do Dia a partir de leads:
+
+```powershell
+$apiKey = (Get-Content .env | Where-Object { $_ -match '^CRM_API_SECRET=' }) -replace '^CRM_API_SECRET=', ''
+
+Invoke-RestMethod `
+  -Uri "http://localhost:3000/api/action-items/generate" `
+  -Method Post `
+  -Headers @{ "x-crm-api-key" = $apiKey } `
+  -ContentType "application/json" `
+  -Body "{}"
+```
+
+Resposta:
+
+```json
+{
+  "created": 1,
+  "skipped": 0,
+  "items": []
+}
+```
+
+Listar itens da Acao do Dia:
 
 ```powershell
 curl.exe "$base/api/action-items" -H "x-crm-api-key: $apiKey"
 ```
 
-Nesta etapa a API apenas lista `action_items`; a geracao automatica ainda nao foi implementada.
+Filtros suportados:
+
+```powershell
+curl.exe "$base/api/action-items?status=pendente&type=follow_up_lead&priority=90" -H "x-crm-api-key: $apiKey"
+curl.exe "$base/api/action-items?lead_id=LEAD_ID&type=follow_up_lead" -H "x-crm-api-key: $apiKey"
+```
 
 ## Webhook WhatsApp Inbound
 

@@ -30,6 +30,13 @@ O sistema deve:
 - Separar dados importados do sistema oficial dos dados preenchidos pela equipe.
 - Preservar historico de interacoes, mensagens e alteracoes.
 
+## Regra de encoding
+
+- Usar ASCII-only por padrao em codigo, docs tecnicos, comentarios, mensagens internas, exemplos e fixtures.
+- Evitar acentos em strings internas, nomes de arquivos, comentarios e Markdown tecnico.
+- Excecao: textos finais destinados a clientes/tutores podem usar portugues com acentos, mas devem ser salvos e revisados como UTF-8.
+- Se encontrar texto quebrado com sinais de mojibake (ex.: `\u00C3`, `\uFFFD` ou `\u00C2`), corrigir antes de concluir.
+
 ## Stack preferida
 
 - Node.js

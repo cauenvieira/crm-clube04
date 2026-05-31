@@ -9,10 +9,17 @@ import {
   request,
   required
 } from "./smoke-api-helpers.js";
+import {
+  generateActionItemsCreate,
+  generateActionItemsIdempotency,
+  listGeneratedActionItem
+} from "./smoke-action-items.js";
+import { runWhatsappInboundCreate, runWhatsappInboundIdempotency } from "./smoke-whatsapp-inbound.js";
 
 type TestContext = {
   contactId?: string;
   leadId?: string;
+  leadActionItemId?: string;
   conversationId?: string;
   providerMessageId?: string;
   webhookContactId?: string;
@@ -33,6 +40,8 @@ const tests: Array<[string, () => Promise<void>]> = [
   ["GET /api/contacts sem header respeita protecao", testContactsWithoutHeader],
   ["POST /api/contacts com API key cria ou retorna contato", testCreateContact],
   ["POST /api/leads cria lead ligado ao contato", testCreateLead],
+  ["POST /api/action-items/generate cria acao para novo lead", testGenerateActionItemsCreate],
+  ["POST /api/action-items/generate repetido nao duplica acao aberta", testGenerateActionItemsIdempotency],
   ["GET /api/leads?status=novo_lead lista o lead criado", testListLeadByStatus],
   ["POST /api/conversations cria conversa", testCreateConversation],
   ["POST /api/messages cria mensagem", testCreateMessage],
@@ -120,6 +129,23 @@ async function testCreateLead() {
   context.leadId = asString(data.id, "lead.id");
 }
 
+async function testGenerateActionItemsCreate() {
+  const result = await generateActionItemsCreate({
+    apiBaseUrl,
+    apiSecret,
+    leadId: required(context.leadId, "leadId")
+  });
+  context.leadActionItemId = result.actionItemId;
+}
+
+async function testGenerateActionItemsIdempotency() {
+  await generateActionItemsIdempotency({
+    apiBaseUrl,
+    apiSecret,
+    leadId: required(context.leadId, "leadId")
+  });
+}
+
 async function testListLeadByStatus() {
   const response = await request(apiBaseUrl, apiSecret, "GET", "/api/leads?status=novo_lead");
   assertStatus(response, 200);
@@ -193,112 +219,39 @@ async function testCreateCrmInteraction() {
 }
 
 async function testActionItems() {
-  const response = await request(apiBaseUrl, apiSecret, "GET", "/api/action-items");
-  assertStatus(response, 200);
-  asArray(asRecord(response.body).data);
+  await listGeneratedActionItem({
+    apiBaseUrl,
+    apiSecret,
+    leadId: required(context.leadId, "leadId"),
+    actionItemId: required(context.leadActionItemId, "leadActionItemId")
+  });
 }
 
 async function testWhatsappInboundCreate() {
-  const stamp = Date.now();
-  const payload = {
-    provider: "waha",
-    providerMessageId: `wh-smoke-msg-${stamp}`,
-    providerConversationId: `55119999${stamp}`,
-    fromNumber: `55119999${stamp}`,
-    toNumber: "5511470000000",
-    contactName: "Smoke WhatsApp",
-    body: "Ola, gostaria de saber valores de banho",
-    messageType: "text",
-    direction: "inbound",
-    timestamp: new Date().toISOString(),
-    source: "whatsapp",
-    campaign: "smoke_webhook",
-    rawPayload: { source: "smoke-api-webhook" }
-  };
-
-  const response = await request(
+  const result = await runWhatsappInboundCreate({
     apiBaseUrl,
-    apiSecret,
-    "POST",
-    "/api/webhooks/whatsapp/inbound",
-    { body: payload }
-  );
-  assertStatus(response, 201);
-  const data = asRecord(asRecord(response.body).data);
-  const created = asRecord(data.created);
-
-  assert(created.message === true, "Webhook inbound inicial deveria criar mensagem");
-  assert(created.lead === true, "Webhook inbound inicial deveria criar lead");
-
-  context.webhookContactId = asString(asRecord(data.contact).id, "webhook.contact.id");
-  context.webhookLeadId = asString(asRecord(data.lead).id, "webhook.lead.id");
-  context.webhookProviderConversationId = payload.providerConversationId;
-  context.webhookFromNumber = payload.fromNumber;
-
-  context.providerMessageId = payload.providerMessageId;
-  context.conversationId = asString(asRecord(data.conversation).id, "webhook.conversation.id");
+    apiSecret
+  });
+  context.webhookContactId = result.contactId;
+  context.webhookLeadId = result.leadId;
+  context.webhookProviderConversationId = result.providerConversationId;
+  context.webhookFromNumber = result.fromNumber;
+  context.providerMessageId = result.providerMessageId;
+  context.conversationId = result.conversationId;
 }
 
 async function testWhatsappInboundIdempotency() {
-  const providerMessageId = required(context.providerMessageId, "providerMessageId");
-  const fromNumber = required(context.webhookFromNumber, "webhookFromNumber");
-
-  const payload = {
-    provider: "waha",
-    providerMessageId,
+  await runWhatsappInboundIdempotency({
+    apiBaseUrl,
+    apiSecret,
+    providerMessageId: required(context.providerMessageId, "providerMessageId"),
     providerConversationId: required(
       context.webhookProviderConversationId,
       "webhookProviderConversationId"
     ),
-    fromNumber,
-    toNumber: "5511470000000",
-    contactName: "Smoke WhatsApp",
-    body: "Mensagem repetida",
-    messageType: "text",
-    direction: "inbound",
-    timestamp: new Date().toISOString(),
-    source: "whatsapp",
-    campaign: "smoke_webhook",
-    rawPayload: { source: "smoke-api-webhook-repeat" }
-  };
-
-  const response = await request(
-    apiBaseUrl,
-    apiSecret,
-    "POST",
-    "/api/webhooks/whatsapp/inbound",
-    { body: payload }
-  );
-  assertStatus(response, 200);
-
-  const data = asRecord(asRecord(response.body).data);
-  const created = asRecord(data.created);
-  assert(created.message === false, "Webhook inbound repetido nao deveria duplicar mensagem");
-  assert(created.lead === false, "Webhook inbound repetido nao deveria criar novo lead ativo");
-
-  const activeStatuses = [
-    "novo_lead",
-    "em_atendimento",
-    "aguardando_resposta",
-    "em_negociacao",
-    "agendado",
-    "reativar_depois"
-  ];
-
-  let activeLeadsForContact = 0;
-  for (const status of activeStatuses) {
-    const list = await request(apiBaseUrl, apiSecret, "GET", `/api/leads?status=${status}`);
-    assertStatus(list, 200);
-    const leads = asArray(asRecord(list.body).data);
-    activeLeadsForContact += leads.filter(
-      (lead) => asRecord(lead).contact_id === context.webhookContactId
-    ).length;
-  }
-
-  assert(
-    activeLeadsForContact <= 1,
-    `Esperava no maximo 1 lead ativo para o contato do webhook, encontrou ${activeLeadsForContact}`
-  );
+    fromNumber: required(context.webhookFromNumber, "webhookFromNumber"),
+    contactId: required(context.webhookContactId, "webhookContactId")
+  });
 }
 
 async function createSmokeMessage() {

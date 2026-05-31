@@ -5,7 +5,7 @@ export async function listActionItems(query: ActionItemListQuery) {
   const conditions: string[] = [];
   const values: unknown[] = [];
 
-  for (const key of ["status", "type"] as const) {
+  for (const key of ["status", "priority", "type", "lead_id"] as const) {
     if (query[key]) {
       values.push(query[key]);
       conditions.push(`${key} = $${values.length}`);
