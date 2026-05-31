@@ -66,7 +66,7 @@ O node `Set Normalized Payload` envia:
 
 ```json
 {
-  "provider": "n8n-test",
+  "provider": "waha",
   "providerMessageId": "{{$json.body.providerMessageId || $execution.id}}",
   "providerConversationId": "{{$json.body.fromNumber}}",
   "fromNumber": "{{$json.body.fromNumber}}",
@@ -94,6 +94,9 @@ Opcao recomendada:
 
 - Definir `CRM_API_SECRET` no ambiente do servico n8n e usar expressao:
   - `{{$env.CRM_API_SECRET}}`
+- Em n8n `2.22.4`, para ambiente local, o compose define:
+  - `N8N_BLOCK_ENV_ACCESS_IN_NODE=false`
+  - Sem isso, o node pode falhar com `access to env vars denied`.
 
 Opcao manual:
 
@@ -162,6 +165,19 @@ Para nao hardcodar segredo:
 
 - defina `CRM_API_SECRET` no `.env` usado pelo Docker Compose;
 - no node HTTP Request, use `{{$env.CRM_API_SECRET}}` no header `x-crm-api-key`.
+
+Validacao rapida do erro `access to env vars denied`:
+
+1. Conferir no container:
+   - `docker compose exec n8n printenv N8N_BLOCK_ENV_ACCESS_IN_NODE`
+2. Valor esperado para local/dev:
+   - `false`
+
+Validacao rapida para `Bad request - please check your parameters` no HTTP Request:
+
+1. Conferir no node `Set Normalized Payload` se `provider` esta como `waha`.
+2. Confirmar que o body final inclui `providerMessageId`, `fromNumber`, `body`, `direction` e `timestamp`.
+3. Confirmar que o HTTP Request envia `Content-Type: application/json` e body JSON (`={{ $json }}`).
 
 ## Observacoes
 

@@ -5,6 +5,7 @@
 - Imagem: `docker.n8n.io/n8nio/n8n`
 - Variavel de versao: `N8N_VERSION`
 - Valor atual recomendado no projeto: `2.22.4`
+- Ambiente local libera acesso a env vars em nodes: `N8N_BLOCK_ENV_ACCESS_IN_NODE=false`
 
 ## Como atualizar o n8n de forma controlada
 
@@ -73,3 +74,4 @@ O import usa os arquivos em `infra/n8n/workflows` montados no container em `/wor
 - Nunca versionar credenciais reais no repositorio.
 - Cuidado com workflows criados manualmente e nao versionados: eles podem ser perdidos em reset de volume.
 - Antes de reimportar, revisar se ha mudancas locais na interface que ainda nao foram versionadas.
+- A liberacao de env vars em nodes e apenas para local/dev. Em ambientes reais, revisar politica de seguranca antes de manter essa opcao.

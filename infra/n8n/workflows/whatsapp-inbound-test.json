@@ -27,7 +27,7 @@
             {
               "name": "provider",
               "type": "string",
-              "value": "n8n-test"
+              "value": "waha"
             },
             {
               "name": "providerMessageId",
