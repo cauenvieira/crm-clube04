@@ -198,6 +198,7 @@ docker compose exec n8n n8n --version
 As regras de separacao entre routes, services, repositories, validation, plugins, jobs e integrations estao em `docs/architecture/code-organization.md`.
 Guia de trabalho com prompts compactos no Codex: `docs/development/codex-workflow.md`.
 Guia de higiene de dados locais (cleanup + seed): `docs/development/dev-data.md`.
+Roadmap de produto da plataforma CRM: `docs/product/crm-platform-roadmap.md`.
 
 ## API REST
 
