@@ -19,6 +19,7 @@
     "verify:operational-worklist": "tsx scripts/verify-operational-worklist.ts",
     "verify:dashboard": "tsx scripts/verify-dashboard.ts",
     "verify:all": "npm run build && npm run lint && npm run smoke:api && npm run verify:action-items && npm run verify:operational-summary && npm run verify:operational-worklist && npm run verify:dashboard && npm run n8n:list:workflows",
+    "analyze:lead-spreadsheet": "tsx scripts/analyze-lead-spreadsheet.ts",
     "dev:cleanup-test-data": "tsx scripts/dev-cleanup-test-data.ts",
     "dev:cleanup-test-data:apply": "tsx scripts/dev-cleanup-test-data.ts --apply --confirm-local-dev",
     "dev:seed-dashboard": "tsx scripts/dev-seed-dashboard.ts",
