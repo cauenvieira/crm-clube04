@@ -4,7 +4,7 @@ Base local:
 
 ```powershell
 $base = "http://localhost:3000"
-$apiKey = "troque_por_um_valor_local_forte"
+$apiKey = (Get-Content .env | Where-Object { $_ -match '^CRM_API_SECRET=' }) -replace '^CRM_API_SECRET=', ''
 ```
 
 ## Autenticacao Interna
@@ -26,12 +26,6 @@ curl.exe "$base/health"
 ## Contacts
 
 Criar contato:
-
-```powershell
-curl.exe -X POST "$base/api/contacts" -H "Content-Type: application/json" -d "{\"name\":\"Tutor Teste\",\"phone\":\"(11) 99999-0001\",\"source\":\"manual\",\"type\":\"lead\"}"
-```
-
-Com API key:
 
 ```powershell
 curl.exe -X POST "$base/api/contacts" -H "Content-Type: application/json" -H "x-crm-api-key: $apiKey" -d "{\"name\":\"Tutor Teste\",\"phone\":\"(11) 99999-0001\",\"source\":\"manual\",\"type\":\"lead\"}"
@@ -382,9 +376,17 @@ Resposta inclui:
 - `lead`
 - `created` com flags de `contact`, `conversation`, `message` e `lead`
 
-## Smoke Test
+## Validacao automatica
 
-Para validar automaticamente o fluxo basico da API local:
+Bateria completa recomendada antes de entrega/commit:
+
+```powershell
+npm run verify:all
+```
+
+Esse comando roda em sequencia build, lint, smoke da API, verifies operacionais, verify do dashboard e listagem do workflow n8n.
+
+Para validar apenas o fluxo basico da API local:
 
 ```powershell
 npm run smoke:api

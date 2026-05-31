@@ -1,6 +1,20 @@
 # Codex Workflow (Compacto)
 
-Guia rapido para abrir tarefas com menos tokens e manter validacao consistente.
+Guia rapido para abrir tarefas com menos tokens e manter validacao consistente, sem perder qualidade tecnica.
+
+
+## Principio
+
+Economizar tokens significa reduzir repeticao e ruido, nao omitir decisao tecnica importante.
+
+Nunca resumir demais:
+
+- decisoes tecnicas relevantes;
+- riscos;
+- erros encontrados;
+- contornos aplicados;
+- mudancas de contrato/API;
+- mudancas em schema, auth, docker, n8n, scraping, dados ou integracoes.
 
 ## 1) Prompt curto para tarefa nova
 
@@ -31,6 +45,7 @@ Relatorio: arquivos alterados + decisoes + validacoes + riscos.
   - `npm run verify:all`: OK
   - `git status`: 3 arquivos alterados
 - Nao colar log completo quando tudo passou.
+- Mesmo em relatorio compacto, informar decisoes, riscos e problemas encontrados quando existirem.
 
 ## 3) Como reportar falha
 

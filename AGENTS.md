@@ -159,7 +159,7 @@ Ela deve mostrar:
 - Workflows n8n versionados devem ficar em `infra/n8n/workflows`.
 - Workflow n8n versionado deve manter `id` estavel para evitar duplicidade no import.
 - Ao alterar workflow n8n, executar `npm run n8n:import:workflows` e `npm run n8n:list:workflows`.
-- Antes de concluir qualquer alteracao, executar `npm run build`, `npm run lint` e `npm run smoke:api`.
+- Antes de concluir qualquer alteracao, executar `npm run verify:all` em sequencia, salvo justificativa explicita. O comando inclui build, lint, smoke, verifies operacionais e checagem n8n.
 - Manter mudancas pequenas e modulares; evitar arquivos grandes e responsabilidades misturadas.
 
 ## Definition of Done para API
@@ -167,7 +167,7 @@ Ela deve mostrar:
 - Para mudancas de API, nao basta build/lint/smoke generico: deve existir teste operacional ou smoke cobrindo fluxo feliz, idempotencia e erro/validacao relevante.
 - Exemplos de documentacao devem ser copiaveis/executaveis sem depender de placeholder sem instrucao de obtencao.
 - O Codex deve executar os testes previstos antes de declarar conclusao.
-- Quando houver script `verify:*` para o fluxo alterado, ele deve ser executado junto das validacoes obrigatorias.
+- Quando houver script `verify:*` para o fluxo alterado, ele deve estar coberto por `npm run verify:all` ou ser executado explicitamente e reportado.
 
 ## Regra de validacao sequencial
 
@@ -205,10 +205,27 @@ Ela deve mostrar:
 - Gerar diff detalhado/ZIP completo apenas em caso sensivel (schema/auth/docker/n8n/bug dificil) ou quando solicitado.
 - Preferir comandos consolidados (`npm run verify:all`) para reduzir ruido.
 - Relatorio final deve priorizar: o que mudou, arquivos, decisoes, problemas/contornos, validacoes, riscos e proximo passo.
+- Nao resumir decisoes tecnicas, riscos, erros ou contornos relevantes apenas para economizar tokens.
 
-## Template obrigatorio de relatorio final
+## Relatorio final do Codex
 
-Todo relatorio final do Codex deve incluir, nesta ordem:
+Use o menor relatorio que preserve decisao tecnica, evidencia e risco.
+
+### Relatorio compacto
+
+Usar para mudancas simples, docs-only, ajustes pequenos de UI ou correcoes sem impacto sensivel. Deve conter:
+
+1. Resumo objetivo.
+2. Arquivos alterados.
+3. Decisoes ou observacoes relevantes.
+4. Problemas encontrados e contornos, se houver.
+5. Validacoes executadas, preferencialmente `npm run verify:all`.
+6. Riscos ou limitacoes.
+7. Proximo passo recomendado.
+
+### Relatorio completo
+
+Usar para mudancas relevantes ou sensiveis: API, schema, auth, docker, n8n, scraping, importacao, WhatsApp, dados, integracoes ou bugs complexos. Deve conter:
 
 1. Resumo objetivo da mudanca.
 2. Arquivos alterados por categoria (codigo, scripts, documentacao, config).
@@ -223,3 +240,5 @@ Todo relatorio final do Codex deve incluir, nesta ordem:
 11. Como visualizar o resultado operacionalmente.
 12. Riscos antes do commit.
 13. Proximo passo recomendado.
+
+Se o usuario pedir relatorio completo, usar o modelo completo mesmo para mudancas simples.

@@ -11,7 +11,7 @@ Substituir controles manuais de leads, recorrencia, pacotes e follow-up por um s
 ```text
 apps/
   api/      API HTTP do CRM
-  web/      interface web futura
+  web/      interface web local/dev
   worker/   jobs de sincronizacao, classificacao e Acao do Dia
 packages/
   shared/   utilitarios e tipos compartilhados
@@ -231,45 +231,83 @@ Painel web local:
 
 - `http://localhost:3000/dashboard`
 
-Exemplo rapido:
+Exemplo rapido no PowerShell:
 
-```bash
-curl -H "x-crm-api-key: troque_por_um_valor_local_forte" http://localhost:3000/api/leads?status=novo_lead
+```powershell
+$apiKey = (Get-Content .env | Where-Object { $_ -match '^CRM_API_SECRET=' }) -replace '^CRM_API_SECRET=', ''
+curl.exe -H "x-crm-api-key: $apiKey" http://localhost:3000/api/leads?status=novo_lead
 ```
 
-Exemplo webhook inbound:
+Exemplo webhook inbound no PowerShell:
 
-```bash
-curl -X POST \
-  -H "Content-Type: application/json" \
-  -H "x-crm-api-key: troque_por_um_valor_local_forte" \
-  -d '{"provider":"waha","providerMessageId":"msg_123","providerConversationId":"5511999999999","fromNumber":"5511999999999","toNumber":"5511470000000","contactName":"Maria","body":"Ola, gostaria de saber valores de banho","messageType":"text","direction":"inbound","timestamp":"2026-05-31T10:00:00.000Z","source":"whatsapp","campaign":"meta_ads_maio","rawPayload":{}}' \
-  http://localhost:3000/api/webhooks/whatsapp/inbound
+```powershell
+$apiKey = (Get-Content .env | Where-Object { $_ -match '^CRM_API_SECRET=' }) -replace '^CRM_API_SECRET=', ''
+
+$payload = @{
+  provider = "waha"
+  providerMessageId = "msg_123"
+  providerConversationId = "5511999999999"
+  fromNumber = "5511999999999"
+  toNumber = "5511470000000"
+  contactName = "Maria"
+  body = "Ola, gostaria de saber valores de banho"
+  messageType = "text"
+  direction = "inbound"
+  timestamp = "2026-05-31T10:00:00.000Z"
+  source = "whatsapp"
+  campaign = "meta_ads_maio"
+  rawPayload = @{}
+} | ConvertTo-Json -Depth 5
+
+Invoke-RestMethod `
+  -Uri "http://localhost:3000/api/webhooks/whatsapp/inbound" `
+  -Method Post `
+  -Headers @{ "x-crm-api-key" = $apiKey } `
+  -ContentType "application/json" `
+  -Body $payload
 ```
 
-## Smoke test da API
+## Validacao local
 
-Com o Docker Compose rodando, execute:
+Com o Docker Compose rodando, a validacao recomendada antes de entrega/commit e:
+
+```bash
+npm run verify:all
+```
+
+Esse comando executa em sequencia build, lint, smoke da API, verifies operacionais, verify do dashboard e listagem do workflow n8n.
+
+Para rodar apenas o smoke test HTTP contra a API local:
 
 ```bash
 npm run smoke:api
 ```
 
-O script usa `API_BASE_URL` quando definido, com padrao `http://localhost:3000`. Se `CRM_API_SECRET` estiver definido no ambiente ou no `.env`, ele envia o header `x-crm-api-key` nos endpoints `/api/*`.
+Os scripts usam `API_BASE_URL` quando definido, com padrao `http://localhost:3000`. Se `CRM_API_SECRET` estiver definido no ambiente ou no `.env`, eles enviam o header `x-crm-api-key` nos endpoints `/api/*`.
 
-## Escopo desta etapa
+## Escopo atual
 
 Implementado:
 
-- monorepo simples com `apps/api`, `apps/web`, `apps/worker` e `packages/shared`;
-- Docker Compose com PostgreSQL, Redis, API e worker;
+- monorepo com `apps/api`, `apps/web`, `apps/worker` e `packages/shared`;
+- Docker Compose com PostgreSQL, Redis, API, worker e n8n local;
 - rota `GET /health` com verificacao real de PostgreSQL e Redis;
-- worker com comando basico de health check;
-- estrutura inicial para banco, rotas, servicos, jobs e integracoes futuras.
+- endpoints base de contatos, leads, conversas, mensagens e interacoes CRM;
+- webhook inbound normalizado para WhatsApp via n8n de teste;
+- geracao de action_items da Acao do Dia;
+- ciclo de vida de action_items: complete, cancel e fechamento automatico por crm_interaction;
+- `GET /api/operational-summary`;
+- `GET /api/operational-worklist`;
+- painel web local/dev em `GET /dashboard`;
+- verificacoes operacionais `verify:*` e bateria sequencial `verify:all`;
+- workflow n8n versionado com ID estavel.
 
 Ainda nao implementado:
 
-- scraping Clube04;
-- integracao WAHA;
-- integracao n8n;
-- dashboard.
+- limpeza/seed controlado de dados de desenvolvimento;
+- importacao da planilha manual atual;
+- WAHA real em modo escuta;
+- scraping somente leitura do sistema Clube04;
+- relatorio diario para Google Chat, Teams, Telegram, e-mail ou outro canal;
+- autenticacao real de usuario para painel;
+- integracao com API oficial futura do sistema Clube04.

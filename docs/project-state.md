@@ -2,16 +2,21 @@
 
 ## Visao geral
 
-O projeto CRM Clube04 esta operacional em ambiente local para fluxo inbound de WhatsApp via n8n, com persistencia no PostgreSQL e suporte a Redis.
+O projeto CRM Clube04 esta operacional em ambiente local para a base de atendimento, follow-up e painel operacional.
 
-Escopo atual:
+O ambiente atual suporta:
 
 - API CRM em Node.js + TypeScript + Fastify;
-- banco PostgreSQL com schema inicial validado;
+- PostgreSQL com schema inicial aplicado;
 - Redis para suporte operacional;
 - worker com health check e base para jobs futuros;
 - n8n local com workflow versionado de teste inbound;
-- protecao de `/api/*` por `x-crm-api-key`.
+- webhook inbound normalizado para WhatsApp via n8n;
+- protecao de `/api/*` por `x-crm-api-key`;
+- action_items da Acao do Dia com geracao e ciclo de vida;
+- resumo operacional;
+- worklist operacional;
+- dashboard local/dev servido pela API.
 
 ## Stack atual
 
@@ -21,9 +26,10 @@ Escopo atual:
 - PostgreSQL
 - Redis
 - Docker Compose
-- n8n (local)
+- n8n local
+- HTML/CSS/JS vanilla para dashboard local/dev
 
-## Servicos Docker (local)
+## Servicos Docker locais
 
 - `crm-api`
 - `crm-worker`
@@ -34,6 +40,7 @@ Escopo atual:
 ## URLs locais
 
 - API health: `http://localhost:3000/health`
+- Dashboard local/dev: `http://localhost:3000/dashboard`
 - n8n editor: `http://localhost:5678`
 - Webhook teste n8n: `http://localhost:5678/webhook-test/whatsapp-inbound-test`
 - URL interna Docker n8n -> API:
@@ -46,8 +53,18 @@ Escopo atual:
 - `npm run lint`
 - `npm run worker`
 - `npm run smoke:api`
+- `npm run verify:action-items`
+- `npm run verify:operational-summary`
+- `npm run verify:operational-worklist`
+- `npm run verify:dashboard`
+- `npm run verify:all`
 - `npm run n8n:import:workflows`
 - `npm run n8n:list:workflows`
+
+Regra atual:
+
+- `npm run verify:all` e a bateria recomendada antes de entrega/commit.
+- `smoke:api` e `verify:*` devem rodar em sequencia, nunca em paralelo, porque usam o mesmo banco local.
 
 ## Workflow n8n oficial
 
@@ -58,28 +75,102 @@ Escopo atual:
 Regra importante:
 
 - import no n8n sobrescreve por `id`, nao por `name`.
+- nao remover nem trocar o `id` do JSON versionado sem justificativa.
 
-## Status atual
+## Endpoints principais implementados
 
-- API local funcional;
-- `/health` publico e OK;
-- endpoints `/api/*` protegidos por API key quando `CRM_API_SECRET` esta definido;
-- fluxo manual PowerShell -> n8n -> CRM API -> PostgreSQL validado;
-- smoke test atual: `13/13` testes OK;
-- workflow oficial com ID estavel definido e importavel.
+- `GET /health`
+- `POST /api/contacts`
+- `GET /api/contacts`
+- `GET /api/contacts/:id`
+- `PATCH /api/contacts/:id`
+- `POST /api/leads`
+- `GET /api/leads`
+- `GET /api/leads/:id`
+- `PATCH /api/leads/:id`
+- `POST /api/conversations`
+- `GET /api/conversations`
+- `GET /api/conversations/:id`
+- `POST /api/messages`
+- `GET /api/messages`
+- `GET /api/conversations/:id/messages`
+- `POST /api/crm-interactions`
+- `GET /api/crm-interactions`
+- `GET /api/action-items`
+- `POST /api/action-items/generate`
+- `POST /api/action-items/:id/complete`
+- `POST /api/action-items/:id/cancel`
+- `GET /api/operational-summary`
+- `GET /api/operational-worklist`
+- `GET /dashboard`
+- `POST /api/webhooks/whatsapp/inbound`
+
+## Status de validacao atual
+
+Ultima bateria conhecida:
+
+- `npm run build`: OK
+- `npm run lint`: OK
+- `npm run smoke:api`: `19/19` OK
+- `npm run verify:action-items`: `8/8` OK
+- `npm run verify:operational-summary`: `6/6` OK
+- `npm run verify:operational-worklist`: `5/5` OK
+- `npm run verify:dashboard`: OK
+- `npm run n8n:list:workflows`: `52RxSSXMQ4Zaitnw|whatsapp-inbound-test`
+
+## Commits recentes relevantes
+
+- `6cfe9f2 feat: add local operations dashboard`
+- `278ca59 feat: add operational worklist endpoint`
+- `cbe75ef feat: add operational summary endpoint`
+- `b4e5c1d feat: manage action item lifecycle`
+- `7bc1466 feat: generate action items for daily CRM follow-up`
+
+## Implementado nesta fase
+
+- base API/banco/worker;
+- n8n local com workflow inbound de teste;
+- idempotencia de mensagens inbound;
+- criacao de lead a partir de mensagem inbound;
+- action_items da Acao do Dia;
+- complete/cancel de action_items;
+- fechamento automatico de follow-up por crm_interaction;
+- resumo operacional com timezone `America/Sao_Paulo`;
+- worklist operacional;
+- dashboard local/dev;
+- processo de validacao sequencial;
+- validacao visual com browser tooling e fallback estrutural;
+- disciplina de tokens para prompts e relatorios.
+
+## Ainda nao implementado
+
+- limpeza/seed controlado de dados de desenvolvimento;
+- importacao da planilha manual atual;
+- WAHA real em modo escuta;
+- scraping somente leitura do sistema Clube04;
+- relatorio diario para Google Chat, Teams, Telegram, e-mail ou outro canal;
+- autenticacao real de usuario para painel;
+- integracao com API oficial futura do sistema Clube04;
+- backup/restore operacional;
+- observabilidade/alertas de falha em jobs e integracoes.
 
 ## Proximos passos recomendados
 
-1. manter somente workflows versionados para fluxo oficial.
-2. adicionar rotina de limpeza de duplicados n8n no checklist operacional.
-3. iniciar camada de testes de integracao para webhook inbound (cenario de erro e idempotencia).
-4. preparar proxima etapa de integracao com WAHA real mantendo isolamento de segredos.
-5. definir politica de promotion local -> VPS (backup, restore e versionamento de ambiente).
+1. Criar rotina segura de limpeza/seed de dados de desenvolvimento.
+2. Importar a planilha manual atual para popular contatos/leads de forma controlada.
+3. Criar relatorio diario baseado em operational-summary/worklist.
+4. Testar WhatsApp em modo escuta com numero separado.
+5. Mapear telas/relatorios do sistema Clube04 para scraping somente leitura.
+6. Preparar adaptadores para futura API oficial do sistema Clube04.
+7. Evoluir UX do dashboard com dados mais proximos da operacao real.
 
 ## Riscos e cuidados
 
-- duplicidade de workflow no n8n ao trocar/remover `id` do JSON;
-- uso de segredos em texto plano em workflow manual;
-- reset de volume n8n sem reimport de workflows versionados;
-- divergencia entre workflow editado na UI e arquivo no Git;
-- execucao de testes sem `CRM_API_SECRET` alinhado entre API e n8n.
+- dados de teste acumulados podem poluir dashboard e metricas locais;
+- scripts `smoke:api` e `verify:*` concorrentes podem gerar falso negativo;
+- API key em `localStorage` e aceitavel apenas para dev local, nao para uso real pela equipe;
+- dashboard ainda nao tem autenticacao real de usuario;
+- WAHA real deve ser testado primeiro com numero separado para reduzir risco de bloqueio;
+- scraping do sistema Clube04 deve ser somente leitura;
+- workflows n8n duplicam se o `id` versionado for alterado indevidamente;
+- segredos nunca devem ser commitados.
