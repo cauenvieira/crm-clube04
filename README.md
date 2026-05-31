@@ -60,6 +60,12 @@ Para subir tambem os containers da API e worker:
 docker compose up -d
 ```
 
+Para subir tambem o n8n local:
+
+```bash
+docker compose up -d n8n
+```
+
 ## Rodando em desenvolvimento
 
 Instale as dependencias:
@@ -123,6 +129,15 @@ docker compose exec -T postgres psql -U clube04 -d clube04_crm -c "\dt"
 ```
 
 A documentacao das tabelas esta em `docs/database/schema.md`.
+
+## n8n local
+
+- URL local do n8n: `http://localhost:5678`
+- Fluxo minimo de teste inbound WhatsApp: `docs/integrations/n8n-whatsapp-inbound.md`
+- URL interna (dentro do n8n em Docker) para chamar a API:
+  - `http://crm-api:3000/api/webhooks/whatsapp/inbound`
+- Header obrigatorio no `HTTP Request`:
+  - `x-crm-api-key: <valor de CRM_API_SECRET>`
 
 ## Organizacao de codigo
 
