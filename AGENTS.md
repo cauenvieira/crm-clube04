@@ -178,6 +178,34 @@ Ela deve mostrar:
 - O relatorio final deve informar explicitamente que a bateria foi executada em sequencia.
 - Scripts de teste devem usar dados unicos por execucao sempre que possivel.
 
+## Regra de validacao visual (frontend/dashboard)
+
+- Para mudancas visuais, usar Chrome/computer-use quando disponivel.
+- Tentar gerar screenshot/appshot em toda validacao visual.
+- Screenshot/appshot e desejavel, mas nao obrigatorio se houver falha tecnica documentada.
+- Se screenshot falhar, relatar evidencia visual estrutural minima:
+  - pagina carregou
+  - estados testados
+  - contagem de cards/listas
+  - botoes visiveis
+  - hasHorizontalOverflow=false
+  - mensagens de erro/sucesso observadas
+- `verify:dashboard` e `verify:all` continuam obrigatorios e nao substituem validacao visual.
+- Nunca versionar screenshots; salvar apenas em `.tmp/` quando necessario.
+
+## Token discipline
+
+- Nao repetir contexto global que ja esta em AGENTS, README ou docs.
+- Prompts devem apontar para docs e focar em objetivo, escopo e excecoes.
+- Relatorios finais devem ser compactos quando tudo passar.
+- Para testes OK, informar comando + resultado resumido; nao colar logs completos.
+- Colar logs completos apenas para erro, warning relevante ou decisao tecnica importante.
+- Nao colar JSON grande de API quando resumo com contagens for suficiente.
+- Nao colar `git diff` completo por padrao; preferir `git diff --stat` e lista de arquivos.
+- Gerar diff detalhado/ZIP completo apenas em caso sensivel (schema/auth/docker/n8n/bug dificil) ou quando solicitado.
+- Preferir comandos consolidados (`npm run verify:all`) para reduzir ruido.
+- Relatorio final deve priorizar: o que mudou, arquivos, decisoes, problemas/contornos, validacoes, riscos e proximo passo.
+
 ## Template obrigatorio de relatorio final
 
 Todo relatorio final do Codex deve incluir, nesta ordem:

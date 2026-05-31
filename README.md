@@ -193,6 +193,7 @@ docker compose exec n8n n8n --version
 ## Organizacao de codigo
 
 As regras de separacao entre routes, services, repositories, validation, plugins, jobs e integrations estao em `docs/architecture/code-organization.md`.
+Guia de trabalho com prompts compactos no Codex: `docs/development/codex-workflow.md`.
 
 ## API REST
 
