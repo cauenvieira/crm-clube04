@@ -136,6 +136,7 @@ A documentacao das tabelas esta em `docs/database/schema.md`.
 - Fluxo minimo de teste inbound WhatsApp: `docs/integrations/n8n-whatsapp-inbound.md`
 - Workflow importavel versionado: `infra/n8n/workflows/whatsapp-inbound-test.json`
 - Guia de manutencao e atualizacao: `docs/integrations/n8n-maintenance.md`
+- Guia MCP local: `docs/integrations/n8n-mcp.md`
 - URL interna (dentro do n8n em Docker) para chamar a API:
   - `http://crm-api:3000/api/webhooks/whatsapp/inbound`
 - Header obrigatorio no `HTTP Request`:
