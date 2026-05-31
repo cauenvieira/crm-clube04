@@ -92,6 +92,7 @@ services:
       - "${N8N_PORT:-5678}:5678"
     volumes:
       - n8n_data:/home/node/.n8n
+      - ./infra/n8n/workflows:/workflows:ro
     depends_on:
       crm-api:
         condition: service_started

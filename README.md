@@ -141,6 +141,25 @@ A documentacao das tabelas esta em `docs/database/schema.md`.
 - Header obrigatorio no `HTTP Request`:
   - `x-crm-api-key: <valor de CRM_API_SECRET>`
 
+### Importacao versionada de workflows n8n
+
+Com ambiente local ativo:
+
+```bash
+docker compose up -d --build
+npm run n8n:import:workflows
+```
+
+Depois:
+
+1. Abrir `http://localhost:5678`
+2. Verificar no editor se o workflow importado aparece
+3. Opcional via CLI:
+
+```bash
+npm run n8n:list:workflows
+```
+
 ### Atualizacao controlada do n8n
 
 O projeto usa imagem oficial:

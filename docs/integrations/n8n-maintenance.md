@@ -54,8 +54,22 @@ Observacao:
 - O nome real do volume pode variar conforme a pasta/projeto Docker Compose.
 - Confirme com `docker volume ls` antes de remover.
 
+## Reimportar workflows apos reset do volume
+
+Depois de resetar o volume do n8n, reimporte os workflows versionados:
+
+```bash
+docker compose up -d --build
+npm run n8n:import:workflows
+npm run n8n:list:workflows
+```
+
+O import usa os arquivos em `infra/n8n/workflows` montados no container em `/workflows`.
+
 ## Cuidado para futuro com dados reais
 
 - Nao usar reset de volume em ambiente com workflows/credenciais reais sem backup.
 - Antes de upgrades maiores, exportar workflows e planejar janela de manutencao.
 - Nunca versionar credenciais reais no repositorio.
+- Cuidado com workflows criados manualmente e nao versionados: eles podem ser perdidos em reset de volume.
+- Antes de reimportar, revisar se ha mudancas locais na interface que ainda nao foram versionadas.

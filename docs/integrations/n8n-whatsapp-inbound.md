@@ -35,13 +35,30 @@ Fluxo:
 
 Webhook n8n -> payload normalizado -> HTTP Request CRM inbound
 
-## Como importar o workflow no n8n
+## Fluxo de importacao (recomendado via CLI)
 
-1. Abrir `http://localhost:5678`
-2. Entrar no editor do n8n
-3. Clicar em `Import from File`
-4. Selecionar `infra/n8n/workflows/whatsapp-inbound-test.json`
-5. Salvar o workflow importado
+Com os containers ativos:
+
+```bash
+npm run n8n:import:workflows
+```
+
+O comando usa o mount read-only da pasta versionada:
+
+- host: `infra/n8n/workflows`
+- container: `/workflows`
+
+Comando equivalente:
+
+```bash
+docker compose exec -T n8n n8n import:workflow --separate --input=/workflows
+```
+
+Para listar workflows importados:
+
+```bash
+npm run n8n:list:workflows
+```
 
 ## Como o payload e normalizado no workflow
 
@@ -94,6 +111,11 @@ No workflow importado:
 2. Use a URL de teste no formato `http://localhost:5678/webhook-test/whatsapp-inbound-test`
 3. Envie o payload abaixo
 
+### Diferenca entre /webhook-test e /webhook
+
+- `/webhook-test/...`: usado para teste manual no editor; exige clicar em `Execute workflow`.
+- `/webhook/...`: usado com workflow ativo em execucao normal; nao depende do botao `Execute workflow`.
+
 Payload de exemplo para chamar o webhook do n8n:
 
 ```json
@@ -133,6 +155,13 @@ curl.exe "http://localhost:3000/api/messages" -H "x-crm-api-key: $apiKey"
 ```
 
 4. Validar no retorno se a mensagem foi criada sem duplicacao ao reenviar mesmo `providerMessageId`.
+
+## Uso de CRM_API_SECRET no n8n
+
+Para nao hardcodar segredo:
+
+- defina `CRM_API_SECRET` no `.env` usado pelo Docker Compose;
+- no node HTTP Request, use `{{$env.CRM_API_SECRET}}` no header `x-crm-api-key`.
 
 ## Observacoes
 
