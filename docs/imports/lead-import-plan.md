@@ -37,12 +37,12 @@
 
 | Valor original provavel | Status canonico sugerido | Observacao |
 | --- | --- | --- |
-| Em espera | `novo_lead` (ou `aguardando_atendimento`) | decidir com operacao qual e o default oficial |
+| Em espera | `novo_lead` | status inicial operacional |
 | Em atendimento | `em_atendimento` | status ativo |
-| Agendamento realizado | `agendado` (ou `agendamento_realizado`) | alinhar ao enum atual do banco/API |
-| Pagamento realizado | `em_negociacao` ou `pagamento_realizado` | depende de status suportado no schema atual |
-| Jornada Concluida | `convertido_cliente` (ou `jornada_concluida`) | pode exigir campo complementar de conversao |
-| Sem retorno | `aguardando_resposta` ou `sem_retorno` | manter rastreio para follow-up |
+| Agendamento realizado | `agendado` | alinhado ao estado de agenda |
+| Pagamento realizado | `validar_conversao` | depende de confirmacao em base cliente |
+| Jornada Concluida | `validar_conversao` | exige crosscheck com Pessoa.csv |
+| Sem retorno | `sem_retorno` | manter rastreio para follow-up |
 | Outros/desconhecidos | `revisao_manual` | nao forcar inferencia automatica |
 
 ## 5) Proximas acoes canonicas propostas
@@ -51,8 +51,8 @@
 | --- | --- | --- | --- |
 | Continuar atendimento | `follow_up_lead` | sim | prioridade por regra de prazo/status |
 | Analise Lideranca | `revisao_lideranca` | sim | fila separada de revisao |
-| Jornada Concluida | `nenhuma` (ou `converter_cliente`) | nao (em geral) | evitar criar pendencia indevida |
-| Sem retorno | `follow_up_ou_revisao` | sim | com limite de tentativas |
+| Jornada Concluida | `validar_conversao` | sim, se sem cliente confirmado | evitar falso positivo de conversao |
+| Sem retorno | `retomar_atendimento` | sim | prioridade quando Data Prox Acao vencida |
 | Desconhecido | `revisao_manual` | opcional | exige triagem humana |
 
 ## 6) Regras de deduplicacao

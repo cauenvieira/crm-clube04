@@ -77,7 +77,7 @@ export function createDateStats(): DateStats {
 export function updateDateStats(stats: DateStats, value: string) {
   const trimmed = value.trim();
   if (!trimmed) return;
-  const parsed = parseDateValue(trimmed);
+  const parsed = parseDateInput(trimmed);
   if (!parsed.date) {
     stats.invalidCount++;
     if (stats.invalidSamples.length < 10) stats.invalidSamples.push(trimmed);
@@ -93,7 +93,7 @@ export function updateDateStats(stats: DateStats, value: string) {
   }
 }
 
-function parseDateValue(input: string): { date?: Date; suspect: boolean } {
+export function parseDateInput(input: string): { date?: Date; suspect: boolean } {
   if (/^\d+(\.\d+)?$/.test(input)) {
     const serial = Number(input);
     if (serial > 20000 && serial < 90000) {

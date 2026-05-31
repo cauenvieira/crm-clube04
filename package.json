@@ -20,6 +20,8 @@
     "verify:dashboard": "tsx scripts/verify-dashboard.ts",
     "verify:all": "npm run build && npm run lint && npm run smoke:api && npm run verify:action-items && npm run verify:operational-summary && npm run verify:operational-worklist && npm run verify:dashboard && npm run n8n:list:workflows",
     "analyze:lead-spreadsheet": "tsx scripts/analyze-lead-spreadsheet.ts",
+    "import:lead-spreadsheet:dry-run": "tsx scripts/import-lead-spreadsheet-dry-run.ts",
+    "import:lead-spreadsheet:crosscheck-dry-run": "tsx scripts/import-lead-spreadsheet-crosscheck-dry-run.ts",
     "dev:cleanup-test-data": "tsx scripts/dev-cleanup-test-data.ts",
     "dev:cleanup-test-data:apply": "tsx scripts/dev-cleanup-test-data.ts --apply --confirm-local-dev",
     "dev:seed-dashboard": "tsx scripts/dev-seed-dashboard.ts",
