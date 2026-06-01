@@ -1,103 +1,51 @@
-# Roadmap Tecnico - Clube04 CRM
+# Roadmap
 
-## Objetivo
+Roadmap tecnico por fases, alinhado com o estado atual do projeto.
 
-Evoluir o CRM operacional do Clube04 em fases pequenas, mantendo ambiente local estavel e arquitetura modular.
+## Fases concluidas
 
-## Fases
+1. Fundacao tecnica local
+- Monorepo, Docker, PostgreSQL, Redis, API e worker.
 
-### Fase 0 - Fundacao Tecnica (Concluida)
+2. API operacional base
+- Endpoints de CRM, API key interna, idempotencia de mensagens.
 
-Status: concluida
+3. Integracao n8n local
+- n8n no compose, workflow versionado, import/list via CLI.
 
-Entregas:
+4. Dashboard local/dev
+- Dashboard React/Vite com resumo, worklist e operacao de leads.
 
-- Monorepo com `apps/api`, `apps/web`, `apps/worker` e `packages/shared`.
-- Docker Compose com `postgres`, `redis`, `crm-api`, `crm-worker`.
-- Migrations SQL versionadas com bootstrap em banco limpo.
-- Endpoint `GET /health` com verificacao real de API, PostgreSQL e Redis.
+5. Jornada manual de leads (fase de remediacao)
+- Entrada manual, dry-run/import tooling e ajustes de backlog importado.
 
-### Fase 1 - API REST Base e Seguranca Interna (Concluida)
+6. Estrategia de testes
+- `verify:all` sequencial, verifies operacionais e validacao frontend.
 
-Status: concluida
+## Proximas fases (ordem planejada)
 
-Entregas:
+1. Operacionalizacao do lead
+- Registrar resultado de contato, padronizar estados e reduzir backlog manual.
 
-- Endpoints REST base para `contacts`, `leads`, `conversations`, `messages`, `crm-interactions` e `action-items`.
-- Idempotencia de mensagens por `provider + provider_message_id`.
-- Protecao de `/api/*` por API key (`x-crm-api-key`) quando `CRM_API_SECRET` estiver definido.
-- Smoke test automatizado (`npm run smoke:api`).
+2. Relatorio diario
+- Consolidar resumo e fila em relatorio diario para acompanhamento da equipe.
 
-### Fase 2 - Entrada WhatsApp via Webhook Normalizado (Concluida)
+3. Jornada e follow-up de clientes
+- Evoluir do lead para cliente com regras de continuidade de atendimento.
 
-Status: concluida
+4. WAHA real
+- Habilitar captura real de eventos WhatsApp em ambiente controlado.
 
-Entregas:
+5. Sincronizacao Clube04 (somente leitura)
+- Carga incremental com controle de estado e auditoria de origem.
 
-- Endpoint `POST /api/webhooks/whatsapp/inbound`.
-- Fluxo de negocio: contato/conversa/mensagem/lead com idempotencia e atualizacoes correlatas.
+6. Auth e auditoria
+- Login de usuario, trilha de acesso, e controles para ambiente operacional.
 
-### Fase 3 - Integracao n8n Local Minima (Concluida)
+## Riscos e cuidados
 
-Status: concluida
-
-Entregas:
-
-- Servico `n8n` no `docker-compose.yml`.
-- Documentacao de fluxo minimo de teste inbound.
-- Uso de rede interna Docker para chamar a API (`http://crm-api:3000/...`).
-
-### Fase 4 - Integracao WAHA via n8n (Proxima)
-
-Status: planejada
-
-Escopo:
-
-- Receber eventos WAHA no n8n e normalizar payload para o webhook inbound do CRM.
-- Tratar retry, idempotencia e observabilidade basica de fluxos.
-
-### Fase 5 - Sincronizacao Clube04 (Leitura) (Proxima)
-
-Status: planejada
-
-Escopo:
-
-- Carga inicial controlada.
-- Sincronizacao incremental com `sync_state`.
-- Persistencia em tabelas de importacao sem alterar sistema origem.
-
-### Fase 6 - Motor CRM e Acao do Dia (Proxima)
-
-Status: planejada
-
-Escopo:
-
-- Regras de classificacao por faixa de recorrencia e pacote.
-- Geracao de `action_items` com prioridades operacionais.
-
-### Fase 7 - Interface Web Operacional (Proxima)
-
-Status: planejada
-
-Escopo:
-
-- Tela de operacao focada em Acao do Dia.
-- Filtros por status, atraso, retorno previsto e risco de pacote.
-
-## Riscos e Cuidados
-
-- Crescimento de arquivos/servicos sem modularizacao.
-- Acoplamento prematuro com sistemas externos.
-- Perda de idempotencia em fluxos de mensagens.
-- Falhas de configuracao de segredos entre host e Docker.
-- Mudancas grandes sem validacao incremental.
-
-## Comandos Principais de Validacao
-
-```bash
-npm run build
-npm run lint
-npm run smoke:api
-docker compose up -d --build
-curl.exe http://localhost:3000/health
-```
+- Nao misturar feature com refatoracao ampla.
+- Evitar execucao paralela de smoke/verify no mesmo banco local.
+- Manter dados reais fora do repositorio.
+- Preservar workflows n8n versionados com ID estavel.
+- Manter integracoes externas sob rollout controlado.

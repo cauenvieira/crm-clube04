@@ -87,6 +87,8 @@ Relatorio: arquivos alterados + decisoes + validacoes + riscos.
 
 - Rodar `npm run verify:all` em sequencia (sem paralelo).
 - Depois rodar `git diff` (ou `git diff --stat`) e `git status`.
+- Nao usar `git add -A`.
+- Nao commitar sem revisao final no thread.
 
 ## 8) Regra obrigatoria para novas funcionalidades
 
@@ -102,3 +104,13 @@ Sempre que uma feature for criada ou alterada:
    - lacunas restantes.
 
 Nao considerar feature de frontend pronta sem `verify:frontend` ou validacao visual equivalente documentada.
+
+## 9) Checklists
+
+Antes de fechar tarefa, usar checklist por tipo:
+
+- `docs/development/checklists/api-feature.md`
+- `docs/development/checklists/frontend-feature.md`
+- `docs/development/checklists/data-import.md`
+- `docs/development/checklists/integration.md`
+- `docs/development/checklists/pre-commit.md`

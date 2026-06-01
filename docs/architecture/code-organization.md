@@ -163,12 +163,6 @@ Regras:
 - Ao investigar bugs, verificar primeiro rota, schema, service, repository e banco nessa ordem.
 - Evitar mensagens genericas quando houver informacao segura e util para o operador.
 
-## Auditoria Atual
+## Observacao
 
-Estado observado nesta etapa:
-
-- `routes`, `services`, `repositories`, `validation`, `config` e `plugins` estao separados adequadamente.
-- SQL da API esta concentrado em repositories, com excecao do health check tecnico em `db/postgres.ts`.
-- Routes estao finas e nao possuem regra de negocio complexa.
-- Nao ha arquivos TypeScript acima de 250 linhas.
-- A migration inicial tem mais de 300 linhas por ser DDL versionado; isso e aceitavel para a etapa de schema, desde que migrations futuras continuem pequenas e focadas.
+Use este documento como regra estrutural permanente. Resultados de auditoria pontual devem ficar no relatorio da tarefa, nao aqui.

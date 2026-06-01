@@ -1,50 +1,38 @@
-# Tasks Tecnicas - Clube04 CRM
+# Tasks Backlog
 
-## Convencoes
+Status:
 
-- Status: `todo`, `doing`, `done`, `blocked`.
-- Prioridade: `P0` (critica), `P1` (alta), `P2` (media).
-- Sempre manter escopo pequeno por tarefa.
+- `todo`
+- `doing`
+- `blocked`
+- `done`
 
-## Backlog Atual
+Prioridade:
 
-1. `[done][P0]` Base monorepo, Docker e health check
-2. `[done][P0]` Schema inicial e migrations versionadas
-3. `[done][P0]` API REST base de CRM
-4. `[done][P0]` Seguranca interna por API key em `/api/*`
-5. `[done][P0]` Endpoint webhook inbound WhatsApp normalizado
-6. `[done][P1]` Smoke test automatizado de fluxos principais
-7. `[done][P1]` Integracao local minima com n8n no Docker
+- `P0` critica
+- `P1` alta
+- `P2` media
 
-## Proximas Tasks (Curto Prazo)
+## Backlog atual
 
-1. `[todo][P0]` Definir contrato canonico de payload n8n -> CRM inbound
-2. `[todo][P0]` Criar fluxo manual n8n + testes de retry/idempotencia documentados
-3. `[todo][P1]` Adicionar logs estruturados por modulo na API
-4. `[todo][P1]` Criar job inicial de sincronizacao incremental com `sync_state` (somente leitura)
-5. `[todo][P1]` Definir regras iniciais da geracao de `action_items`
-6. `[todo][P2]` Preparar base para observabilidade (latencia de rotas e erros controlados)
+1. `[todo][P0]` Operacionalizar lead com registro estruturado de resultado de atendimento.
+2. `[todo][P0]` Criar relatorio diario de operacao com base em summary + worklist.
+3. `[todo][P0]` Definir arquitetura v1 da Jornada do Cliente (pos-conversao).
+4. `[todo][P1]` Preparar trilha controlada para WAHA real (somente inbound primeiro).
+5. `[todo][P1]` Iniciar sincronizacao Clube04 somente leitura por etapas.
+6. `[todo][P1]` Evoluir auth e auditoria para uso operacional real.
 
-## Tasks Medias (Proximas Fases)
+## Divida tecnica prioritaria
 
-1. `[todo][P0]` Integrar eventos WAHA ao n8n (sem envio ativo nesta fase)
-2. `[todo][P1]` Implementar ingestao incremental de `customers`, `pets`, `appointments`, `services`, `packages`
-3. `[todo][P1]` Implementar calculos de frequencia real e retorno previsto por pet
-4. `[todo][P1]` Materializar fila operacional da Acao do Dia
-5. `[todo][P2]` Iniciar interface web operacional (MVP)
+1. `[todo][P1]` Dividir scripts grandes de importacao/remediacao em modulos menores.
+2. `[todo][P1]` Revisar placeholders em `apps/web/public` e consolidar assets ativos.
+3. `[todo][P1]` Revisar configuracao Playwright (chrome/channel/headed) para reduzir flakes locais.
+4. `[todo][P2]` Consolidar padroes de logs estruturados por modulo.
+5. `[todo][P2]` Revisar cobertura de verify para novos fluxos de importacao.
 
-## Cuidados Operacionais por Task
+## Regras de execucao das tasks
 
-- Nao alterar schema sem necessidade e justificativa.
-- Nao misturar regra de negocio complexa em routes.
-- SQL somente em repositories.
-- Preservar idempotencia de mensagens e webhooks.
-- Validar com `build`, `lint` e `smoke:api` a cada incremento.
-
-## Comandos de Validacao Rapida
-
-```bash
-npm run build
-npm run lint
-npm run smoke:api
-```
+- Toda task deve declarar escopo permitido e itens proibidos.
+- Feature nova precisa atualizar testes e docs no mesmo ciclo.
+- Validacao final obrigatoria em sequencia com `npm run verify:all`.
+- Nao considerar falha paralela como conclusiva sem rerun sequencial.

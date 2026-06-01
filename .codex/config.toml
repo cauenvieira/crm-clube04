@@ -1,6 +1,5 @@
-# Configuração local do projeto Clube04 CRM
+# Configuracao local do projeto CRM Clube04.
+# Sem segredos. Sem tokens.
 
 approval_policy = "on-request"
-
-[sandbox]
-mode = "workspace-write"
+sandbox_mode = "workspace-write"

@@ -26,3 +26,10 @@ test-results/
 .codex/worktrees/
 # Local temporary exports
 .tmp/
+
+# Defensive block for local data files
+*.csv
+*.xlsx
+*.xls
+*.zip
+*.7z

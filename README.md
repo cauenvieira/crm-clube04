@@ -1,347 +1,68 @@
 # Clube04 CRM
 
-CRM operacional do Clube04 Mogi das Cruzes.
+CRM operacional local para atendimento, follow-up e fila de trabalho do Clube04 Mogi.
 
-## Objetivo
+## Start rapido
 
-Substituir controles manuais de leads, recorrencia, pacotes e follow-up por um sistema proprio integrado com n8n, WAHA e sincronizacao somente leitura do sistema Clube04.
-
-## Estrutura
-
-```text
-apps/
-  api/      API HTTP do CRM
-  web/      dashboard operacional local/dev (React + Vite + TypeScript)
-  worker/   jobs de sincronizacao, classificacao e Acao do Dia
-packages/
-  shared/   utilitarios e tipos compartilhados
-infra/
-  db/             scripts executados pelo Docker na criacao do banco
-  db/migrations/  migrations SQL versionadas
-```
-
-## Ambiente local
-
-Requisitos:
-
-- Docker Desktop
-- Git
-- Node.js LTS 20+
-
-## Configuracao
-
-Copie o arquivo de exemplo e ajuste apenas valores locais:
+1. Copiar env:
 
 ```bash
 cp .env.example .env
 ```
 
-Nao coloque credenciais reais no codigo. O arquivo `.env` deve ficar fora do Git.
-
-Para proteger os endpoints internos, defina:
+2. Subir ambiente:
 
 ```bash
-CRM_API_SECRET=troque_por_um_valor_local_forte
+docker compose up -d --build
 ```
 
-Quando `CRM_API_SECRET` estiver definido, todas as rotas `/api/*` exigem o header `x-crm-api-key`. A rota `/health` continua publica.
-
-## Rodando dependencias locais
-
-Suba PostgreSQL e Redis:
-
-```bash
-docker compose up -d postgres redis
-```
-
-Para subir tambem os containers da API e worker:
-
-```bash
-docker compose up -d
-```
-
-Para subir tambem o n8n local:
-
-```bash
-docker compose up -d n8n
-```
-
-## Rodando em desenvolvimento
-
-Instale as dependencias:
+3. Instalar dependencias:
 
 ```bash
 npm install
 ```
 
-Inicie a API local:
-
-```bash
-npm run dev
-```
-
-Build do frontend local (bundle React servido em `/dashboard`):
-
-```bash
-npm run build -w @clube04/web
-```
-
-Verifique a saude da API:
-
-```bash
-curl http://localhost:3000/health
-```
-
-Resposta esperada:
-
-```json
-{
-  "api": "ok",
-  "postgres": "ok",
-  "redis": "ok",
-  "checkedAt": "2026-05-30T00:00:00.000Z"
-}
-```
-
-Rode o health check do worker:
-
-```bash
-npm run worker
-```
-
-## Scripts
-
-- `npm run dev`: inicia a API em modo desenvolvimento.
-- `npm run build`: compila os workspaces TypeScript.
-- `npm run start`: inicia a API compilada.
-- `npm run worker`: executa o health check basico do worker.
-- `npm run lint`: executa checagem TypeScript nos workspaces configurados.
-- `npm run dev -w @clube04/web`: inicia Vite dev server do frontend.
-- `npm run build -w @clube04/web`: gera bundle do frontend em `apps/web/dist`.
-- `npm run smoke:api`: executa um smoke test HTTP contra a API local.
-- `npm run verify:action-items`: valida o ciclo de vida de action_items.
-- `npm run verify:operational-summary`: valida o endpoint de resumo operacional.
-- `npm run verify:operational-worklist`: valida o endpoint de worklist operacional.
-- `npm run verify:dashboard`: valida o painel web local.
-- `npm run verify:frontend`: valida o dashboard real em navegador (Playwright).
-- `npm run verify:data-cleanliness`: valida residuos abertos de teste na fila.
-- `npm run verify:all`: executa a bateria completa recomendada antes de commit.
-- `npm run verify:all:no-cleanup`: executa a mesma bateria sem cleanup final (debug).
-- `npm run dev:cleanup-test-data`: varredura dry-run de dados artificiais de teste.
-- `npm run dev:cleanup-test-data:apply`: aplica limpeza segura de dados artificiais de teste.
-- `npm run dev:seed-dashboard`: cria massa minima de demonstracao para dashboard local.
-- `npm run remediate:lead-import-worklist`: remedia a fila de leads importados (dry-run por padrao).
-
-Observacao importante sobre validacao:
-
-- Os scripts `smoke:api` e `verify:*` usam o mesmo banco local e devem rodar em sequencia.
-- Nao execute esses scripts em paralelo, em jobs de background ou em terminais concorrentes.
-
-## Banco de dados
-
-O schema inicial fica em:
-
-- `infra/db/migrations/001_initial_crm_schema.sql`
-
-Em um banco novo, o Docker aplica a migration automaticamente ao criar o volume do PostgreSQL.
-O arquivo `infra/db/001_apply_migrations.sql` fica na raiz montada em `/docker-entrypoint-initdb.d/`, que e o local executado pelo entrypoint oficial do Postgres. Ele chama a migration versionada em `infra/db/migrations`.
-
-Para aplicar/verificar manualmente em um banco local ja existente:
-
-```bash
-docker compose exec -T postgres psql -U clube04 -d clube04_crm -f /docker-entrypoint-initdb.d/migrations/001_initial_crm_schema.sql
-docker compose exec -T postgres psql -U clube04 -d clube04_crm -c "\dt"
-```
-
-A documentacao das tabelas esta em `docs/database/schema.md`.
-
-## n8n local
-
-- URL local do n8n: `http://localhost:5678`
-- Fluxo minimo de teste inbound WhatsApp: `docs/integrations/n8n-whatsapp-inbound.md`
-- Workflow importavel versionado: `infra/n8n/workflows/whatsapp-inbound-test.json`
-- Guia de manutencao e atualizacao: `docs/integrations/n8n-maintenance.md`
-- Guia MCP local: `docs/integrations/n8n-mcp.md`
-- URL interna (dentro do n8n em Docker) para chamar a API:
-  - `http://crm-api:3000/api/webhooks/whatsapp/inbound`
-- Header obrigatorio no `HTTP Request`:
-  - `x-crm-api-key: <valor de CRM_API_SECRET>`
-
-### Importacao versionada de workflows n8n
-
-Com ambiente local ativo:
-
-```bash
-docker compose up -d --build
-npm run n8n:import:workflows
-```
-
-Depois:
-
-1. Abrir `http://localhost:5678`
-2. Verificar no editor se o workflow importado aparece
-3. Opcional via CLI:
-
-```bash
-npm run n8n:list:workflows
-```
-
-### Atualizacao controlada do n8n
-
-O projeto usa imagem oficial:
-
-- `docker.n8n.io/n8nio/n8n`
-
-Versao e fixada por variavel:
-
-- `N8N_VERSION` no `.env` (com exemplo em `.env.example`)
-
-Fluxo recomendado de update:
-
-```bash
-docker compose down
-docker compose pull n8n
-docker compose up -d --build
-docker compose exec n8n n8n --version
-```
-
-## Organizacao de codigo
-
-As regras de separacao entre routes, services, repositories, validation, plugins, jobs e integrations estao em `docs/architecture/code-organization.md`.
-Guia de trabalho com prompts compactos no Codex: `docs/development/codex-workflow.md`.
-Guia de higiene de dados locais (cleanup + seed): `docs/development/dev-data.md`.
-Guia de regras finais de backlog importado: `docs/imports/lead-backlog-rules.md`.
-Roadmap de produto da plataforma CRM: `docs/product/crm-platform-roadmap.md`.
-
-## API REST
-
-A documentacao dos endpoints esta em `docs/api/rest-api.md`.
-
-Rotas principais desta etapa:
-
-- `GET /health`
-- `POST /api/contacts`
-- `GET /api/contacts`
-- `GET /api/contacts/:id`
-- `PATCH /api/contacts/:id`
-- `POST /api/leads`
-- `GET /api/leads/search`
-- `GET /api/leads`
-- `GET /api/leads/:id`
-- `PATCH /api/leads/:id`
-- `POST /api/manual-leads`
-- `POST /api/conversations`
-- `GET /api/conversations`
-- `GET /api/conversations/:id`
-- `POST /api/messages`
-- `GET /api/messages`
-- `GET /api/conversations/:id/messages`
-- `POST /api/crm-interactions`
-- `GET /api/crm-interactions`
-- `GET /api/action-items`
-- `POST /api/action-items/generate`
-- `POST /api/action-items/:id/complete`
-- `POST /api/action-items/:id/cancel`
-- `GET /api/operational-summary`
-- `GET /api/operational-worklist`
-- `GET /dashboard`
-- `POST /api/webhooks/whatsapp/inbound`
-
-Painel web local:
-
-- `http://localhost:3000/dashboard`
-
-Fluxo recomendado:
-
-1. abrir `Configuracoes` e salvar `CRM_API_SECRET` como API key local;
-2. usar `Hoje` para executar fila operacional;
-3. usar `Novo Lead` para cadastro manual sem planilha.
-
-Observacao tecnica:
-
-- `/dashboard/app.js` e `/dashboard/styles.css` servem o bundle real do Vite em `apps/web/dist`.
-- Se o bundle nao existir, a API retorna erro explicito para evitar fallback enganoso.
-
-Exemplo rapido no PowerShell:
-
-```powershell
-$apiKey = (Get-Content .env | Where-Object { $_ -match '^CRM_API_SECRET=' }) -replace '^CRM_API_SECRET=', ''
-curl.exe -H "x-crm-api-key: $apiKey" http://localhost:3000/api/leads?status=novo_lead
-```
-
-Exemplo webhook inbound no PowerShell:
-
-```powershell
-$apiKey = (Get-Content .env | Where-Object { $_ -match '^CRM_API_SECRET=' }) -replace '^CRM_API_SECRET=', ''
-
-$payload = @{
-  provider = "waha"
-  providerMessageId = "msg_123"
-  providerConversationId = "5511999999999"
-  fromNumber = "5511999999999"
-  toNumber = "5511470000000"
-  contactName = "Maria"
-  body = "Ola, gostaria de saber valores de banho"
-  messageType = "text"
-  direction = "inbound"
-  timestamp = "2026-05-31T10:00:00.000Z"
-  source = "whatsapp"
-  campaign = "meta_ads_maio"
-  rawPayload = @{}
-} | ConvertTo-Json -Depth 5
-
-Invoke-RestMethod `
-  -Uri "http://localhost:3000/api/webhooks/whatsapp/inbound" `
-  -Method Post `
-  -Headers @{ "x-crm-api-key" = $apiKey } `
-  -ContentType "application/json" `
-  -Body $payload
-```
-
-## Validacao local
-
-Com o Docker Compose rodando, a validacao recomendada antes de entrega/commit e:
+4. Validar:
 
 ```bash
 npm run verify:all
 ```
 
-Esse comando executa em sequencia build, lint, smoke da API, verifies operacionais, verify do dashboard, verify frontend real, listagem n8n e cleanup seguro.
+## URLs locais
 
-Para rodar apenas o smoke test HTTP contra a API local:
+- API health: `http://localhost:3000/health`
+- Dashboard: `http://localhost:3000/dashboard`
+- n8n: `http://localhost:5678`
 
-```bash
-npm run smoke:api
-```
+## Comandos principais
 
-Os scripts usam `API_BASE_URL` quando definido, com padrao `http://localhost:3000`. Se `CRM_API_SECRET` estiver definido no ambiente ou no `.env`, eles enviam o header `x-crm-api-key` nos endpoints `/api/*`.
+- `npm run dev`
+- `npm run build`
+- `npm run lint`
+- `npm run smoke:api`
+- `npm run verify:all`
+- `npm run n8n:list:workflows`
+- `npm run dev:cleanup-test-data`
+- `npm run dev:cleanup-test-data:apply`
+- `npm run dev:seed-dashboard`
 
-## Escopo atual
+## Regras operacionais
 
-Implementado:
+- Rodar `verify:all` em sequencia antes de commit.
+- Nao executar smoke/verify em paralelo no mesmo banco local.
+- Nao versionar `.env`, dados reais, exports locais ou arquivos em `.tmp/`.
 
-- monorepo com `apps/api`, `apps/web`, `apps/worker` e `packages/shared`;
-- Docker Compose com PostgreSQL, Redis, API, worker e n8n local;
-- rota `GET /health` com verificacao real de PostgreSQL e Redis;
-- endpoints base de contatos, leads, conversas, mensagens e interacoes CRM;
-- webhook inbound normalizado para WhatsApp via n8n de teste;
-- geracao de action_items da Acao do Dia;
-- ciclo de vida de action_items: complete, cancel e fechamento automatico por crm_interaction;
-- `GET /api/operational-summary`;
-- `GET /api/operational-worklist`;
-- painel web local/dev em `GET /dashboard`;
-- frontend do dashboard migrado para React/Vite;
-- endpoint transacional `POST /api/manual-leads`;
-- busca operacional `GET /api/leads/search`;
-- verificacoes operacionais `verify:*` e bateria sequencial `verify:all`;
-- workflow n8n versionado com ID estavel.
+## Documentacao
 
-Ainda nao implementado:
-
-- limpeza/seed controlado de dados de desenvolvimento;
-- importacao da planilha manual atual;
-- WAHA real em modo escuta;
-- scraping somente leitura do sistema Clube04;
-- relatorio diario para Google Chat, Teams, Telegram, e-mail ou outro canal;
-- autenticacao real de usuario para painel;
-- integracao com API oficial futura do sistema Clube04.
+- Estado atual: `docs/project-state.md`
+- API: `docs/api/rest-api.md`
+- Dashboard: `docs/web/dashboard.md`
+- Arquitetura e organizacao: `docs/architecture/code-organization.md`
+- Estrutura do repo: `docs/development/repo-structure.md`
+- Estrategia de testes: `docs/development/testing-strategy.md`
+- Workflow de trabalho no Codex: `docs/development/codex-workflow.md`
+- Instrucoes curtas para Codex: `docs/development/codex-custom-instructions.md`
+- Higiene de dados de dev: `docs/development/dev-data.md`
+- Roadmap: `docs/roadmap.md`
+- Backlog: `docs/tasks.md`
+- Integracao n8n inbound: `docs/integrations/n8n-whatsapp-inbound.md`
