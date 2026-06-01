@@ -19,7 +19,7 @@ import {
 } from "./lead-spreadsheet-import-utils.js";
 import { readPessoaCsv, maskName, maskPhone, truncateSafe } from "./pessoa-csv-utils.js";
 import { readFirstSheet } from "./xlsx-first-sheet-reader.js";
-import { buildPhonePlans } from "./remediate-lead-import-classification.js";
+import { buildPhonePlans } from "../../remediation/remediate-lead-import-classification.js";
 
 const OPERATIONAL_TIMEZONE = "America/Sao_Paulo";
 

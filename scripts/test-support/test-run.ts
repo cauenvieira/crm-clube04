@@ -1,4 +1,4 @@
-import { loadDotEnv } from "../smoke-api-helpers.js";
+import { loadDotEnv } from "../smoke/smoke-api-helpers.js";
 
 export type TestRunContext = {
   apiBaseUrl: string;

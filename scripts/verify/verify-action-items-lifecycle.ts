@@ -6,10 +6,10 @@ import {
   assertOneOfStatus,
   assertStatus,
   request
-} from "./smoke-api-helpers.js";
-import { buildRunPayloadSource, buildTestNote, buildTestPhone, buildTestTutorName } from "./test-support/test-data.js";
-import { cleanupByRunId } from "./test-support/test-cleanup.js";
-import { createTestRunContext } from "./test-support/test-run.js";
+} from "../smoke/smoke-api-helpers.js";
+import { buildRunPayloadSource, buildTestNote, buildTestPhone, buildTestTutorName } from "../test-support/test-data.js";
+import { cleanupByRunId } from "../test-support/test-cleanup.js";
+import { createTestRunContext } from "../test-support/test-run.js";
 
 type VerifyContext = {
   apiBaseUrl: string;

@@ -10,19 +10,23 @@ Keep local validation deterministic, fast to run, and aligned with operational r
 - Quick API flow validation.
 - Covers core endpoints and idempotency basics.
 - Use on local iteration and in pre-commit battery.
+- Source path: `scripts/smoke/`.
 
 2. `verify:*` scripts
 - Operational validations by domain.
 - Examples: action items lifecycle, operational summary, worklist, dashboard, data cleanliness.
 - Must validate happy path plus at least one idempotency or validation/error path where relevant.
+- Source path: `scripts/verify/`.
 
 3. `verify:frontend`
 - Real browser validation (Playwright) for dashboard UX and interaction flow.
 - Required when frontend behavior changes.
+- Source path: `scripts/frontend-tests/`.
 
 4. Data cleanliness checks
 - Ensure test artifacts are removed or tagged safely.
 - Use `verify:data-cleanliness` plus cleanup/seed scripts for local reset.
+- Source path: `scripts/dev-data/`.
 
 ## Mandatory execution order
 

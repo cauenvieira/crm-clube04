@@ -21,9 +21,9 @@ import {
   generateActionItemsIdempotency
 } from "./smoke-action-items.js";
 import { runWhatsappInboundCreate, runWhatsappInboundIdempotency } from "./smoke-whatsapp-inbound.js";
-import { buildRunPayloadSource, buildTestNote, buildTestPhone, buildTestTutorName } from "./test-support/test-data.js";
-import { cleanupByRunId } from "./test-support/test-cleanup.js";
-import { createTestRunContext } from "./test-support/test-run.js";
+import { buildRunPayloadSource, buildTestNote, buildTestPhone, buildTestTutorName } from "../test-support/test-data.js";
+import { cleanupByRunId } from "../test-support/test-cleanup.js";
+import { createTestRunContext } from "../test-support/test-run.js";
 
 type TestContext = {
   contactId?: string;

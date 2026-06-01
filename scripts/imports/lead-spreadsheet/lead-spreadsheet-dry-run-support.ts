@@ -1,4 +1,4 @@
-import { createDbContext, assertLocalSafeEnvironment, closeDbContext } from "./dev-data-helpers.js";
+import { createDbContext, assertLocalSafeEnvironment, closeDbContext } from "../../dev-data/dev-data-helpers.js";
 
 export type OperationType =
   | "create_contact"

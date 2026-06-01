@@ -1,7 +1,7 @@
 import type { PoolClient } from "pg";
 import pg from "pg";
 
-import { loadDotEnv } from "./smoke-api-helpers.js";
+import { loadDotEnv } from "../smoke/smoke-api-helpers.js";
 
 const { Pool } = pg;
 

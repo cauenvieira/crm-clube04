@@ -14,6 +14,8 @@ Painel local/dev para operacao diaria de leads e action_items.
   - `/dashboard`
   - `/dashboard/app.js`
   - `/dashboard/styles.css`
+- `apps/web/public` contem apenas `dashboard.html` (scaffold);
+- `app.js` e `styles.css` sao servidos somente do build em `apps/web/dist`.
 - sem fallback silencioso para bundle ausente:
   - se `apps/web/dist` nao existir, `/dashboard/app.js` e `/dashboard/styles.css` retornam erro explicito.
 

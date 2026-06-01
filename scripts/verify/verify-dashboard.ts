@@ -1,4 +1,4 @@
-import { assert, assertStatus } from "./smoke-api-helpers.js";
+import { assert, assertStatus } from "../smoke/smoke-api-helpers.js";
 
 type HttpResult = {
   status: number;

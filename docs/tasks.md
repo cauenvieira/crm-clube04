@@ -24,11 +24,12 @@ Prioridade:
 
 ## Divida tecnica prioritaria
 
-1. `[todo][P1]` Dividir scripts grandes de importacao/remediacao em modulos menores.
-2. `[todo][P1]` Revisar placeholders em `apps/web/public` e consolidar assets ativos.
-3. `[todo][P1]` Revisar configuracao Playwright (chrome/channel/headed) para reduzir flakes locais.
-4. `[todo][P2]` Consolidar padroes de logs estruturados por modulo.
-5. `[todo][P2]` Revisar cobertura de verify para novos fluxos de importacao.
+1. `[done][P1]` Reorganizar scripts por dominio (`smoke`, `verify`, `dev-data`, `imports`, `remediation`).
+2. `[done][P1]` Remover placeholders obsoletos de `apps/web/public` que nao sao servidos em runtime.
+3. `[todo][P1]` Dividir arquivos de script acima de 300 linhas (`smoke-api`, `dev-cleanup-test-data`, `import-lead-spreadsheet-apply-support`).
+4. `[todo][P1]` Revisar configuracao Playwright (chrome/channel/headed) para reduzir flakes locais.
+5. `[todo][P2]` Consolidar padroes de logs estruturados por modulo.
+6. `[todo][P2]` Revisar cobertura de verify para novos fluxos de importacao.
 
 ## Regras de execucao das tasks
 

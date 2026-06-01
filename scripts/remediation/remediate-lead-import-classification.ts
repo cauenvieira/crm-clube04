@@ -1,4 +1,4 @@
-import { normalizeText, parseDateInput } from "./analyze-lead-spreadsheet-utils.js";
+import { normalizeText, parseDateInput } from "../imports/lead-spreadsheet/analyze-lead-spreadsheet-utils.js";
 import {
   hasStatusActionConflict,
   indicatesConversionBySheet,
@@ -6,9 +6,9 @@ import {
   mapNextActionCrosscheck,
   mapStatusCrosscheck,
   parseLegacyAttemptCount
-} from "./lead-customer-crosscheck-utils.js";
-import type { ParsedSheetRow } from "./lead-spreadsheet-import-utils.js";
-import type { PessoaCsvData } from "./pessoa-csv-utils.js";
+} from "../imports/lead-spreadsheet/lead-customer-crosscheck-utils.js";
+import type { ParsedSheetRow } from "../imports/lead-spreadsheet/lead-spreadsheet-import-utils.js";
+import type { PessoaCsvData } from "../imports/lead-spreadsheet/pessoa-csv-utils.js";
 
 const JUNE_START = "2026-06-01";
 const JUNE_END = "2026-06-30";

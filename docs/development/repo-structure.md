@@ -12,7 +12,14 @@ packages/
 infra/
   db/        db bootstrap and versioned SQL migrations
   n8n/       n8n versioned workflows and integration assets
-scripts/     smoke/verify/import/remediation/dev-data scripts
+scripts/
+  smoke/                    API smoke flow scripts
+  verify/                   operational verification scripts
+  test-support/             shared test helpers (runId/http/cleanup/data)
+  dev-data/                 local cleanup and seed scripts
+  frontend-tests/           Playwright browser tests
+  imports/lead-spreadsheet/ spreadsheet import and dry-run tooling
+  remediation/              backlog remediation scripts
 docs/        architecture, product, integrations, operations, backlog
 ```
 
@@ -37,7 +44,7 @@ docs/        architecture, product, integrations, operations, backlog
   - keep provider-specific transport details isolated
 
 - New validation script:
-  - `scripts/verify-*.ts`
+  - `scripts/verify/verify-*.ts`
   - include runId, deterministic output, and cleanup
 
 - n8n workflows:

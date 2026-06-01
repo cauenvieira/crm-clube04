@@ -1,5 +1,5 @@
-import type { HttpResult } from "../smoke-api-helpers.js";
-import { request } from "../smoke-api-helpers.js";
+import type { HttpResult } from "../smoke/smoke-api-helpers.js";
+import { request } from "../smoke/smoke-api-helpers.js";
 
 import type { TestRunContext } from "./test-run.js";
 

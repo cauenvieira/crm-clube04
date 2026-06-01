@@ -6,7 +6,7 @@ import {
   createDbContext,
   selectIds,
   uniqueIds
-} from "../dev-data-helpers.js";
+} from "../dev-data/dev-data-helpers.js";
 
 type CleanupSummary = {
   runId: string;

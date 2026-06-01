@@ -1,17 +1,17 @@
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 
-import { assertLocalSafeEnvironment, closeDbContext, createDbContext } from "./dev-data-helpers.js";
-import { normalizeText } from "./analyze-lead-spreadsheet-utils.js";
+import { assertLocalSafeEnvironment, closeDbContext, createDbContext } from "../dev-data/dev-data-helpers.js";
+import { normalizeText } from "../imports/lead-spreadsheet/analyze-lead-spreadsheet-utils.js";
 import {
   buildColumnMap,
   detectHeaderRow,
   missingRequiredColumns,
   parseRows,
   pickMostRecentRow
-} from "./lead-spreadsheet-import-utils.js";
-import { readPessoaCsv } from "./pessoa-csv-utils.js";
-import { readFirstSheet } from "./xlsx-first-sheet-reader.js";
+} from "../imports/lead-spreadsheet/lead-spreadsheet-import-utils.js";
+import { readPessoaCsv } from "../imports/lead-spreadsheet/pessoa-csv-utils.js";
+import { readFirstSheet } from "../imports/lead-spreadsheet/xlsx-first-sheet-reader.js";
 import {
   buildBacklogSchedule,
   buildPhonePlans,

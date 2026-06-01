@@ -12,7 +12,7 @@ Manter o banco local limpo para avaliacao visual e testes, sem risco de apagar d
 
 ## Como funciona o cleanup
 
-Script: `scripts/dev-cleanup-test-data.ts`
+Script: `scripts/dev-data/dev-cleanup-test-data.ts`
 
 Regras de seguranca:
 
@@ -46,7 +46,7 @@ Relatorio de ambiguos no dry-run:
 
 ## Como funciona o seed
 
-Script: `scripts/dev-seed-dashboard.ts`
+Script: `scripts/dev-data/dev-seed-dashboard.ts`
 
 Comportamento:
 

@@ -1,4 +1,4 @@
-import { closeDbContext, createDbContext } from "./dev-data-helpers.js";
+import { closeDbContext, createDbContext } from "../dev-data/dev-data-helpers.js";
 
 type ResidueRow = {
   type: string;
