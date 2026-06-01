@@ -36,16 +36,16 @@ Status:
 - `Em espera -> novo_lead`
 - `Em atendimento -> em_atendimento`
 - `Agendamento realizado -> agendado`
-- `Pagamento realizado -> validar_conversao`
-- `Jornada Concluida -> validar_conversao`
+- `Pagamento realizado -> sinal de conversao (nao vira status canonico proprio)`
+- `Jornada Concluida -> sinal de conversao (nao vira status canonico proprio)`
 - `Sem retorno -> sem_retorno`
 - desconhecido -> revisao manual
 
 Proxima acao:
 
-- `Continuar atendimento -> follow_up_lead` (gera action item)
+- `Continuar atendimento -> fazer_follow_up` (gera action item)
 - `Analise Lideranca -> revisao_lideranca` (gera action item)
-- `Jornada Concluida -> validar_conversao` (depende de cruzamento de cliente)
+- `Jornada Concluida -> nenhuma` (se confirmado em `Pessoa.csv`) ou `retomar_atendimento` (se nao confirmado)
 - `Sem retorno -> retomar_atendimento` (gera action item se houver vencimento)
 - desconhecido -> revisao manual
 

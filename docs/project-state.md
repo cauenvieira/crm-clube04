@@ -141,6 +141,12 @@ Ultima bateria conhecida:
 - processo de validacao sequencial;
 - validacao visual com browser tooling e fallback estrutural;
 - disciplina de tokens para prompts e relatorios.
+- remediacao operacional da importacao Jornada do Lead aplicada no banco local:
+  - `convertido_cliente` por Pessoa.csv: 277
+  - `retomar_atendimento`: 1407
+  - `fazer_follow_up`: 33
+  - `revisar_lideranca`: 32
+  - `validar_conversao` removido da fila principal de importados (itens legados mantidos como `ignorado`)
 
 ## Ainda nao implementado
 
@@ -156,13 +162,13 @@ Ultima bateria conhecida:
 
 ## Proximos passos recomendados
 
-1. Criar rotina segura de limpeza/seed de dados de desenvolvimento.
-2. Importar a planilha manual atual para popular contatos/leads de forma controlada.
-3. Criar relatorio diario baseado em operational-summary/worklist.
+1. Incluir entrada manual de lead para reduzir dependencia da planilha no dia a dia.
+2. Criar relatorio diario baseado em operational-summary/worklist.
+3. Iniciar trilha de follow-up da Jornada do Cliente para os convertidos.
 4. Testar WhatsApp em modo escuta com numero separado.
 5. Mapear telas/relatorios do sistema Clube04 para scraping somente leitura.
 6. Preparar adaptadores para futura API oficial do sistema Clube04.
-7. Evoluir UX do dashboard com dados mais proximos da operacao real.
+7. Evoluir UX do dashboard com filtros operacionais e atalho de acao por bloco.
 
 ## Riscos e cuidados
 

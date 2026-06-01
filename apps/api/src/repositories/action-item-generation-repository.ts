@@ -30,7 +30,10 @@ const leadColumns = `
 
 export async function listLeadsByStatus(status: string): Promise<LeadForActionItemGeneration[]> {
   const result = await postgresPool.query<LeadForActionItemGeneration>(
-    `select ${leadColumns} from leads where status = $1`,
+    `select ${leadColumns}
+      from leads
+      where status = $1
+        and coalesce(source, '') <> 'spreadsheet_import'`,
     [status]
   );
   return result.rows;
@@ -40,7 +43,10 @@ export async function listLeadsByStatuses(
   statuses: readonly string[]
 ): Promise<LeadForActionItemGeneration[]> {
   const result = await postgresPool.query<LeadForActionItemGeneration>(
-    `select ${leadColumns} from leads where status = any($1::lead_status[])`,
+    `select ${leadColumns}
+      from leads
+      where status = any($1::lead_status[])
+        and coalesce(source, '') <> 'spreadsheet_import'`,
     [statuses]
   );
   return result.rows;

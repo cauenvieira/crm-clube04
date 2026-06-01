@@ -36,7 +36,6 @@ npm run import:lead-spreadsheet:crosscheck-dry-run -- ".tmp\imports\02 - Control
 - `novo_lead`
 - `em_atendimento`
 - `agendado`
-- `validar_conversao`
 - `convertido_cliente`
 - `sem_retorno`
 - `revisao_lideranca`
@@ -48,8 +47,8 @@ Mapeamento base:
 - `Em espera -> novo_lead`
 - `Em atendimento -> em_atendimento`
 - `Agendamento realizado -> agendado`
-- `Pagamento realizado -> validar_conversao`
-- `Jornada Concluida -> validar_conversao`
+- `Pagamento realizado -> sinal de conversao (nao vira status canonico proprio)`
+- `Jornada Concluida -> sinal de conversao (nao vira status canonico proprio)`
 - `Sem retorno -> sem_retorno`
 - `Analise Lideranca -> revisao_lideranca`
 - desconhecido -> `revisao_manual`
@@ -60,7 +59,6 @@ Observacao: `Pagamento realizado` e `Jornada Concluida` nao confirmam conversao 
 
 - `fazer_follow_up`
 - `revisar_lideranca`
-- `validar_conversao`
 - `retomar_atendimento`
 - `nenhuma`
 - `revisao_manual`
@@ -69,7 +67,7 @@ Mapeamento base:
 
 - `Continuar atendimento -> fazer_follow_up`
 - `Analise Lideranca -> revisar_lideranca`
-- `Jornada Concluida -> validar_conversao`
+- `Jornada Concluida -> nenhuma` (quando confirmado em `Pessoa.csv`) ou `retomar_atendimento` (quando nao confirmado)
 - `Sem retorno -> retomar_atendimento`
 - desconhecido -> `revisao_manual`
 
@@ -79,14 +77,25 @@ Mapeamento base:
    - marcar `conversao_confirmada` no dry-run;
    - quando planilha indicar conclusao/agendamento/pagamento, status final pode virar `convertido_cliente`.
 2. Se planilha indicar conclusao/pagamento e telefone nao existir em `Pessoa.csv`:
-   - status final `validar_conversao`;
-   - action item `validar_conversao`.
+   - nao manter status transitorio;
+   - classificar como `retomar_atendimento` na fila operacional.
 3. Se nao converteu e `Data Prox Acao` esta vencida:
    - action item `retomar_atendimento`.
-4. Se caso esta em analise de lideranca:
+4. Se caso tem criterio critico de lideranca (conflito de nomes, tentativa >= 12, observacao sensivel, classificacao insegura):
    - action item `revisar_lideranca`.
-5. Conflito entre status e proxima acao:
-   - `revisao_manual`.
+5. Se planilha indicava `Analise Lideranca` sem criterio critico:
+   - reclassificar para `retomar_atendimento`.
+
+## Fila operacional final apos remediacao
+
+Depois da importacao, a fila principal deve usar:
+
+- `retomar_atendimento`
+- `fazer_follow_up`
+- `revisar_lideranca`
+- `novo_lead` (novas entradas)
+
+`validar_conversao` nao permanece como fila principal.
 
 ## Prioridade de classificacao (v1)
 
@@ -94,16 +103,19 @@ Mapeamento base:
    - `status = convertido_cliente`
    - `action = nenhuma`
 2. `Jornada Concluida` ou `Pagamento realizado` sem telefone na base cliente:
-   - `status = validar_conversao`
-   - `action = validar_conversao`
-3. Sinal de analise de lideranca:
+   - `status = em_atendimento`
+   - `action = retomar_atendimento`
+3. Sinal de analise de lideranca sem criterio critico:
+   - `status = em_atendimento`
+   - `action = retomar_atendimento`
+4. Apenas casos criticos de lideranca:
    - `status = revisao_lideranca`
    - `action = revisar_lideranca`
-4. `Data Prox Acao` vencida e lead fora dos grupos acima:
+5. `Data Prox Acao` vencida e lead fora dos grupos acima:
    - `action = retomar_atendimento`
-5. `Continuar atendimento` sem vencimento:
+6. `Continuar atendimento` sem vencimento:
    - `action = fazer_follow_up`
-6. Desconhecido, conflito de status/acao ou conflito de tutor no mesmo telefone:
+7. Desconhecido, conflito de status/acao ou conflito de tutor no mesmo telefone:
    - `status/action = revisao_manual`
 
 ## Regra de vencimento operacional

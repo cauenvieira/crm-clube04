@@ -11,6 +11,11 @@ const activeLeadStatuses = [
 ] as const;
 
 const overdueActionItemStatuses: readonly ActionItemStatus[] = ["pendente", "em_andamento"];
+const openActionItemStatuses: readonly ActionItemStatus[] = [
+  "pendente",
+  "em_andamento",
+  "reagendado"
+];
 
 export async function getOperationalDayWindow(timezone: string) {
   const result = await postgresPool.query(
@@ -67,6 +72,36 @@ export async function listOverdueActionItems(limit: number) {
     order by ai.due_at asc, ai.priority desc, ai.created_at asc
     limit $2`,
     [overdueActionItemStatuses, limit]
+  );
+  return result.rows;
+}
+
+export async function listOpenActionItemsByTypes(limit: number, types: readonly string[]) {
+  const result = await postgresPool.query(
+    `select
+      ai.id,
+      ai.type,
+      ai.priority,
+      ai.status,
+      ai.title,
+      ai.due_at,
+      ai.lead_id,
+      ai.contact_id,
+      c.name as contact_name,
+      c.normalized_phone,
+      l.status as lead_status,
+      l.source as lead_source,
+      l.campaign as lead_campaign,
+      ai.reason,
+      ai.created_at
+    from action_items ai
+    left join contacts c on c.id = ai.contact_id
+    left join leads l on l.id = ai.lead_id
+    where ai.status = any($1::action_item_status[])
+      and ai.type = any($2::text[])
+    order by ai.due_at asc nulls last, ai.priority desc, ai.created_at asc
+    limit $3`,
+    [openActionItemStatuses, types, limit]
   );
   return result.rows;
 }

@@ -13,6 +13,10 @@ type WorklistItemRow = {
   contact_id: string | null;
   contact_name: string | null;
   normalized_phone: string | null;
+  lead_status?: string | null;
+  lead_source?: string | null;
+  lead_campaign?: string | null;
+  reason?: string | null;
   created_at: Date | string;
 };
 
@@ -44,10 +48,24 @@ export async function getOperationalWorklist(limit: number) {
   const generatedAt = new Date();
   const dayWindow = await worklistRepository.getOperationalDayWindow(operationalTimezone);
 
-  const [pendingItems, overdueItems, leadsOverdue, leadsWithoutInteraction, latestInbound] =
+  const [
+    pendingItems,
+    overdueItems,
+    retomarAtendimento,
+    followUpsAgendados,
+    revisaoLideranca,
+    novosLeads,
+    leadsOverdue,
+    leadsWithoutInteraction,
+    latestInbound
+  ] =
     await Promise.all([
       worklistRepository.listPendingActionItems(limit),
       worklistRepository.listOverdueActionItems(limit),
+      worklistRepository.listOpenActionItemsByTypes(limit, ["retomar_atendimento"]),
+      worklistRepository.listOpenActionItemsByTypes(limit, ["fazer_follow_up", "follow_up_agendado"]),
+      worklistRepository.listOpenActionItemsByTypes(limit, ["revisar_lideranca"]),
+      worklistRepository.listOpenActionItemsByTypes(limit, ["follow_up_lead", "novo_lead"]),
       worklistRepository.listLeadsWithOverdueFollowUp(limit),
       worklistRepository.listLeadsWithoutInteraction24h(limit),
       worklistRepository.listLatestInboundMessages(limit)
@@ -60,7 +78,11 @@ export async function getOperationalWorklist(limit: number) {
     limit,
     actionItems: {
       pendentes: pendingItems.map(mapActionItem),
-      vencidos: overdueItems.map(mapActionItem)
+      vencidos: overdueItems.map(mapActionItem),
+      retomarAtendimento: retomarAtendimento.map(mapActionItem),
+      followUpsAgendados: followUpsAgendados.map(mapActionItem),
+      revisaoLideranca: revisaoLideranca.map(mapActionItem),
+      novosLeads: novosLeads.map(mapActionItem)
     },
     leads: {
       followUpVencido: leadsOverdue.map(mapLead),
@@ -84,6 +106,10 @@ function mapActionItem(row: WorklistItemRow) {
     contactId: row.contact_id,
     contactName: row.contact_name,
     normalizedPhone: row.normalized_phone,
+    leadStatus: row.lead_status ?? null,
+    leadSource: row.lead_source ?? null,
+    leadCampaign: row.lead_campaign ?? null,
+    reason: row.reason ?? null,
     createdAt: toIsoOrNull(row.created_at)
   };
 }

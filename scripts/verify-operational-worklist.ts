@@ -164,6 +164,10 @@ function validateWorklistShape(payload: Record<string, unknown>, expectedLimit: 
 
   asArray(actionItems.pendentes);
   asArray(actionItems.vencidos);
+  asArray(actionItems.retomarAtendimento);
+  asArray(actionItems.followUpsAgendados);
+  asArray(actionItems.revisaoLideranca);
+  asArray(actionItems.novosLeads);
   asArray(leads.followUpVencido);
   asArray(leads.semInteracao24h);
   asArray(messages.ultimasInbound);
@@ -177,6 +181,10 @@ function ensureArraysRespectLimit(payload: Record<string, unknown>, limit: numbe
   const arrays = [
     asArray(actionItems.pendentes),
     asArray(actionItems.vencidos),
+    asArray(actionItems.retomarAtendimento),
+    asArray(actionItems.followUpsAgendados),
+    asArray(actionItems.revisaoLideranca),
+    asArray(actionItems.novosLeads),
     asArray(leads.followUpVencido),
     asArray(leads.semInteracao24h),
     asArray(messages.ultimasInbound)

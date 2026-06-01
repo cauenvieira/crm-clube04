@@ -16,13 +16,16 @@ export function printCrosscheckSummary(input: {
   pessoaPhonesWithMultiplePets: number;
   pessoaPhonesWithConflictingNames: number;
   leadsFoundInPessoa: number;
+  leadsConvertidoCliente: number;
   jornadaConcluidaAndFound: number;
   jornadaConcluidaWithoutPessoa: number;
   pagamentoSemPessoa: number;
-  leadsValidarConversao: number;
+  leadsFazerFollowUp: number;
   leadsRetomarAtendimento: number;
   leadsRevisarLideranca: number;
   leadsRevisaoManual: number;
+  reclassificadosAnaliseLiderancaParaRetomar: number;
+  reclassificadosConversaoPlanilhaParaRetomar: number;
   legacyAttemptCountFilled: number;
   retomarAtendimentoTotal: number;
   retomarByStatus: Map<string, number>;
@@ -55,20 +58,26 @@ export function printCrosscheckSummary(input: {
   console.log(`Telefones com multiplos pets no Pessoa.csv: ${input.pessoaPhonesWithMultiplePets}`);
   console.log(`Telefones com nomes conflitantes no Pessoa.csv: ${input.pessoaPhonesWithConflictingNames}`);
   console.log(`Leads com telefone encontrado na base de clientes: ${input.leadsFoundInPessoa}`);
+  console.log(`Leads tratados como convertido_cliente: ${input.leadsConvertidoCliente}`);
   console.log(`Leads Jornada Concluida com telefone encontrado: ${input.jornadaConcluidaAndFound}`);
   console.log(`Leads Jornada Concluida sem telefone no Pessoa.csv: ${input.jornadaConcluidaWithoutPessoa}`);
   console.log(`Leads Pagamento realizado sem telefone no Pessoa.csv: ${input.pagamentoSemPessoa}`);
-  console.log(`Leads para validar conversao: ${input.leadsValidarConversao}`);
+  console.log(`Leads para fazer_follow_up: ${input.leadsFazerFollowUp}`);
   console.log(`Leads para retomar atendimento: ${input.leadsRetomarAtendimento}`);
   console.log(`Leads para revisar lideranca: ${input.leadsRevisarLideranca}`);
   console.log(`Leads para revisao manual: ${input.leadsRevisaoManual}`);
+  console.log(
+    `Reclassificados para retomar (planilha Analise Lideranca sem criterio critico): ${input.reclassificadosAnaliseLiderancaParaRetomar}`
+  );
+  console.log(
+    `Reclassificados para retomar (sinal de conversao sem Pessoa.csv): ${input.reclassificadosConversaoPlanilhaParaRetomar}`
+  );
   console.log(`legacy_attempt_count preenchido: ${input.legacyAttemptCountFilled}`);
   console.log(`retomar_atendimento_total: ${input.retomarAtendimentoTotal}`);
 
   console.log("Action items simulados por tipo:");
   console.log(`- fazer_follow_up: ${input.actionItemCounts.get("fazer_follow_up") ?? 0}`);
   console.log(`- revisar_lideranca: ${input.actionItemCounts.get("revisar_lideranca") ?? 0}`);
-  console.log(`- validar_conversao: ${input.actionItemCounts.get("validar_conversao") ?? 0}`);
   console.log(`- retomar_atendimento: ${input.actionItemCounts.get("retomar_atendimento") ?? 0}`);
 
   console.log("Breakdown revisar_lideranca:");

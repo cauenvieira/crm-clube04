@@ -4,10 +4,6 @@ import { resolve } from "node:path";
 import { normalizeText } from "./analyze-lead-spreadsheet-utils.js";
 import {
   mapStatusCrosscheck,
-  mapNextActionCrosscheck,
-  indicatesConversionBySheet,
-  hasStatusActionConflict,
-  isLeadershipSignal,
   getDueBucket,
   getSaoPauloBusinessDateYmd,
   parseLegacyAttemptCount,
@@ -23,6 +19,7 @@ import {
 } from "./lead-spreadsheet-import-utils.js";
 import { readPessoaCsv, maskName, maskPhone, truncateSafe } from "./pessoa-csv-utils.js";
 import { readFirstSheet } from "./xlsx-first-sheet-reader.js";
+import { buildPhonePlans } from "./remediate-lead-import-classification.js";
 
 const OPERATIONAL_TIMEZONE = "America/Sao_Paulo";
 
@@ -61,6 +58,13 @@ function main() {
     if (!grouped.has(row.normalizedPhone)) grouped.set(row.normalizedPhone, []);
     grouped.get(row.normalizedPhone)?.push(row);
   }
+  const rowsByPhone = new Map<string, typeof rows>();
+  for (const [phone, groupRows] of grouped.entries()) {
+    const latest = pickMostRecentRow(groupRows);
+    if (!latest) continue;
+    rowsByPhone.set(phone, [latest, ...groupRows.filter((row) => row.rowNumber !== latest.rowNumber)]);
+  }
+  const phonePlans = buildPhonePlans(rowsByPhone, pessoa);
 
   const samplesJornadaSemCliente: string[] = [];
   const samplesPagamentoSemCliente: string[] = [];
@@ -71,20 +75,22 @@ function main() {
   const samplesRetomarAtendimento: string[] = [];
 
   let leadsFoundInPessoa = 0;
+  let leadsConvertidoCliente = 0;
   let jornadaConcluidaAndFound = 0;
   let jornadaConcluidaWithoutPessoa = 0;
   let pagamentoSemPessoa = 0;
-  let leadsValidarConversao = 0;
+  let leadsFazerFollowUp = 0;
   let leadsRetomarAtendimento = 0;
   let leadsRevisarLideranca = 0;
   let leadsRevisaoManual = 0;
+  let reclassificadosAnaliseLiderancaParaRetomar = 0;
+  let reclassificadosConversaoPlanilhaParaRetomar = 0;
   let retomarAtendimentoTotal = 0;
   let legacyAttemptCountFilled = 0;
 
   const actionItemCounts = new Map<string, number>([
     ["fazer_follow_up", 0],
     ["revisar_lideranca", 0],
-    ["validar_conversao", 0],
     ["retomar_atendimento", 0]
   ]);
   const retomarByStatus = new Map<string, number>();
@@ -101,63 +107,41 @@ function main() {
     sem_cliente_encontrado: 0
   };
 
-  for (const [phone, groupRows] of grouped.entries()) {
-    const latest = pickMostRecentRow(groupRows);
+  for (const [phone, groupRows] of rowsByPhone.entries()) {
+    const latest = groupRows[0];
     if (!latest) continue;
+    const plan = phonePlans.get(phone);
+    if (!plan) continue;
 
-    const foundInPessoa = pessoa.phonesIndex.has(phone);
+    const foundInPessoa = plan.foundInPessoa;
     if (foundInPessoa) leadsFoundInPessoa++;
+    if (plan.bucket === "convertido") leadsConvertidoCliente++;
 
     const statusBase = mapStatusCrosscheck(latest);
-    const actionBase = mapNextActionCrosscheck(latest);
-    const conversionBySheet = indicatesConversionBySheet(latest);
     const dueBucket = getDueBucket(latest.values.dataProxAcao, businessDateYmd);
     const overdue = dueBucket === "vencida";
     const conflictingTutor = hasConflictingTutor(groupRows);
-    const leadershipSignal = isLeadershipSignal(latest);
+    const actionItem = plan.desiredActionType;
 
-    let statusFinal = statusBase;
-    let actionItem: "fazer_follow_up" | "revisar_lideranca" | "validar_conversao" | "retomar_atendimento" | null =
-      null;
-
-    const hasConflict =
-      conflictingTutor ||
-      hasStatusActionConflict(statusBase, actionBase) ||
-      statusBase === "revisao_manual" ||
-      actionBase === "revisao_manual";
-
-    if (hasConflict) {
-      statusFinal = "revisao_manual";
-    } else if (foundInPessoa && conversionBySheet) {
-      statusFinal = "convertido_cliente";
-      actionItem = null;
-    } else if (!foundInPessoa && conversionBySheet) {
-      statusFinal = "validar_conversao";
-      actionItem = "validar_conversao";
-    } else if (leadershipSignal || statusBase === "revisao_lideranca" || actionBase === "revisar_lideranca") {
-      statusFinal = "revisao_lideranca";
-      actionItem = "revisar_lideranca";
-    } else if (overdue) {
-      statusFinal = statusBase;
-      actionItem = "retomar_atendimento";
-    } else if (actionBase === "fazer_follow_up") {
-      statusFinal = statusBase;
-      actionItem = "fazer_follow_up";
-    }
-
-    if (statusFinal === "validar_conversao") leadsValidarConversao++;
+    if (actionItem === "fazer_follow_up") leadsFazerFollowUp++;
     if (actionItem === "retomar_atendimento") leadsRetomarAtendimento++;
     if (actionItem === "revisar_lideranca") leadsRevisarLideranca++;
-    if (statusFinal === "revisao_manual") leadsRevisaoManual++;
+    if (plan.criticalReasons.includes("impossible_safe_classification")) leadsRevisaoManual++;
+    if (plan.notes.some((note) => note.includes("sheet_analise_lideranca_reclassified_to_retomar"))) {
+      reclassificadosAnaliseLiderancaParaRetomar++;
+    }
+    if (plan.notes.some((note) => note.includes("sheet_conversion_without_pessoa_reclassified_to_retomar"))) {
+      reclassificadosConversaoPlanilhaParaRetomar++;
+    }
     if (actionItem) actionItemCounts.set(actionItem, (actionItemCounts.get(actionItem) ?? 0) + 1);
     if (actionItem === "retomar_atendimento") {
       retomarAtendimentoTotal++;
-      addCount(retomarByStatus, statusFinal);
+      addCount(retomarByStatus, normalizeStatusForRetomar(statusBase));
       const atendente = normalizeAttendant(latest.values.atendente);
       addCount(retomarByAtendente, atendente);
       pushSample(
         samplesRetomarAtendimento,
-        `row ${latest.rowNumber} phone ${maskPhone(phone)} status ${statusFinal} atd ${truncateSafe(atendente, 14)}`
+        `row ${latest.rowNumber} phone ${maskPhone(phone)} status ${normalizeStatusForRetomar(statusBase)} atd ${truncateSafe(atendente, 14)}`
       );
     }
     if (actionItem === "revisar_lideranca") {
@@ -236,13 +220,16 @@ function main() {
     pessoaPhonesWithMultiplePets: pessoa.phonesWithMultiplePets,
     pessoaPhonesWithConflictingNames: pessoa.phonesWithConflictingNames,
     leadsFoundInPessoa,
+    leadsConvertidoCliente,
     jornadaConcluidaAndFound,
     jornadaConcluidaWithoutPessoa,
     pagamentoSemPessoa,
-    leadsValidarConversao,
+    leadsFazerFollowUp,
     leadsRetomarAtendimento,
     leadsRevisarLideranca,
     leadsRevisaoManual,
+    reclassificadosAnaliseLiderancaParaRetomar,
+    reclassificadosConversaoPlanilhaParaRetomar,
     legacyAttemptCountFilled,
     referenceTimezone: OPERATIONAL_TIMEZONE,
     referenceBusinessDate: businessDateYmd,
@@ -270,6 +257,11 @@ function normalizeAttendant(raw: string): string {
   const trimmed = raw.trim();
   if (!trimmed) return "sem_atendente";
   return trimmed;
+}
+
+function normalizeStatusForRetomar(status: string) {
+  if (status === "validar_conversao") return "em_atendimento";
+  return status;
 }
 
 main();

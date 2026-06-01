@@ -27,8 +27,10 @@ const ui = {
   metaWindow: document.getElementById("meta-window"),
   listActionPending: document.getElementById("list-action-pending"),
   listActionOverdue: document.getElementById("list-action-overdue"),
-  listLeadsOverdue: document.getElementById("list-leads-overdue"),
-  listLeadsNoInteraction: document.getElementById("list-leads-no-interaction"),
+  listRetomarAtendimento: document.getElementById("list-retomar-atendimento"),
+  listFollowUpsAgendados: document.getElementById("list-follow-ups-agendados"),
+  listRevisaoLideranca: document.getElementById("list-revisao-lideranca"),
+  listNovosLeads: document.getElementById("list-novos-leads"),
   listMessagesInbound: document.getElementById("list-messages-inbound")
 };
 
@@ -117,8 +119,10 @@ function renderWithoutApiKey() {
   const message = "Informe a API key para carregar dados.";
   renderList(ui.listActionPending, [], () => null, message);
   renderList(ui.listActionOverdue, [], () => null, message);
-  renderList(ui.listLeadsOverdue, [], () => null, message);
-  renderList(ui.listLeadsNoInteraction, [], () => null, message);
+  renderList(ui.listRetomarAtendimento, [], () => null, message);
+  renderList(ui.listFollowUpsAgendados, [], () => null, message);
+  renderList(ui.listRevisaoLideranca, [], () => null, message);
+  renderList(ui.listNovosLeads, [], () => null, message);
   renderList(ui.listMessagesInbound, [], () => null, message);
 }
 
@@ -156,20 +160,25 @@ function renderSummary(summary) {
 }
 
 function renderWorklist(worklist) {
-  renderActionItems(ui.listActionOverdue, worklist?.actionItems?.vencidos ?? [], "vencido");
-  renderActionItems(ui.listActionPending, worklist?.actionItems?.pendentes ?? [], "pendente");
-  renderLeads(ui.listLeadsOverdue, worklist?.leads?.followUpVencido ?? [], "follow_up");
-  renderLeads(ui.listLeadsNoInteraction, worklist?.leads?.semInteracao24h ?? [], "interacao");
+  const actionItems = worklist?.actionItems ?? {};
+  renderActionItems(ui.listActionOverdue, filterPriorityItems(actionItems.vencidos ?? []), "vencido");
+  renderActionItems(ui.listActionPending, filterPriorityItems(actionItems.pendentes ?? []), "pendente");
+  renderActionItems(ui.listRetomarAtendimento, actionItems.retomarAtendimento ?? [], "retomar");
+  renderActionItems(ui.listFollowUpsAgendados, actionItems.followUpsAgendados ?? [], "followup");
+  renderActionItems(ui.listRevisaoLideranca, actionItems.revisaoLideranca ?? [], "revisao");
+  renderActionItems(ui.listNovosLeads, actionItems.novosLeads ?? [], "novo");
   renderMessages(ui.listMessagesInbound, worklist?.messages?.ultimasInbound ?? []);
 }
 
 function renderActionItems(target, items, mode) {
   renderList(target, items, (item) => {
+    const sourceDetail = item.leadSource === "spreadsheet_import" ? " | Origem: spreadsheet_import" : "";
+    const importedStatus = item.leadStatus ? ` | Lead status: ${item.leadStatus}` : "";
     const wrapper = baseItem(
       item.title ?? "Sem titulo",
       `${item.contactName ?? "Sem contato"} | ${formatPhone(item.normalizedPhone)}`,
-      `${mode === "vencido" ? "Vencido em" : "Prazo"} ${formatDateTime(item.dueAt)}`,
-      `Status: ${item.status ?? "-"} | Tipo: ${item.type ?? "-"} | Prioridade: ${Number(item.priority ?? 0)}`
+      `${labelForMode(mode)} ${formatDateTime(item.dueAt)}`,
+      `Status: ${item.status ?? "-"} | Tipo: ${item.type ?? "-"} | Prioridade: ${Number(item.priority ?? 0)}${sourceDetail}${importedStatus}`
     );
     if (item.id) {
       const actions = document.createElement("div");
@@ -178,22 +187,14 @@ function renderActionItems(target, items, mode) {
       actions.appendChild(makeButton("Ignorar", "btn-action btn-ignore", () => mutateActionItem(item.id, "cancel")));
       wrapper.appendChild(actions);
     }
-    wrapper.appendChild(makeDebugDetails({ id: item.id, leadId: item.leadId, contactId: item.contactId }));
-    return wrapper;
-  });
-}
-
-function renderLeads(target, items, mode) {
-  renderList(target, items, (item) => {
-    const whenText = mode === "follow_up" ? formatDateTime(item.nextActionAt) : formatDateTime(item.lastInteractionAt);
-    const label = mode === "follow_up" ? "Proximo contato" : "Ultima interacao";
-    const wrapper = baseItem(
-      item.contactName ?? "Sem contato",
-      formatPhone(item.normalizedPhone),
-      `${label} ${whenText}`,
-      `Status: ${item.status ?? "-"} | Source: ${item.source ?? "-"}`
-    );
-    wrapper.appendChild(makeDebugDetails({ leadId: item.id, contactId: item.contactId }));
+    wrapper.appendChild(makeDebugDetails({
+      id: item.id,
+      leadId: item.leadId,
+      contactId: item.contactId,
+      leadSource: item.leadSource,
+      leadStatus: item.leadStatus,
+      reason: item.reason
+    }));
     return wrapper;
   });
 }
@@ -337,4 +338,18 @@ function escapeHtml(value) {
 
 function truncate(value, maxLength) {
   return value.length <= maxLength ? value : `${value.slice(0, maxLength)}...`;
+}
+
+function filterPriorityItems(items) {
+  const hidden = new Set(["lead_sem_interacao", "validar_conversao"]);
+  return items.filter((item) => !hidden.has(String(item.type ?? "")));
+}
+
+function labelForMode(mode) {
+  if (mode === "vencido") return "Vencido em";
+  if (mode === "retomar") return "Retomar ate";
+  if (mode === "followup") return "Follow-up em";
+  if (mode === "revisao") return "Revisar ate";
+  if (mode === "novo") return "Atender ate";
+  return "Prazo";
 }

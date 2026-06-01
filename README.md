@@ -119,6 +119,7 @@ npm run worker
 - `npm run dev:cleanup-test-data`: varredura dry-run de dados artificiais de teste.
 - `npm run dev:cleanup-test-data:apply`: aplica limpeza segura de dados artificiais de teste.
 - `npm run dev:seed-dashboard`: cria massa minima de demonstracao para dashboard local.
+- `npm run remediate:lead-import-worklist`: remedia a fila de leads importados (dry-run por padrao).
 
 Observacao importante sobre validacao:
 
@@ -198,6 +199,7 @@ docker compose exec n8n n8n --version
 As regras de separacao entre routes, services, repositories, validation, plugins, jobs e integrations estao em `docs/architecture/code-organization.md`.
 Guia de trabalho com prompts compactos no Codex: `docs/development/codex-workflow.md`.
 Guia de higiene de dados locais (cleanup + seed): `docs/development/dev-data.md`.
+Guia de regras finais de backlog importado: `docs/imports/lead-backlog-rules.md`.
 Roadmap de produto da plataforma CRM: `docs/product/crm-platform-roadmap.md`.
 
 ## API REST

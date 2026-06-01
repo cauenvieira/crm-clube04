@@ -316,7 +316,11 @@ Exemplo resumido de resposta:
   "limit": 10,
   "actionItems": {
     "pendentes": [],
-    "vencidos": []
+    "vencidos": [],
+    "retomarAtendimento": [],
+    "followUpsAgendados": [],
+    "revisaoLideranca": [],
+    "novosLeads": []
   },
   "leads": {
     "followUpVencido": [],
@@ -332,6 +336,10 @@ Criterios de ordenacao:
 
 - `actionItems.pendentes`: `priority desc`, `due_at asc nulls last`, `created_at asc`
 - `actionItems.vencidos`: `due_at asc`, `priority desc`, `created_at asc`
+- `actionItems.retomarAtendimento`: `due_at asc`, `priority desc`, `created_at asc`
+- `actionItems.followUpsAgendados`: `due_at asc`, `priority desc`, `created_at asc`
+- `actionItems.revisaoLideranca`: `due_at asc`, `priority desc`, `created_at asc`
+- `actionItems.novosLeads`: `due_at asc`, `priority desc`, `created_at asc`
 - `leads.followUpVencido`: `next_action_at asc`, `created_at asc`
 - `leads.semInteracao24h`: `last_interaction_at asc nulls first`, `created_at asc`
 - `messages.ultimasInbound`: `created_at desc`

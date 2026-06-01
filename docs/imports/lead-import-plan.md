@@ -40,8 +40,8 @@
 | Em espera | `novo_lead` | status inicial operacional |
 | Em atendimento | `em_atendimento` | status ativo |
 | Agendamento realizado | `agendado` | alinhado ao estado de agenda |
-| Pagamento realizado | `validar_conversao` | depende de confirmacao em base cliente |
-| Jornada Concluida | `validar_conversao` | exige crosscheck com Pessoa.csv |
+| Pagamento realizado | `agendado` | sinal de conversao, validar com Pessoa.csv antes de concluir jornada |
+| Jornada Concluida | `agendado` | tratar como sinal de conclusao e confirmar por telefone em Pessoa.csv |
 | Sem retorno | `sem_retorno` | manter rastreio para follow-up |
 | Outros/desconhecidos | `revisao_manual` | nao forcar inferencia automatica |
 
@@ -49,9 +49,10 @@
 
 | Valor original provavel | Acao canonica sugerida | Gera action_item? | Observacao |
 | --- | --- | --- | --- |
-| Continuar atendimento | `follow_up_lead` | sim | prioridade por regra de prazo/status |
+| Continuar atendimento | `fazer_follow_up` | sim | prioridade por regra de prazo/status |
 | Analise Lideranca | `revisao_lideranca` | sim | fila separada de revisao |
-| Jornada Concluida | `validar_conversao` | sim, se sem cliente confirmado | evitar falso positivo de conversao |
+| Jornada Concluida | `retomar_atendimento` | sim | sem cliente confirmado em Pessoa.csv vira retomada operacional |
+| Pagamento realizado | `retomar_atendimento` | sim | sem cliente confirmado em Pessoa.csv vira retomada operacional |
 | Sem retorno | `retomar_atendimento` | sim | prioridade quando Data Prox Acao vencida |
 | Desconhecido | `revisao_manual` | opcional | exige triagem humana |
 
@@ -116,7 +117,15 @@ Schema atual e suficiente para um v1 basico de consolidacao de contatos/leads/ac
 
 Nao criar migration agora. Gaps ficam registrados para etapa de implementacao do importador real.
 
-## 10) Proximas etapas recomendadas
+## 10) Ajuste operacional apos import
+
+Depois do apply inicial da planilha, executar remediacao de worklist para fila final:
+
+- remover `validar_conversao` da fila principal;
+- manter apenas `retomar_atendimento`, `fazer_follow_up`, `revisar_lideranca`, `novo_lead`;
+- distribuir backlog em lotes diarios (padrao 30/dia) em dias operacionais terca-sabado.
+
+## 11) Proximas etapas recomendadas
 
 1. Validar status canonicos com operacao/lideranca.
 2. Validar regras de duplicidade e criterios de consolidacao por telefone.

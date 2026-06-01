@@ -22,6 +22,8 @@
     "analyze:lead-spreadsheet": "tsx scripts/analyze-lead-spreadsheet.ts",
     "import:lead-spreadsheet:dry-run": "tsx scripts/import-lead-spreadsheet-dry-run.ts",
     "import:lead-spreadsheet:crosscheck-dry-run": "tsx scripts/import-lead-spreadsheet-crosscheck-dry-run.ts",
+    "import:lead-spreadsheet:apply": "tsx scripts/import-lead-spreadsheet-apply.ts",
+    "remediate:lead-import-worklist": "tsx scripts/remediate-lead-import-worklist.ts",
     "dev:cleanup-test-data": "tsx scripts/dev-cleanup-test-data.ts",
     "dev:cleanup-test-data:apply": "tsx scripts/dev-cleanup-test-data.ts --apply --confirm-local-dev",
     "dev:seed-dashboard": "tsx scripts/dev-seed-dashboard.ts",

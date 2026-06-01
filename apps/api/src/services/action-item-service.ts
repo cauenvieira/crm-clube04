@@ -6,7 +6,10 @@ import type { ActionItemListQuery, ActionItemStatus } from "../validation/action
 const followUpActionItemTypes = [
   "follow_up_lead",
   "follow_up_agendado",
-  "lead_sem_interacao"
+  "lead_sem_interacao",
+  "retomar_atendimento",
+  "fazer_follow_up",
+  "revisar_lideranca"
 ] as const;
 
 const openActionItemStatuses: readonly ActionItemStatus[] = [

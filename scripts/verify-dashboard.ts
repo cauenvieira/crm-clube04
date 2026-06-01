@@ -20,7 +20,11 @@ async function main() {
   assert(dashboard.body.includes('id="btn-update"'), "Dashboard sem botao Atualizar");
   assert(dashboard.body.includes('id="limit"'), "Dashboard sem campo de limit");
   assert(dashboard.body.includes("Agora / Prioridade"), "Dashboard sem secao Agora / Prioridade");
-  assert(dashboard.body.includes("Leads em risco"), "Dashboard sem secao Leads em risco");
+  assert(dashboard.body.includes("Fila operacional"), "Dashboard sem secao Fila operacional");
+  assert(dashboard.body.includes('id="list-retomar-atendimento"'), "Dashboard sem lista Retomar atendimento");
+  assert(dashboard.body.includes('id="list-follow-ups-agendados"'), "Dashboard sem lista Follow-ups agendados");
+  assert(dashboard.body.includes('id="list-revisao-lideranca"'), "Dashboard sem lista Revisao lideranca");
+  assert(dashboard.body.includes('id="list-novos-leads"'), "Dashboard sem lista Novos leads");
   assert(dashboard.body.includes("Movimento recente"), "Dashboard sem secao Movimento recente");
 
   const appJs = await getText("/dashboard/app.js");
