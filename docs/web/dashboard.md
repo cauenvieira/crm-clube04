@@ -1,90 +1,130 @@
-# Dashboard UX v2
+# Dashboard UX v3 (React/Vite)
 
-Painel local/dev para visualizacao operacional humana, com foco de uso diario da equipe.
+Painel local/dev para operacao diaria de leads e action_items.
 
 ## URL
 
 - `http://localhost:3000/dashboard`
 
-## Como usar
+## Tecnologia
 
-1. Abrir a URL no navegador.
-2. Informar a API key no campo "API key".
-3. Ajustar `limit` (default `10`, max `50`) se necessario.
-4. Clicar em "Atualizar".
-5. Opcional: ajustar limite por lista (`1` a `50`).
+- frontend em React + TypeScript;
+- bundle gerado por Vite em `apps/web/dist`;
+- API continua servindo:
+  - `/dashboard`
+  - `/dashboard/app.js`
+  - `/dashboard/styles.css`
+- sem fallback silencioso para bundle ausente:
+  - se `apps/web/dist` nao existir, `/dashboard/app.js` e `/dashboard/styles.css` retornam erro explicito.
 
-## Armazenamento da API key
+## Navegacao
 
-- A API key e salva apenas no `localStorage` do navegador local.
-- O botao "Limpar API key" remove esse valor do navegador.
-- Nenhum segredo fica hardcoded no codigo do painel.
+Menu lateral:
 
-## Acoes no painel
+- Hoje
+- Leads (placeholder local nesta etapa)
+- Novo Lead
+- Configuracoes
 
-- "Concluir" envia `POST /api/action-items/:id/complete` com `Content-Type: application/json` e body `{}`.
-- "Ignorar" envia `POST /api/action-items/:id/cancel` com `Content-Type: application/json` e body `{}`.
-- "Ignorar" pede confirmacao antes de enviar.
-- Depois da acao, o painel recarrega summary e worklist.
-- O painel mostra feedback curto de sucesso/erro apos atualizar ou executar acao.
+## Configuracao de API key
 
-## Estrutura visual
+1. Abrir `Configuracoes`.
+2. Informar o valor de `CRM_API_SECRET`.
+3. Salvar.
 
-- Bloco "Agora / Prioridade":
-  - Acoes vencidas
-  - Acoes pendentes
-- Bloco "Leads em risco":
-  - Follow-up vencido
-  - Sem interacao 24h
-- Bloco "Movimento recente":
-  - Ultimas mensagens inbound
+Comportamento:
 
-## Datas e timezone
+- API key salva somente no `localStorage` local;
+- botao `Limpar` remove do navegador;
+- nenhum segredo hardcoded no frontend.
 
-- Datas sao exibidas em formato local `pt-BR` no timezone `America/Sao_Paulo`.
-- Valores internos continuam em ISO na API.
-- Campos sem valor exibem "Sem registro".
+## Tela Hoje
 
-## Debug
-
-- IDs e campos tecnicos ficam em `<details>` por item, para nao poluir a leitura principal.
-
-## Fonte de dados
+Usa:
 
 - `GET /api/operational-summary`
 - `GET /api/operational-worklist?limit=<n>`
 
+Secoes operacionais:
+
+- Acoes vencidas
+- Acoes pendentes
+- Retomar atendimento
+- Follow-ups agendados
+- Revisao lideranca
+- Novos leads
+- Ultimas mensagens inbound
+
+Acoes por item:
+
+- Abrir WhatsApp
+- Concluir (`POST /api/action-items/:id/complete`)
+- Ignorar (`POST /api/action-items/:id/cancel`)
+
+## Tela Novo Lead
+
+Form de entrada manual via `POST /api/manual-leads`.
+
+Obrigatorios:
+
+- Tutor
+- Telefone
+- Metodo de entrada
+- Atendente
+- Proxima acao
+- Data Prox Acao
+
+Opcionais:
+
+- Nome do doguinho
+- Raca
+- Peso aproximado
+- Servico de interesse
+- Observacao inicial
+
+Fluxo:
+
+- valida campos obrigatorios no frontend;
+- envia payload para API;
+- mostra `contact_id`, `lead_id`, `action_item_id` e flags de `created/duplicate`;
+- permite busca rapida por telefone/nome com `GET /api/leads/search`.
+
+## Datas e timezone
+
+- exibicao local em `pt-BR` para operacao humana;
+- backend segue ISO UTC e criterio operacional `America/Sao_Paulo`.
+
 ## Limitacoes atuais
 
-- Escopo local/dev, sem autenticacao real de usuario.
-- Sem frontend complexo (HTML/CSS/JS vanilla).
+- escopo local/dev;
+- sem login de usuario;
+- API key em localStorage;
+- sem WAHA real.
 
 ## Evidencia visual
 
-Procedimento recomendado no ambiente atual:
-
 1. Abrir `http://localhost:3000/dashboard`.
-2. Validar estados (sem chave, chave invalida, chave valida, limit, acoes).
-3. Tentar screenshot/appshot via browser tooling do Codex.
+2. Validar estados: sem chave, chave invalida, chave valida.
+3. Validar cards/listas, botoes de acao e limit.
+4. Tentar screenshot/appshot quando tooling permitir.
 
-Observacao pratica:
+Se screenshot falhar por timeout/CDP, usar fallback estrutural no relatorio:
 
-- No ambiente local atual, screenshot no Chrome extension pode falhar por timeout de CDP.
-- Screenshot no Codex In-app Browser (iab) tem sido mais estavel.
+- pagina carregou
+- estados testados
+- contagem de cards/listas
+- botoes visiveis
+- `hasHorizontalOverflow=false`
+- mensagens de erro/sucesso observadas
 
-Politica de arquivo:
+## Verificacao automatizada
 
-- Nao versionar screenshots no repositorio.
-- Se precisar salvar arquivo local, usar `.tmp/`.
-- Preferir apenas referencia no relatorio final.
-
-Fallback obrigatorio (se screenshot falhar):
-
-- Registrar evidencia visual estrutural minima:
-  - pagina carregou
-  - estados testados
-  - contagem de cards
-  - contagem de listas
-  - botoes visiveis
-  - `hasHorizontalOverflow=false`
-  - mensagens de erro/sucesso observadas
+- `npm run verify:dashboard` valida rota/asset/strings criticas.
+- `npm run verify:frontend` valida fluxo real no navegador:
+  - carrega `/dashboard`
+  - detecta erros de console/page
+  - detecta assets 4xx/5xx
+  - salva API key e confirma persistencia
+  - valida telas Hoje e Novo Lead
+  - cria/busca/repete lead manual com idempotencia
+  - valida `hasHorizontalOverflow=false`

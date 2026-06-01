@@ -7,6 +7,7 @@ import { registerCrmInteractionRoutes } from "./crm-interactions.js";
 import { registerDashboardRoutes } from "./dashboard.js";
 import { registerHealthRoutes } from "./health.js";
 import { registerLeadRoutes } from "./leads.js";
+import { registerManualLeadRoutes } from "./manual-leads.js";
 import { registerMessageRoutes } from "./messages.js";
 import { registerOperationalSummaryRoutes } from "./operational-summary.js";
 import { registerOperationalWorklistRoutes } from "./operational-worklist.js";
@@ -17,6 +18,7 @@ export async function registerRoutes(app: FastifyInstance): Promise<void> {
   await registerDashboardRoutes(app);
   await registerContactRoutes(app);
   await registerLeadRoutes(app);
+  await registerManualLeadRoutes(app);
   await registerConversationRoutes(app);
   await registerMessageRoutes(app);
   await registerCrmInteractionRoutes(app);

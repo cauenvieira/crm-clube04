@@ -3,6 +3,9 @@ import { asArray, asRecord, asString, assert, assertStatus, request } from "./sm
 type InboundCreateParams = {
   apiBaseUrl: string;
   apiSecret: string | undefined;
+  runId: string;
+  sourceMarker: string;
+  contactName: string;
 };
 
 export type InboundCreateResult = {
@@ -21,26 +24,30 @@ type InboundIdempotencyParams = {
   providerConversationId: string;
   fromNumber: string;
   contactId: string;
+  runId: string;
+  sourceMarker: string;
+  contactName: string;
 };
 
 export async function runWhatsappInboundCreate(
   params: InboundCreateParams
 ): Promise<InboundCreateResult> {
   const stamp = Date.now();
+  const conversationToken = `${String(stamp).slice(-6)}${Math.floor(Math.random() * 1000)}`;
   const payload = {
     provider: "waha",
-    providerMessageId: `wh-smoke-msg-${stamp}`,
-    providerConversationId: `55119999${stamp}`,
-    fromNumber: `55119999${stamp}`,
+    providerMessageId: `wh-smoke-msg-${params.runId}-${stamp}`,
+    providerConversationId: `55119999${conversationToken}`,
+    fromNumber: `55119999${conversationToken}`,
     toNumber: "5511470000000",
-    contactName: "Smoke WhatsApp",
+    contactName: params.contactName,
     body: "Ola, gostaria de saber valores de banho",
     messageType: "text",
     direction: "inbound",
     timestamp: new Date().toISOString(),
     source: "whatsapp",
-    campaign: "smoke_webhook",
-    rawPayload: { source: "smoke-api-webhook" }
+    campaign: params.sourceMarker,
+    rawPayload: { source: params.sourceMarker, testRunId: params.runId }
   };
 
   const response = await request(
@@ -77,14 +84,14 @@ export async function runWhatsappInboundIdempotency(
     providerConversationId: params.providerConversationId,
     fromNumber: params.fromNumber,
     toNumber: "5511470000000",
-    contactName: "Smoke WhatsApp",
+    contactName: params.contactName,
     body: "Mensagem repetida",
     messageType: "text",
     direction: "inbound",
     timestamp: new Date().toISOString(),
     source: "whatsapp",
-    campaign: "smoke_webhook",
-    rawPayload: { source: "smoke-api-webhook-repeat" }
+    campaign: params.sourceMarker,
+    rawPayload: { source: params.sourceMarker, testRunId: params.runId }
   };
 
   const response = await request(

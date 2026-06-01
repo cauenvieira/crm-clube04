@@ -3,32 +3,54 @@ import { resolve } from "node:path";
 
 import type { FastifyInstance } from "fastify";
 
-const assetsRootCandidates = [
+const builtAssetsRootCandidates = [
+  resolve(process.cwd(), "apps/web/dist"),
+  resolve("/app/apps/web/dist")
+];
+
+const publicAssetsRootCandidates = [
   resolve(process.cwd(), "apps/web/public"),
   resolve("/app/apps/web/public")
 ];
 
 export async function registerDashboardRoutes(app: FastifyInstance): Promise<void> {
   app.get("/dashboard", async (_request, reply) => {
-    const html = await readDashboardAsset("dashboard.html");
+    const html = await readDashboardHtml();
     return reply.type("text/html; charset=utf-8").send(html);
   });
 
   app.get("/dashboard/app.js", async (_request, reply) => {
-    const js = await readDashboardAsset("app.js");
+    const js = await readRequiredDashboardBundle("app.js");
     return reply.type("application/javascript; charset=utf-8").send(js);
   });
 
   app.get("/dashboard/styles.css", async (_request, reply) => {
-    const css = await readDashboardAsset("styles.css");
+    const css = await readRequiredDashboardBundle("style.css");
     return reply.type("text/css; charset=utf-8").send(css);
   });
 }
 
-async function readDashboardAsset(fileName: "dashboard.html" | "app.js" | "styles.css") {
+async function readDashboardHtml() {
+  return await readFromCandidates(publicAssetsRootCandidates, "dashboard.html");
+}
+
+async function readRequiredDashboardBundle(fileName: "app.js" | "style.css") {
+  try {
+    return await readFromCandidates(builtAssetsRootCandidates, fileName);
+  } catch (error) {
+    throw new Error(
+      `Bundle do dashboard nao encontrado (${fileName}). Rode npm run build -w @clube04/web antes de abrir /dashboard. ${String(error)}`
+    );
+  }
+}
+
+async function readFromCandidates(
+  rootCandidates: string[],
+  fileName: "dashboard.html" | "app.js" | "style.css"
+) {
   const errors: unknown[] = [];
 
-  for (const root of assetsRootCandidates) {
+  for (const root of rootCandidates) {
     try {
       return await readFile(resolve(root, fileName), "utf8");
     } catch (error) {

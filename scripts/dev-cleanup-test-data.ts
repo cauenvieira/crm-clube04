@@ -58,6 +58,13 @@ const explicitPayloadSourceMarkers = [
   "n8n_direct_test"
 ];
 
+const dynamicTestPrefix = "test_run:%";
+const dynamicRunLike = "%crm_test_%";
+const dynamicTutorPrefix = "TESTE_CRM_%";
+const legacySmokeTutorPrefix = "Smoke Manual Lead%";
+const dynamicNotePattern = "%TEST_RUN_ID=%";
+const dynamicAttendantPrefix = "TESTE_AUTOMACAO_%";
+
 type CleanupTargets = {
   contactIds: string[];
   leadIds: string[];
@@ -117,6 +124,19 @@ async function main() {
 }
 
 async function collectTargets(client: PoolClient): Promise<CleanupTargets> {
+  const markerContactIds = await selectIds(
+    client,
+    `
+      select id
+      from contacts
+      where source = any($1::text[])
+         or source like $2
+         or name like $3
+         or name like $4
+    `,
+    [explicitSourceMarkers, dynamicTestPrefix, dynamicTutorPrefix, legacySmokeTutorPrefix]
+  );
+
   const leadIds = await selectIds(
     client,
     `
@@ -124,16 +144,15 @@ async function collectTargets(client: PoolClient): Promise<CleanupTargets> {
       from leads
       where source = any($1::text[])
          or campaign = any($2::text[])
+         or source like $3
+         or campaign like $3
+         or contact_id = any($4::uuid[])
     `,
-    [explicitSourceMarkers, explicitCampaignMarkers]
+    [explicitSourceMarkers, explicitCampaignMarkers, dynamicTestPrefix, markerContactIds]
   );
 
   const candidateContactIds = uniqueIds([
-    ...(await selectIds(
-      client,
-      "select id from contacts where source = any($1::text[])",
-      [explicitSourceMarkers]
-    )),
+    ...markerContactIds,
     ...(await selectIds(
       client,
       "select distinct contact_id as id from leads where id = any($1::uuid[]) and contact_id is not null",
@@ -180,10 +199,12 @@ async function collectTargets(client: PoolClient): Promise<CleanupTargets> {
       `
         select id
         from messages
-        where provider_message_id ilike any($1::text[])
-           or coalesce(raw_payload->>'source', '') = any($2::text[])
+      where provider_message_id ilike any($1::text[])
+         or coalesce(raw_payload->>'source', '') = any($2::text[])
+         or coalesce(raw_payload->>'testRunId', '') <> ''
+         or coalesce(provider_message_id, '') ilike $3
       `,
-      [explicitProviderMessagePatterns, explicitPayloadSourceMarkers]
+      [explicitProviderMessagePatterns, explicitPayloadSourceMarkers, dynamicRunLike]
     )),
     ...(await selectIds(
       client,
@@ -200,8 +221,11 @@ async function collectTargets(client: PoolClient): Promise<CleanupTargets> {
       where type like 'dev_seed_%'
          or lead_id = any($1::uuid[])
          or (contact_id = any($2::uuid[]) and title ilike 'Dev Seed %')
+         or (contact_id = any($2::uuid[]) and coalesce(reason, '') like 'manual_lead_entry:%')
+         or coalesce(reason, '') like $3
+         or coalesce(title, '') like $4
     `,
-    [leadIds, safeContactIds]
+    [leadIds, safeContactIds, dynamicTestPrefix, dynamicTutorPrefix]
   );
 
   const interactionIds = await selectIds(
@@ -213,8 +237,10 @@ async function collectTargets(client: PoolClient): Promise<CleanupTargets> {
          or responsible in ('smoke', 'verify-script', 'dev-seed')
          or lead_id = any($1::uuid[])
          or contact_id = any($2::uuid[])
+         or responsible like $3
+         or notes like $4
     `,
-    [leadIds, safeContactIds]
+    [leadIds, safeContactIds, dynamicAttendantPrefix, dynamicNotePattern]
   );
 
   const deletableContactIds = await selectIds(

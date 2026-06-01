@@ -27,7 +27,7 @@ O ambiente atual suporta:
 - Redis
 - Docker Compose
 - n8n local
-- HTML/CSS/JS vanilla para dashboard local/dev
+- React + Vite + TypeScript para dashboard local/dev
 
 ## Servicos Docker locais
 
@@ -57,6 +57,8 @@ O ambiente atual suporta:
 - `npm run verify:operational-summary`
 - `npm run verify:operational-worklist`
 - `npm run verify:dashboard`
+- `npm run verify:frontend`
+- `npm run verify:data-cleanliness`
 - `npm run verify:all`
 - `npm run n8n:import:workflows`
 - `npm run n8n:list:workflows`
@@ -65,6 +67,7 @@ Regra atual:
 
 - `npm run verify:all` e a bateria recomendada antes de entrega/commit.
 - `smoke:api` e `verify:*` devem rodar em sequencia, nunca em paralelo, porque usam o mesmo banco local.
+- scripts de verify/smoke usam `runId` e cleanup automatico para reduzir residuos.
 
 ## Workflow n8n oficial
 
@@ -102,6 +105,8 @@ Regra importante:
 - `POST /api/action-items/:id/cancel`
 - `GET /api/operational-summary`
 - `GET /api/operational-worklist`
+- `POST /api/manual-leads`
+- `GET /api/leads/search`
 - `GET /dashboard`
 - `POST /api/webhooks/whatsapp/inbound`
 
@@ -111,11 +116,13 @@ Ultima bateria conhecida:
 
 - `npm run build`: OK
 - `npm run lint`: OK
-- `npm run smoke:api`: `19/19` OK
+- `npm run smoke:api`: `22/22` OK
 - `npm run verify:action-items`: `8/8` OK
 - `npm run verify:operational-summary`: `6/6` OK
 - `npm run verify:operational-worklist`: `5/5` OK
 - `npm run verify:dashboard`: OK
+- `npm run verify:frontend`: OK
+- `npm run verify:data-cleanliness`: OK
 - `npm run n8n:list:workflows`: `52RxSSXMQ4Zaitnw|whatsapp-inbound-test`
 
 ## Commits recentes relevantes
@@ -137,7 +144,8 @@ Ultima bateria conhecida:
 - fechamento automatico de follow-up por crm_interaction;
 - resumo operacional com timezone `America/Sao_Paulo`;
 - worklist operacional;
-- dashboard local/dev;
+- dashboard local/dev em React/Vite;
+- entrada manual de lead com dedupe de lead ativo;
 - processo de validacao sequencial;
 - validacao visual com browser tooling e fallback estrutural;
 - disciplina de tokens para prompts e relatorios.

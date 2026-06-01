@@ -28,9 +28,13 @@ Regras de seguranca:
 Marcadores explicitos de limpeza:
 
 - `source`/`campaign` de smoke/verify/dev-seed
+- `source`/`campaign` com prefixo `test_run:`
+- `contacts.name` com prefixo `TESTE_CRM_`
+- `crm_interactions.notes` com marcador `TEST_RUN_ID=`
 - `campaign = n8n_direct_test`
 - `provider_message_id` e `provider_conversation_id` com prefixos de teste conhecidos
 - `raw_payload.source` conhecido de testes locais (ex.: `powershell-direct-test`)
+- `raw_payload.testRunId` gerado pelos verifies/smoke novos
 
 Relatorio de ambiguos no dry-run:
 
@@ -89,6 +93,12 @@ Executar bateria completa antes de commit:
 npm run verify:all
 ```
 
+Validar residuos apos bateria (tambem roda dentro de `verify:all`):
+
+```powershell
+npm run verify:data-cleanliness
+```
+
 Preparar dashboard limpo para avaliacao visual (apos validate):
 
 ```powershell
@@ -100,6 +110,7 @@ Observacao:
 
 - `smoke:api` e scripts `verify:*` criam dados artificiais novamente no banco local.
 - Por isso, depois de `npm run verify:all`, rode cleanup apply + seed para voltar ao estado limpo de demonstracao.
+- os verifies/smoke atuais usam `runId` unico e tentam cleanup automatico no `finally`, inclusive em falha.
 
 ## Alerta
 

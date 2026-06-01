@@ -3,110 +3,11 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>CRM Clube04 - Painel Operacional</title>
+    <title>Painel Operacional | CRM Clube04</title>
     <link rel="stylesheet" href="/dashboard/styles.css" />
   </head>
   <body>
-    <main class="layout">
-      <header class="panel-header panel-card">
-        <div class="brand">
-          <p class="brand-tag">Clube04 CRM</p>
-          <h1>CRM Clube04</h1>
-          <p class="subtitle">Painel Operacional</p>
-        </div>
-        <div class="meta" id="summary-meta">
-          <div class="meta-item">
-            <span class="meta-label">Data operacional</span>
-            <strong id="meta-business-date">-</strong>
-          </div>
-          <div class="meta-item">
-            <span class="meta-label">Timezone</span>
-            <strong id="meta-timezone">-</strong>
-          </div>
-          <div class="meta-item">
-            <span class="meta-label">Atualizado em</span>
-            <strong id="meta-generated-at">-</strong>
-          </div>
-          <div class="meta-item">
-            <span class="meta-label">Janela do dia</span>
-            <strong id="meta-window">-</strong>
-          </div>
-        </div>
-      </header>
-
-      <section class="controls panel-card">
-        <div class="control-fields">
-          <label>
-            API key
-            <input id="api-key" type="password" placeholder="Informe x-crm-api-key" />
-          </label>
-          <label>
-            Limite por lista
-            <input id="limit" type="number" min="1" max="50" value="10" />
-          </label>
-        </div>
-        <div class="buttons">
-          <button id="btn-update" type="button" class="btn-primary">Atualizar</button>
-          <button id="btn-clear-key" type="button" class="btn-secondary">Limpar API key</button>
-        </div>
-        <p class="help-text">
-          Sem API key valida, o painel nao carrega dados de /api.
-        </p>
-      </section>
-
-      <section class="status">
-        <p id="loading" class="status-line hidden">Carregando dados...</p>
-        <p id="error" class="status-line status-error hidden"></p>
-        <p id="feedback" class="status-line status-success hidden"></p>
-      </section>
-
-      <section class="summary-block">
-        <h2>Resumo rapido</h2>
-        <div class="summary-grid" id="summary-cards"></div>
-      </section>
-
-      <section class="list-grid">
-        <article class="panel-card section-card">
-          <h2>Agora / Prioridade</h2>
-          <div class="split-column">
-            <section>
-              <h3>Acoes vencidas</h3>
-              <div id="list-action-overdue"></div>
-            </section>
-            <section>
-              <h3>Acoes pendentes</h3>
-              <div id="list-action-pending"></div>
-            </section>
-          </div>
-        </article>
-        <article class="panel-card section-card">
-          <h2>Fila operacional</h2>
-          <div class="split-column split-column-double">
-            <section>
-              <h3>Retomar atendimento</h3>
-              <div id="list-retomar-atendimento"></div>
-            </section>
-            <section>
-              <h3>Follow-ups agendados</h3>
-              <div id="list-follow-ups-agendados"></div>
-            </section>
-            <section>
-              <h3>Revisao lideranca</h3>
-              <div id="list-revisao-lideranca"></div>
-            </section>
-            <section>
-              <h3>Novos leads</h3>
-              <div id="list-novos-leads"></div>
-            </section>
-          </div>
-        </article>
-        <article class="panel-card section-card">
-          <h2>Movimento recente</h2>
-          <h3>Ultimas mensagens inbound</h3>
-          <div id="list-messages-inbound"></div>
-        </article>
-      </section>
-    </main>
-    <script src="/dashboard/app.js"></script>
+    <div id="root"></div>
+    <script type="module" src="/dashboard/app.js"></script>
   </body>
 </html>

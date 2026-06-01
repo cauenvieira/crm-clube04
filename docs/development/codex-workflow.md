@@ -87,3 +87,18 @@ Relatorio: arquivos alterados + decisoes + validacoes + riscos.
 
 - Rodar `npm run verify:all` em sequencia (sem paralelo).
 - Depois rodar `git diff` (ou `git diff --stat`) e `git status`.
+
+## 8) Regra obrigatoria para novas funcionalidades
+
+Sempre que uma feature for criada ou alterada:
+
+1. identificar os fluxos que mudaram;
+2. atualizar/criar smoke, verify e (quando frontend) teste real de navegador;
+3. usar `runId` unico por execucao para marcar dados artificiais;
+4. garantir cleanup automatico em `finally`, inclusive em falha;
+5. reportar no fechamento:
+   - testes adicionados/alterados;
+   - comportamento coberto;
+   - lacunas restantes.
+
+Nao considerar feature de frontend pronta sem `verify:frontend` ou validacao visual equivalente documentada.

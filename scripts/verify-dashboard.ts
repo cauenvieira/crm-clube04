@@ -16,16 +16,15 @@ async function main() {
   const dashboard = await getText("/dashboard");
   assertStatus(dashboard, 200);
   assert(dashboard.body.includes("Painel Operacional"), "Dashboard nao contem titulo esperado");
-  assert(dashboard.body.includes('id="api-key"'), "Dashboard sem campo de API key");
-  assert(dashboard.body.includes('id="btn-update"'), "Dashboard sem botao Atualizar");
-  assert(dashboard.body.includes('id="limit"'), "Dashboard sem campo de limit");
-  assert(dashboard.body.includes("Agora / Prioridade"), "Dashboard sem secao Agora / Prioridade");
-  assert(dashboard.body.includes("Fila operacional"), "Dashboard sem secao Fila operacional");
-  assert(dashboard.body.includes('id="list-retomar-atendimento"'), "Dashboard sem lista Retomar atendimento");
-  assert(dashboard.body.includes('id="list-follow-ups-agendados"'), "Dashboard sem lista Follow-ups agendados");
-  assert(dashboard.body.includes('id="list-revisao-lideranca"'), "Dashboard sem lista Revisao lideranca");
-  assert(dashboard.body.includes('id="list-novos-leads"'), "Dashboard sem lista Novos leads");
-  assert(dashboard.body.includes("Movimento recente"), "Dashboard sem secao Movimento recente");
+  assert(dashboard.body.includes('id="root"'), "Dashboard sem root React");
+  assert(
+    dashboard.body.includes('/dashboard/styles.css'),
+    "Dashboard sem referencia a /dashboard/styles.css"
+  );
+  assert(
+    dashboard.body.includes('/dashboard/app.js'),
+    "Dashboard sem referencia a /dashboard/app.js"
+  );
 
   const appJs = await getText("/dashboard/app.js");
   assertStatus(appJs, 200);
@@ -46,16 +45,41 @@ async function main() {
     "app.js nao contem chamada para /api/operational-worklist"
   );
   assert(
+    appJs.body.includes("/api/manual-leads"),
+    "app.js nao contem chamada para /api/manual-leads"
+  );
+  assert(
+    appJs.body.includes("/api/leads/search"),
+    "app.js nao contem chamada para /api/leads/search"
+  );
+  assert(
+    !appJs.body.includes("Build do frontend React nao encontrado"),
+    "app.js retornou fallback de erro em vez do bundle React real"
+  );
+  assert(
     appJs.body.includes("x-crm-api-key"),
     "app.js nao contem uso de header x-crm-api-key"
   );
+  assert(
+    appJs.body.includes("createRoot"),
+    "app.js nao parece bundle React/Vite (createRoot ausente)"
+  );
+  assert(appJs.body.includes("Hoje"), "app.js nao contem menu Hoje");
+  assert(appJs.body.includes("Novo Lead"), "app.js nao contem menu Novo Lead");
+  assert(appJs.body.includes("Configuracoes"), "app.js nao contem menu Configuracoes");
+  assert(appJs.body.includes("Retomar atendimento"), "app.js nao contem secao Retomar atendimento");
+  assert(appJs.body.includes("Follow-ups agendados"), "app.js nao contem secao Follow-ups agendados");
+  assert(appJs.body.includes("Revisao lideranca"), "app.js nao contem secao Revisao lideranca");
+  assert(appJs.body.includes("Abrir WhatsApp"), "app.js nao contem acao Abrir WhatsApp");
+  assert(appJs.body.includes("Concluir"), "app.js nao contem acao Concluir");
+  assert(appJs.body.includes("Ignorar"), "app.js nao contem acao Ignorar");
 
   console.log("OK - /dashboard responde 200 e contem Painel Operacional");
-  console.log("OK - dashboard contem controles e secoes principais");
+  console.log("OK - dashboard contem root React e referencias de bundle");
   console.log("OK - /dashboard/app.js responde 200");
   console.log("OK - /dashboard/styles.css responde 200");
   console.log("OK - Sem segredo/API key hardcoded detectado");
-  console.log("OK - app.js contem chamadas de summary/worklist e header x-crm-api-key");
+  console.log("OK - app.js contem chamadas API, menu operacional e acoes");
   console.log("");
   console.log("Resumo verify:dashboard: 6/6 passos OK");
 }

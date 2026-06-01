@@ -5,7 +5,6 @@ import {
   assert,
   assertOneOfStatus,
   assertStatus,
-  loadDotEnv,
   request,
   required
 } from "./smoke-api-helpers.js";
@@ -22,10 +21,17 @@ import {
   generateActionItemsIdempotency
 } from "./smoke-action-items.js";
 import { runWhatsappInboundCreate, runWhatsappInboundIdempotency } from "./smoke-whatsapp-inbound.js";
+import { buildRunPayloadSource, buildTestNote, buildTestPhone, buildTestTutorName } from "./test-support/test-data.js";
+import { cleanupByRunId } from "./test-support/test-cleanup.js";
+import { createTestRunContext } from "./test-support/test-run.js";
 
 type TestContext = {
   contactId?: string;
   leadId?: string;
+  manualLeadPhone?: string;
+  manualLeadContactId?: string;
+  manualLeadLeadId?: string;
+  manualLeadActionItemId?: string;
   leadActionItemId?: string;
   cancelActionItemId?: string;
   autoCloseActionItemId?: string;
@@ -37,17 +43,22 @@ type TestContext = {
   webhookFromNumber?: string;
 };
 
-loadDotEnv();
+const run = createTestRunContext("smoke:api", { requireApiSecret: false });
+const apiBaseUrl = run.apiBaseUrl;
+const apiSecret = run.apiSecret || undefined;
+const sourceMarker = buildRunPayloadSource(run);
 
-const apiBaseUrl = (process.env.API_BASE_URL ?? "http://localhost:3000").replace(/\/$/, "");
-const apiSecret = process.env.CRM_API_SECRET?.trim();
 const context: TestContext = {};
 const results: { name: string; ok: boolean; error?: string }[] = [];
+let phoneIndex = 0;
 
 const tests: Array<[string, () => Promise<void>]> = [
   ["GET /health sem header retorna 200", testHealth],
   ["GET /api/contacts sem header respeita protecao", testContactsWithoutHeader],
   ["POST /api/contacts com API key cria ou retorna contato", testCreateContact],
+  ["POST /api/manual-leads cria lead manual", testCreateManualLead],
+  ["POST /api/manual-leads repetido nao duplica lead ativo", testCreateManualLeadIdempotency],
+  ["GET /api/leads/search encontra lead manual por telefone", testLeadSearch],
   ["POST /api/leads cria lead ligado ao contato", testCreateLead],
   ["POST /api/action-items/generate cria acao para novo lead", testGenerateActionItemsCreate],
   ["POST /api/action-items/generate repetido nao duplica acao aberta", testGenerateActionItemsIdempotency],
@@ -72,25 +83,29 @@ main().catch((error) => {
 });
 
 async function main() {
-  for (const [name, test] of tests) {
-    try {
-      await test();
-      results.push({ name, ok: true });
-      console.log(`OK - ${name}`);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      results.push({ name, ok: false, error: message });
-      console.error(`ERRO - ${name}`);
-      console.error(`  ${message}`);
+  try {
+    for (const [name, test] of tests) {
+      try {
+        await test();
+        results.push({ name, ok: true });
+        console.log(`OK - ${name}`);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        results.push({ name, ok: false, error: message });
+        console.error(`ERRO - ${name}`);
+        console.error(`  ${message}`);
+      }
     }
-  }
 
-  const failed = results.filter((result) => !result.ok);
-  console.log("");
-  console.log(`Resumo: ${results.length - failed.length}/${results.length} testes OK`);
-
-  if (failed.length > 0) {
-    process.exitCode = 1;
+    const failed = results.filter((result) => !result.ok);
+    console.log("");
+    console.log(`Resumo: ${results.length - failed.length}/${results.length} testes OK`);
+    if (failed.length > 0) process.exitCode = 1;
+  } finally {
+    const summary = await cleanupByRunId(run.runId);
+    console.log(
+      `Cleanup runId ${summary.runId}: messages=${summary.messages}, interactions=${summary.interactions}, action_items=${summary.actionItems}, conversations=${summary.conversations}, leads=${summary.leads}, contacts=${summary.contacts}`
+    );
   }
 }
 
@@ -109,12 +124,11 @@ async function testContactsWithoutHeader() {
 }
 
 async function testCreateContact() {
-  const stamp = Date.now();
   const response = await request(apiBaseUrl, apiSecret, "POST", "/api/contacts", {
     body: {
-      name: "Smoke Test Tutor",
-      phone: `1198888${stamp}`,
-      source: "smoke-test",
+      name: buildTestTutorName(run, "CONTACT"),
+      phone: nextPhone(),
+      source: sourceMarker,
       type: "lead"
     }
   });
@@ -131,8 +145,9 @@ async function testCreateLead() {
       contact_id: required(context.contactId, "contactId"),
       pet_name: "Smoke",
       service_interest: "banho",
-      source: "smoke-test",
-      campaign: "smoke-api",
+      source: sourceMarker,
+      campaign: sourceMarker,
+      assigned_to: run.attendantMarker,
       status: "novo_lead"
     }
   });
@@ -140,6 +155,79 @@ async function testCreateLead() {
   assertStatus(response, 201);
   const data = asRecord(asRecord(response.body).data);
   context.leadId = asString(data.id, "lead.id");
+}
+
+async function testCreateManualLead() {
+  context.manualLeadPhone = nextPhone();
+  const nextActionAt = getTomorrowYmd();
+
+  const response = await request(apiBaseUrl, apiSecret, "POST", "/api/manual-leads", {
+    body: {
+      tutorName: buildTestTutorName(run, "MANUAL"),
+      phone: required(context.manualLeadPhone, "manualLeadPhone"),
+      entryMethod: sourceMarker,
+      attendant: run.attendantMarker,
+      nextAction: "fazer_follow_up",
+      nextActionAt,
+      serviceInterest: "banho",
+      initialNote: buildTestNote(run, "smoke-manual-create")
+    }
+  });
+
+  assertOneOfStatus(response, [200, 201]);
+  const data = asRecord(asRecord(response.body).data);
+  const created = asRecord(data.created);
+  assert(created.lead === true, "Primeiro cadastro manual deveria criar lead");
+  context.manualLeadContactId = asString(data.contact_id, "manual_lead.contact_id");
+  context.manualLeadLeadId = asString(data.lead_id, "manual_lead.lead_id");
+  context.manualLeadActionItemId = asString(data.action_item_id, "manual_lead.action_item_id");
+}
+
+async function testCreateManualLeadIdempotency() {
+  const nextActionAt = getTomorrowYmd();
+
+  const response = await request(apiBaseUrl, apiSecret, "POST", "/api/manual-leads", {
+    body: {
+      tutorName: buildTestTutorName(run, "MANUAL"),
+      phone: required(context.manualLeadPhone, "manualLeadPhone"),
+      entryMethod: sourceMarker,
+      attendant: run.attendantMarker,
+      nextAction: "fazer_follow_up",
+      nextActionAt,
+      serviceInterest: "banho",
+      initialNote: buildTestNote(run, "smoke-manual-repeat")
+    }
+  });
+
+  assertStatus(response, 200);
+  const data = asRecord(asRecord(response.body).data);
+  const duplicate = asRecord(data.duplicate);
+  assert(
+    duplicate.active_lead === true,
+    "Cadastro manual repetido deveria sinalizar duplicate.active_lead=true"
+  );
+  assert(
+    asString(data.lead_id, "manual_lead_repeat.lead_id") === required(context.manualLeadLeadId, "manualLeadLeadId"),
+    "Cadastro manual repetido nao deveria criar novo lead_id"
+  );
+}
+
+async function testLeadSearch() {
+  const response = await request(
+    apiBaseUrl,
+    apiSecret,
+    "GET",
+    `/api/leads/search?phone=${required(context.manualLeadPhone, "manualLeadPhone")}`
+  );
+  assertStatus(response, 200);
+  const data = asArray(asRecord(response.body).data);
+  assert(data.length > 0, "Busca de lead manual deveria retornar ao menos 1 resultado");
+  const first = asRecord(data[0]);
+  const contact = asRecord(first.contact);
+  assert(
+    asString(contact.id, "lead_search.contact.id") === required(context.manualLeadContactId, "manualLeadContactId"),
+    "Busca deveria incluir o contato manual recem-criado"
+  );
 }
 
 async function testGenerateActionItemsCreate() {
@@ -220,13 +308,12 @@ async function testListLeadByStatus() {
 }
 
 async function testCreateConversation() {
-  const stamp = Date.now();
   const response = await request(apiBaseUrl, apiSecret, "POST", "/api/conversations", {
     body: {
       contact_id: required(context.contactId, "contactId"),
       channel: "whatsapp",
       provider: "manual",
-      provider_conversation_id: `smoke-conv-${stamp}`
+      provider_conversation_id: `smoke-conv-${run.runId}-${Date.now()}`
     }
   });
 
@@ -236,7 +323,7 @@ async function testCreateConversation() {
 }
 
 async function testCreateMessage() {
-  context.providerMessageId = `smoke-msg-${Date.now()}`;
+  context.providerMessageId = `smoke-msg-${run.runId}-${Date.now()}`;
   const response = await createSmokeMessage();
   assertStatus(response, 201);
   const body = asRecord(response.body);
@@ -272,9 +359,9 @@ async function testCreateCrmInteraction() {
       lead_id: required(context.leadId, "leadId"),
       interaction_type: "smoke_test",
       channel: "manual",
-      responsible: "smoke",
+      responsible: run.attendantMarker,
       result: "ok",
-      notes: "Smoke test automatizado",
+      notes: buildTestNote(run, "smoke-crm-interaction"),
       next_action_at: new Date(Date.now() + 86_400_000).toISOString(),
       increment_attempts: true
     }
@@ -307,7 +394,10 @@ async function testActionItems() {
 async function testWhatsappInboundCreate() {
   const result = await runWhatsappInboundCreate({
     apiBaseUrl,
-    apiSecret
+    apiSecret,
+    runId: run.runId,
+    sourceMarker,
+    contactName: buildTestTutorName(run, "WHATSAPP")
   });
   context.webhookContactId = result.contactId;
   context.webhookLeadId = result.leadId;
@@ -327,7 +417,10 @@ async function testWhatsappInboundIdempotency() {
       "webhookProviderConversationId"
     ),
     fromNumber: required(context.webhookFromNumber, "webhookFromNumber"),
-    contactId: required(context.webhookContactId, "webhookContactId")
+    contactId: required(context.webhookContactId, "webhookContactId"),
+    runId: run.runId,
+    sourceMarker,
+    contactName: buildTestTutorName(run, "WHATSAPP")
   });
 }
 
@@ -343,7 +436,20 @@ async function createSmokeMessage() {
       to_number: "1140000000",
       body: "Smoke test mensagem",
       timestamp: new Date().toISOString(),
-      raw_payload: { source: "smoke-api" }
+      raw_payload: { source: sourceMarker, testRunId: run.runId }
     }
   });
+}
+
+function nextPhone() {
+  phoneIndex += 1;
+  return buildTestPhone(run, phoneIndex);
+}
+
+function getTomorrowYmd() {
+  const nextActionAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+  const yyyy = nextActionAt.getFullYear();
+  const mm = String(nextActionAt.getMonth() + 1).padStart(2, "0");
+  const dd = String(nextActionAt.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
 }

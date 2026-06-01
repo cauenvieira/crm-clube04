@@ -5,21 +5,21 @@ import {
   assert,
   assertOneOfStatus,
   assertStatus,
-  loadDotEnv,
   request
 } from "./smoke-api-helpers.js";
-
-loadDotEnv();
-
-const apiBaseUrl = (process.env.API_BASE_URL ?? "http://localhost:3000").replace(/\/$/, "");
-const apiSecret = process.env.CRM_API_SECRET?.trim();
+import { buildRunPayloadSource, buildTestPhone, buildTestTutorName } from "./test-support/test-data.js";
+import { cleanupByRunId } from "./test-support/test-cleanup.js";
+import { createTestRunContext } from "./test-support/test-run.js";
 
 type VerifyContext = {
   apiBaseUrl: string;
   apiSecret: string;
 };
 
+const run = createTestRunContext("verify:operational-summary");
+const sourceMarker = buildRunPayloadSource(run);
 const results: Array<{ step: string; ok: boolean; error?: string }> = [];
+let phoneIndex = 0;
 
 main().catch((error) => {
   console.error(error instanceof Error ? error.message : String(error));
@@ -27,42 +27,52 @@ main().catch((error) => {
 });
 
 async function main() {
-  assert(apiSecret, "CRM_API_SECRET nao definido no ambiente/.env para verify:operational-summary");
-  const ctx: VerifyContext = { apiBaseUrl, apiSecret };
+  const ctx: VerifyContext = { apiBaseUrl: run.apiBaseUrl, apiSecret: run.apiSecret };
 
-  const completeSeed = await runStep("Criar lead para item concluido", () =>
-    createLeadSeed(ctx, "summary-complete")
-  );
+  try {
+    const completeSeed = await runStep("Criar lead para item concluido", () =>
+      createLeadSeed(ctx, "SUMMARY_COMPLETE")
+    );
 
-  await runStep("Gerar e concluir um action_item", async () => {
-    await generateActionItems(ctx);
-    const pending = await findActionItem(ctx, completeSeed.leadId, "follow_up_lead", "pendente");
-    await completeActionItem(ctx, pending.id);
-  });
+    await runStep("Gerar e concluir um action_item", async () => {
+      await generateActionItems(ctx);
+      const pending = await findActionItem(ctx, completeSeed.leadId, "follow_up_lead", "pendente");
+      await completeActionItem(ctx, pending.id);
+    });
 
-  const pendingSeed = await runStep("Criar lead para item pendente", () =>
-    createLeadSeed(ctx, "summary-pendente")
-  );
+    const pendingSeed = await runStep("Criar lead para item pendente", () =>
+      createLeadSeed(ctx, "SUMMARY_PENDING")
+    );
 
-  await runStep("Gerar um action_item pendente", async () => {
-    await generateActionItems(ctx);
-    await findActionItem(ctx, pendingSeed.leadId, "follow_up_lead", "pendente");
-  });
+    await runStep("Gerar um action_item pendente", async () => {
+      await generateActionItems(ctx);
+      await findActionItem(ctx, pendingSeed.leadId, "follow_up_lead", "pendente");
+    });
 
-  await runStep("Criar mensagem inbound de hoje", async () => {
-    const conversation = await createConversation(ctx, pendingSeed.contactId, `summary-conv-${Date.now()}`);
-    await createInboundMessage(ctx, conversation.id);
-  });
+    await runStep("Criar mensagem inbound de hoje", async () => {
+      const conversation = await createConversation(
+        ctx,
+        pendingSeed.contactId,
+        `summary-conv-${run.runId}-${Date.now()}`
+      );
+      await createInboundMessage(ctx, conversation.id);
+    });
 
-  await runStep("Validar payload do resumo operacional", async () => {
-    const summary = await getOperationalSummary(ctx);
-    validateSummaryShape(summary);
-  });
+    await runStep("Validar payload do resumo operacional", async () => {
+      const summary = await getOperationalSummary(ctx);
+      validateSummaryShape(summary);
+    });
 
-  const failed = results.filter((result) => !result.ok);
-  console.log("");
-  console.log(`Resumo verify:operational-summary: ${results.length - failed.length}/${results.length} passos OK`);
-  if (failed.length > 0) process.exitCode = 1;
+    const failed = results.filter((result) => !result.ok);
+    console.log("");
+    console.log(`Resumo verify:operational-summary: ${results.length - failed.length}/${results.length} passos OK`);
+    if (failed.length > 0) process.exitCode = 1;
+  } finally {
+    const summary = await cleanupByRunId(run.runId);
+    console.log(
+      `Cleanup runId ${summary.runId}: messages=${summary.messages}, interactions=${summary.interactions}, action_items=${summary.actionItems}, conversations=${summary.conversations}, leads=${summary.leads}, contacts=${summary.contacts}`
+    );
+  }
 }
 
 async function runStep<T>(step: string, fn: () => Promise<T>): Promise<T> {
@@ -81,12 +91,11 @@ async function runStep<T>(step: string, fn: () => Promise<T>): Promise<T> {
 }
 
 async function createLeadSeed(ctx: VerifyContext, label: string) {
-  const stamp = Date.now();
   const contactResponse = await request(ctx.apiBaseUrl, ctx.apiSecret, "POST", "/api/contacts", {
     body: {
-      name: `Verify ${label}`,
-      phone: `11966${Math.floor(Math.random() * 10_000)}${String(stamp).slice(-4)}`,
-      source: "verify-operational-summary",
+      name: buildTestTutorName(run, label),
+      phone: nextPhone(),
+      source: sourceMarker,
       type: "lead"
     }
   });
@@ -99,15 +108,15 @@ async function createLeadSeed(ctx: VerifyContext, label: string) {
       contact_id: contactId,
       pet_name: `Pet ${label}`,
       service_interest: "banho",
-      source: "verify-operational-summary",
-      campaign: "verify-operational-summary",
+      source: sourceMarker,
+      campaign: sourceMarker,
+      assigned_to: run.attendantMarker,
       status: "novo_lead"
     }
   });
   assertStatus(leadResponse, 201);
   const lead = asRecord(asRecord(leadResponse.body).data);
   const leadId = asString(lead.id, "lead.id");
-
   return { contactId, leadId };
 }
 
@@ -167,14 +176,14 @@ async function createInboundMessage(ctx: VerifyContext, conversationId: string) 
     body: {
       conversation_id: conversationId,
       provider: "manual",
-      provider_message_id: `summary-msg-${Date.now()}`,
+      provider_message_id: `summary-msg-${run.runId}-${Date.now()}`,
       direction: "inbound",
       message_type: "text",
       from_number: "11999990001",
       to_number: "1140000000",
       body: "verify operational summary inbound",
       timestamp: new Date().toISOString(),
-      raw_payload: { source: "verify-operational-summary" }
+      raw_payload: { source: sourceMarker, testRunId: run.runId }
     }
   });
   assertStatus(response, 201);
@@ -226,4 +235,9 @@ function validateSummaryShape(summary: Record<string, unknown>) {
     assert(typeof ultimaInboundEm === "string", "messages.ultimaInboundEm deveria ser string ou null");
     assert(!Number.isNaN(new Date(ultimaInboundEm).getTime()), "messages.ultimaInboundEm nao e ISO valido");
   }
+}
+
+function nextPhone() {
+  phoneIndex += 1;
+  return buildTestPhone(run, phoneIndex);
 }

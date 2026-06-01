@@ -11,7 +11,7 @@ Substituir controles manuais de leads, recorrencia, pacotes e follow-up por um s
 ```text
 apps/
   api/      API HTTP do CRM
-  web/      interface web local/dev
+  web/      dashboard operacional local/dev (React + Vite + TypeScript)
   worker/   jobs de sincronizacao, classificacao e Acao do Dia
 packages/
   shared/   utilitarios e tipos compartilhados
@@ -80,6 +80,12 @@ Inicie a API local:
 npm run dev
 ```
 
+Build do frontend local (bundle React servido em `/dashboard`):
+
+```bash
+npm run build -w @clube04/web
+```
+
 Verifique a saude da API:
 
 ```bash
@@ -110,12 +116,17 @@ npm run worker
 - `npm run start`: inicia a API compilada.
 - `npm run worker`: executa o health check basico do worker.
 - `npm run lint`: executa checagem TypeScript nos workspaces configurados.
+- `npm run dev -w @clube04/web`: inicia Vite dev server do frontend.
+- `npm run build -w @clube04/web`: gera bundle do frontend em `apps/web/dist`.
 - `npm run smoke:api`: executa um smoke test HTTP contra a API local.
 - `npm run verify:action-items`: valida o ciclo de vida de action_items.
 - `npm run verify:operational-summary`: valida o endpoint de resumo operacional.
 - `npm run verify:operational-worklist`: valida o endpoint de worklist operacional.
 - `npm run verify:dashboard`: valida o painel web local.
+- `npm run verify:frontend`: valida o dashboard real em navegador (Playwright).
+- `npm run verify:data-cleanliness`: valida residuos abertos de teste na fila.
 - `npm run verify:all`: executa a bateria completa recomendada antes de commit.
+- `npm run verify:all:no-cleanup`: executa a mesma bateria sem cleanup final (debug).
 - `npm run dev:cleanup-test-data`: varredura dry-run de dados artificiais de teste.
 - `npm run dev:cleanup-test-data:apply`: aplica limpeza segura de dados artificiais de teste.
 - `npm run dev:seed-dashboard`: cria massa minima de demonstracao para dashboard local.
@@ -214,9 +225,11 @@ Rotas principais desta etapa:
 - `GET /api/contacts/:id`
 - `PATCH /api/contacts/:id`
 - `POST /api/leads`
+- `GET /api/leads/search`
 - `GET /api/leads`
 - `GET /api/leads/:id`
 - `PATCH /api/leads/:id`
+- `POST /api/manual-leads`
 - `POST /api/conversations`
 - `GET /api/conversations`
 - `GET /api/conversations/:id`
@@ -237,6 +250,17 @@ Rotas principais desta etapa:
 Painel web local:
 
 - `http://localhost:3000/dashboard`
+
+Fluxo recomendado:
+
+1. abrir `Configuracoes` e salvar `CRM_API_SECRET` como API key local;
+2. usar `Hoje` para executar fila operacional;
+3. usar `Novo Lead` para cadastro manual sem planilha.
+
+Observacao tecnica:
+
+- `/dashboard/app.js` e `/dashboard/styles.css` servem o bundle real do Vite em `apps/web/dist`.
+- Se o bundle nao existir, a API retorna erro explicito para evitar fallback enganoso.
 
 Exemplo rapido no PowerShell:
 
@@ -282,7 +306,7 @@ Com o Docker Compose rodando, a validacao recomendada antes de entrega/commit e:
 npm run verify:all
 ```
 
-Esse comando executa em sequencia build, lint, smoke da API, verifies operacionais, verify do dashboard e listagem do workflow n8n.
+Esse comando executa em sequencia build, lint, smoke da API, verifies operacionais, verify do dashboard, verify frontend real, listagem n8n e cleanup seguro.
 
 Para rodar apenas o smoke test HTTP contra a API local:
 
@@ -306,6 +330,9 @@ Implementado:
 - `GET /api/operational-summary`;
 - `GET /api/operational-worklist`;
 - painel web local/dev em `GET /dashboard`;
+- frontend do dashboard migrado para React/Vite;
+- endpoint transacional `POST /api/manual-leads`;
+- busca operacional `GET /api/leads/search`;
 - verificacoes operacionais `verify:*` e bateria sequencial `verify:all`;
 - workflow n8n versionado com ID estavel.
 

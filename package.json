@@ -18,7 +18,10 @@
     "verify:operational-summary": "tsx scripts/verify-operational-summary.ts",
     "verify:operational-worklist": "tsx scripts/verify-operational-worklist.ts",
     "verify:dashboard": "tsx scripts/verify-dashboard.ts",
-    "verify:all": "npm run build && npm run lint && npm run smoke:api && npm run verify:action-items && npm run verify:operational-summary && npm run verify:operational-worklist && npm run verify:dashboard && npm run n8n:list:workflows",
+    "verify:frontend": "playwright test",
+    "verify:data-cleanliness": "tsx scripts/verify-data-cleanliness.ts",
+    "verify:all": "tsx scripts/run-verify-all.ts",
+    "verify:all:no-cleanup": "tsx scripts/run-verify-all.ts --no-cleanup",
     "analyze:lead-spreadsheet": "tsx scripts/analyze-lead-spreadsheet.ts",
     "import:lead-spreadsheet:dry-run": "tsx scripts/import-lead-spreadsheet-dry-run.ts",
     "import:lead-spreadsheet:crosscheck-dry-run": "tsx scripts/import-lead-spreadsheet-crosscheck-dry-run.ts",
@@ -34,6 +37,7 @@
     "node": ">=20.0.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.60.0",
     "@types/node": "^20.14.10",
     "tsx": "^4.16.2",
     "typescript": "^5.5.3"

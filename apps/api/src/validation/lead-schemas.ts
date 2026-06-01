@@ -56,6 +56,15 @@ export const leadListQuerySchema = paginationQuerySchema.extend({
   campaign: z.string().optional()
 });
 
+export const leadSearchQuerySchema = z.object({
+  phone: z.string().trim().min(1).optional(),
+  q: z.string().trim().min(1).optional(),
+  limit: z.coerce.number().int().min(1).max(50).default(10)
+}).refine((data) => Boolean(data.phone || data.q), {
+  message: "Informe phone ou q"
+});
+
 export type LeadCreateInput = z.infer<typeof leadCreateSchema>;
 export type LeadPatchInput = z.infer<typeof leadPatchSchema>;
 export type LeadListQuery = z.infer<typeof leadListQuerySchema>;
+export type LeadSearchQuery = z.infer<typeof leadSearchQuerySchema>;

@@ -78,6 +78,88 @@ Atualizar:
 curl.exe -X PATCH "$base/api/leads/LEAD_ID" -H "Content-Type: application/json" -H "x-crm-api-key: $apiKey" -d "{\"status\":\"em_atendimento\",\"next_action_at\":\"2026-06-01T12:00:00.000Z\"}"
 ```
 
+Busca simples para evitar duplicidade no cadastro manual:
+
+```powershell
+curl.exe "$base/api/leads/search?phone=5511999999999&limit=10" -H "x-crm-api-key: $apiKey"
+curl.exe "$base/api/leads/search?q=Maria&limit=10" -H "x-crm-api-key: $apiKey"
+```
+
+Retorno minimo:
+
+- `contact`
+- `active_lead` (quando existir)
+- `open_action_items` (quando existir)
+
+## Manual Leads
+
+Endpoint transacional para cadastro manual operacional:
+
+```text
+POST /api/manual-leads
+```
+
+Payload:
+
+```json
+{
+  "tutorName": "Maria Manual",
+  "phone": "11999990000",
+  "entryMethod": "whatsapp",
+  "attendant": "equipe",
+  "nextAction": "fazer_follow_up",
+  "nextActionAt": "2026-06-02",
+  "petName": "Mel",
+  "breed": "Shih tzu",
+  "estimatedWeight": "8kg",
+  "serviceInterest": "banho",
+  "initialNote": "Primeiro contato manual"
+}
+```
+
+Exemplo PowerShell:
+
+```powershell
+$body = @{
+  tutorName = "Maria Manual"
+  phone = "11999990000"
+  entryMethod = "whatsapp"
+  attendant = "equipe"
+  nextAction = "fazer_follow_up"
+  nextActionAt = "2026-06-02"
+  petName = "Mel"
+  breed = "Shih tzu"
+  estimatedWeight = "8kg"
+  serviceInterest = "banho"
+  initialNote = "Primeiro contato manual"
+} | ConvertTo-Json
+
+Invoke-RestMethod `
+  -Uri "$base/api/manual-leads" `
+  -Method Post `
+  -Headers @{ "x-crm-api-key" = $apiKey } `
+  -ContentType "application/json" `
+  -Body $body
+```
+
+Resposta operacional:
+
+- `contact_id`
+- `lead_id`
+- `action_item_id`
+- `created` flags
+- `linked` flags
+- `duplicate.active_lead`
+- `message`
+
+Regras:
+
+- normaliza telefone;
+- cria/vincula `contact` por `normalized_phone`;
+- nao duplica lead ativo para o mesmo contato;
+- registra `crm_interaction` inicial;
+- cria `action_item` inicial sem duplicar aberto para `lead_id + type + due_at`.
+
 ## Conversations
 
 Criar conversa:
@@ -349,6 +431,16 @@ Criterios de ordenacao:
 Painel web local/dev servido pela API:
 
 - `GET /dashboard`
+
+Assets servidos pela API:
+
+- `GET /dashboard/app.js`
+- `GET /dashboard/styles.css`
+
+Observacao:
+
+- `/dashboard/app.js` e `/dashboard/styles.css` servem o bundle real de `apps/web/dist`.
+- se o build do frontend nao existir, a API retorna erro explicito para evitar fallback enganoso.
 
 Guia de uso:
 

@@ -5,21 +5,21 @@ import {
   assert,
   assertOneOfStatus,
   assertStatus,
-  loadDotEnv,
   request
 } from "./smoke-api-helpers.js";
-
-loadDotEnv();
-
-const apiBaseUrl = (process.env.API_BASE_URL ?? "http://localhost:3000").replace(/\/$/, "");
-const apiSecret = process.env.CRM_API_SECRET?.trim();
+import { buildRunPayloadSource, buildTestPhone, buildTestTutorName } from "./test-support/test-data.js";
+import { cleanupByRunId } from "./test-support/test-cleanup.js";
+import { createTestRunContext } from "./test-support/test-run.js";
 
 type VerifyContext = {
   apiBaseUrl: string;
   apiSecret: string;
 };
 
+const run = createTestRunContext("verify:operational-worklist");
+const sourceMarker = buildRunPayloadSource(run);
 const results: Array<{ step: string; ok: boolean; error?: string }> = [];
+let phoneIndex = 0;
 
 main().catch((error) => {
   console.error(error instanceof Error ? error.message : String(error));
@@ -27,38 +27,48 @@ main().catch((error) => {
 });
 
 async function main() {
-  assert(apiSecret, "CRM_API_SECRET nao definido no ambiente/.env para verify:operational-worklist");
-  const ctx: VerifyContext = { apiBaseUrl, apiSecret };
+  const ctx: VerifyContext = { apiBaseUrl: run.apiBaseUrl, apiSecret: run.apiSecret };
 
-  const seed = await runStep("Criar contato e lead de teste", () => createLeadSeed(ctx));
+  try {
+    const seed = await runStep("Criar contato e lead de teste", () => createLeadSeed(ctx));
 
-  await runStep("Gerar action items para o lead de teste", async () => {
-    const response = await request(ctx.apiBaseUrl, ctx.apiSecret, "POST", "/api/action-items/generate", {
-      body: {}
+    await runStep("Gerar action items para o lead de teste", async () => {
+      const response = await request(ctx.apiBaseUrl, ctx.apiSecret, "POST", "/api/action-items/generate", {
+        body: {}
+      });
+      assertStatus(response, 200);
     });
-    assertStatus(response, 200);
-  });
 
-  await runStep("Criar conversa e mensagem inbound de teste", async () => {
-    const conversation = await createConversation(ctx, seed.contactId, `worklist-conv-${Date.now()}`);
-    await createInboundMessage(ctx, conversation.id);
-  });
+    await runStep("Criar conversa e mensagem inbound de teste", async () => {
+      const conversation = await createConversation(
+        ctx,
+        seed.contactId,
+        `worklist-conv-${run.runId}-${Date.now()}`
+      );
+      await createInboundMessage(ctx, conversation.id);
+    });
 
-  await runStep("Validar payload base do operational-worklist", async () => {
-    const payload = await getOperationalWorklist(ctx, 10);
-    validateWorklistShape(payload, 10);
-  });
+    await runStep("Validar payload base do operational-worklist", async () => {
+      const payload = await getOperationalWorklist(ctx, 10);
+      validateWorklistShape(payload, 10);
+    });
 
-  await runStep("Validar query limit=1", async () => {
-    const payload = await getOperationalWorklist(ctx, 1);
-    validateWorklistShape(payload, 1);
-    ensureArraysRespectLimit(payload, 1);
-  });
+    await runStep("Validar query limit=1", async () => {
+      const payload = await getOperationalWorklist(ctx, 1);
+      validateWorklistShape(payload, 1);
+      ensureArraysRespectLimit(payload, 1);
+    });
 
-  const failed = results.filter((result) => !result.ok);
-  console.log("");
-  console.log(`Resumo verify:operational-worklist: ${results.length - failed.length}/${results.length} passos OK`);
-  if (failed.length > 0) process.exitCode = 1;
+    const failed = results.filter((result) => !result.ok);
+    console.log("");
+    console.log(`Resumo verify:operational-worklist: ${results.length - failed.length}/${results.length} passos OK`);
+    if (failed.length > 0) process.exitCode = 1;
+  } finally {
+    const summary = await cleanupByRunId(run.runId);
+    console.log(
+      `Cleanup runId ${summary.runId}: messages=${summary.messages}, interactions=${summary.interactions}, action_items=${summary.actionItems}, conversations=${summary.conversations}, leads=${summary.leads}, contacts=${summary.contacts}`
+    );
+  }
 }
 
 async function runStep<T>(step: string, fn: () => Promise<T>): Promise<T> {
@@ -77,12 +87,11 @@ async function runStep<T>(step: string, fn: () => Promise<T>): Promise<T> {
 }
 
 async function createLeadSeed(ctx: VerifyContext) {
-  const stamp = Date.now();
   const contactResponse = await request(ctx.apiBaseUrl, ctx.apiSecret, "POST", "/api/contacts", {
     body: {
-      name: "Verify Worklist",
-      phone: `11955${Math.floor(Math.random() * 10_000)}${String(stamp).slice(-4)}`,
-      source: "verify-operational-worklist",
+      name: buildTestTutorName(run, "WORKLIST"),
+      phone: nextPhone(),
+      source: sourceMarker,
       type: "lead"
     }
   });
@@ -95,8 +104,9 @@ async function createLeadSeed(ctx: VerifyContext) {
       contact_id: contactId,
       pet_name: "Pet Worklist",
       service_interest: "banho",
-      source: "verify-operational-worklist",
-      campaign: "verify-operational-worklist",
+      source: sourceMarker,
+      campaign: sourceMarker,
+      assigned_to: run.attendantMarker,
       status: "novo_lead"
     }
   });
@@ -125,14 +135,14 @@ async function createInboundMessage(ctx: VerifyContext, conversationId: string) 
     body: {
       conversation_id: conversationId,
       provider: "manual",
-      provider_message_id: `worklist-msg-${Date.now()}`,
+      provider_message_id: `worklist-msg-${run.runId}-${Date.now()}`,
       direction: "inbound",
       message_type: "text",
       from_number: "11999990001",
       to_number: "1140000000",
       body: "verify worklist inbound",
       timestamp: new Date().toISOString(),
-      raw_payload: { source: "verify-operational-worklist" }
+      raw_payload: { source: sourceMarker, testRunId: run.runId }
     }
   });
   assertStatus(response, 201);
@@ -193,4 +203,9 @@ function ensureArraysRespectLimit(payload: Record<string, unknown>, limit: numbe
   for (const list of arrays) {
     assert(list.length <= limit, `Lista retornou ${list.length} itens com limit=${limit}`);
   }
+}
+
+function nextPhone() {
+  phoneIndex += 1;
+  return buildTestPhone(run, phoneIndex);
 }
