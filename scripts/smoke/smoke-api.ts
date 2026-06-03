@@ -35,6 +35,7 @@ type TestContext = {
   leadActionItemId?: string;
   cancelActionItemId?: string;
   autoCloseActionItemId?: string;
+  manualOutcomeNextActionItemId?: string;
   conversationId?: string;
   providerMessageId?: string;
   webhookContactId?: string;
@@ -59,6 +60,9 @@ const tests: Array<[string, () => Promise<void>]> = [
   ["POST /api/manual-leads cria lead manual", testCreateManualLead],
   ["POST /api/manual-leads repetido nao duplica lead ativo", testCreateManualLeadIdempotency],
   ["GET /api/leads/search encontra lead manual por telefone", testLeadSearch],
+  ["GET /api/leads/export.csv retorna CSV com BOM", testLeadsExportCsv],
+  ["GET /api/leads/:id/operational-context retorna contexto", testLeadOperationalContext],
+  ["POST /api/leads/:id/contact-outcomes registra outcome e cria proxima acao", testLeadContactOutcome],
   ["POST /api/leads cria lead ligado ao contato", testCreateLead],
   ["POST /api/action-items/generate cria acao para novo lead", testGenerateActionItemsCreate],
   ["POST /api/action-items/generate repetido nao duplica acao aberta", testGenerateActionItemsIdempotency],
@@ -228,6 +232,90 @@ async function testLeadSearch() {
     asString(contact.id, "lead_search.contact.id") === required(context.manualLeadContactId, "manualLeadContactId"),
     "Busca deveria incluir o contato manual recem-criado"
   );
+}
+
+async function testLeadsExportCsv() {
+  const headers: Record<string, string> = {};
+  if (apiSecret) headers["x-crm-api-key"] = apiSecret;
+
+  const response = await fetch(
+    `${apiBaseUrl}/api/leads/export.csv?phone=${required(context.manualLeadPhone, "manualLeadPhone")}&limit=20`,
+    { headers }
+  );
+  assert(response.status === 200, `Esperava HTTP 200 no export CSV, recebeu ${response.status}`);
+
+  const contentType = response.headers.get("content-type") ?? "";
+  assert(contentType.includes("text/csv"), "Export CSV deveria retornar content-type text/csv");
+
+  const bytes = new Uint8Array(await response.arrayBuffer());
+  assert(bytes.length >= 3, "Export CSV vazio");
+  assert(bytes[0] === 0xef && bytes[1] === 0xbb && bytes[2] === 0xbf, "Export CSV deveria iniciar com UTF-8 BOM");
+  const body = new TextDecoder("utf-8").decode(bytes);
+  assert(
+    body.includes("nome_tutor") && body.includes("telefone_normalizado"),
+    "Header do CSV nao encontrado no export"
+  );
+  assert(
+    body.includes("nome_tutor;telefone;telefone_normalizado"),
+    "Export CSV deveria usar separador ponto e virgula no header"
+  );
+}
+
+async function testLeadOperationalContext() {
+  const response = await request(
+    apiBaseUrl,
+    apiSecret,
+    "GET",
+    `/api/leads/${required(context.manualLeadLeadId, "manualLeadLeadId")}/operational-context`
+  );
+  assertStatus(response, 200);
+  const data = asRecord(asRecord(response.body).data);
+  const contact = asRecord(data.contact);
+  assert(
+    asString(contact.id, "lead_operational_context.contact.id") ===
+      required(context.manualLeadContactId, "manualLeadContactId"),
+    "Contexto operacional deveria retornar o contato correto"
+  );
+}
+
+async function testLeadContactOutcome() {
+  const dueYmd = getTomorrowYmd();
+  const response = await request(
+    apiBaseUrl,
+    apiSecret,
+    "POST",
+    `/api/leads/${required(context.manualLeadLeadId, "manualLeadLeadId")}/contact-outcomes`,
+    {
+      body: {
+        actionItemId: required(context.manualLeadActionItemId, "manualLeadActionItemId"),
+        outcome: "continuar_atendimento",
+        channel: "whatsapp",
+        nextActionAt: dueYmd,
+        summary: buildTestNote(run, "smoke-lead-outcome")
+      }
+    }
+  );
+  assertStatus(response, 201);
+
+  const data = asRecord(asRecord(response.body).data);
+  context.manualOutcomeNextActionItemId = asString(
+    data.nextActionItemId,
+    "lead_outcome.nextActionItemId"
+  );
+  assert(data.outcome === "continuar_atendimento", "Outcome retornado deveria ser continuar_atendimento");
+
+  const followUpList = await request(
+    apiBaseUrl,
+    apiSecret,
+    "GET",
+    `/api/action-items?lead_id=${required(context.manualLeadLeadId, "manualLeadLeadId")}&type=fazer_follow_up&status=pendente&limit=20`
+  );
+  assertStatus(followUpList, 200);
+  const items = asArray(asRecord(followUpList.body).data);
+  const created = items.find(
+    (item) => asRecord(item).id === required(context.manualOutcomeNextActionItemId, "manualOutcomeNextActionItemId")
+  );
+  assert(Boolean(created), "Outcome deveria criar action_item de follow-up pendente");
 }
 
 async function testGenerateActionItemsCreate() {

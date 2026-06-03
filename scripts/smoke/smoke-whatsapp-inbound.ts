@@ -33,12 +33,13 @@ export async function runWhatsappInboundCreate(
   params: InboundCreateParams
 ): Promise<InboundCreateResult> {
   const stamp = Date.now();
-  const conversationToken = `${String(stamp).slice(-6)}${Math.floor(Math.random() * 1000)}`;
+  const phoneSuffix = `${String(stamp).slice(-5)}${String(Math.floor(Math.random() * 1000)).padStart(3, "0")}`;
+  const whatsappNumber = `55119${phoneSuffix}`;
   const payload = {
     provider: "waha",
     providerMessageId: `wh-smoke-msg-${params.runId}-${stamp}`,
-    providerConversationId: `55119999${conversationToken}`,
-    fromNumber: `55119999${conversationToken}`,
+    providerConversationId: whatsappNumber,
+    fromNumber: whatsappNumber,
     toNumber: "5511470000000",
     contactName: params.contactName,
     body: "Ola, gostaria de saber valores de banho",

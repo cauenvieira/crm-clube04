@@ -78,18 +78,136 @@ Atualizar:
 curl.exe -X PATCH "$base/api/leads/LEAD_ID" -H "Content-Type: application/json" -H "x-crm-api-key: $apiKey" -d "{\"status\":\"em_atendimento\",\"next_action_at\":\"2026-06-01T12:00:00.000Z\"}"
 ```
 
-Busca simples para evitar duplicidade no cadastro manual:
+Busca operacional de leads (telefone, tutor, doguinho, status e origem):
 
 ```powershell
 curl.exe "$base/api/leads/search?phone=5511999999999&limit=10" -H "x-crm-api-key: $apiKey"
 curl.exe "$base/api/leads/search?q=Maria&limit=10" -H "x-crm-api-key: $apiKey"
+curl.exe "$base/api/leads/search?status=em_atendimento&source=manual_entry&limit=50" -H "x-crm-api-key: $apiKey"
 ```
 
 Retorno minimo:
 
 - `contact`
 - `active_lead` (quando existir)
+- `latest_lead` (inclui leads encerrados para busca/auditoria)
 - `open_action_items` (quando existir)
+
+Exportacao CSV:
+
+```powershell
+curl.exe "$base/api/leads/export.csv?status=em_atendimento&limit=1000" -H "x-crm-api-key: $apiKey" -o leads.csv
+```
+
+Regras:
+
+- retorna `text/csv; charset=utf-8` com BOM UTF-8;
+- usa `;` como separador;
+- nome sugerido de arquivo: `leads-clube04-YYYY-MM-DD.csv`;
+- campos: nome do tutor, telefone, telefone normalizado, origem, status, proxima acao, data proxima acao, data entrada, ultimo resultado, ultima observacao, tentativas, criado em, atualizado em.
+
+## Lead Operational Cycle
+
+Contexto operacional do lead:
+
+```powershell
+$leadId = "COLE_O_LEAD_ID"
+
+Invoke-RestMethod `
+  -Uri "$base/api/leads/$leadId/operational-context" `
+  -Method Get `
+  -Headers @{ "x-crm-api-key" = $apiKey }
+```
+
+Registrar resultado de atendimento:
+
+```text
+POST /api/leads/:leadId/contact-outcomes
+```
+
+Outcomes suportados:
+
+- `continuar_atendimento`
+- `agendamento_realizado`
+- `sem_resposta`
+- `cliente_convertido`
+- `enviar_analise_lideranca`
+- `perdido`
+- `desqualificado`
+- `nutricao_campanha`
+
+Aliases legados aceitos por compatibilidade:
+
+- `nao_respondeu` -> `sem_resposta`
+- `chamar_depois` -> `continuar_atendimento`
+- `agendou` -> `agendamento_realizado`
+- `sem_interesse` -> `perdido`
+- `dados_invalidos` -> `desqualificado`
+- `escalar_lideranca` -> `enviar_analise_lideranca`
+- `virou_cliente` -> `cliente_convertido`
+
+Exemplo `continuar_atendimento`:
+
+```powershell
+$leadId = "COLE_O_LEAD_ID"
+$actionItemId = "COLE_O_ACTION_ITEM_ID"
+
+$body = @{
+  actionItemId = $actionItemId
+  outcome = "continuar_atendimento"
+  channel = "whatsapp"
+  nextActionAt = "2026-06-02"
+  summary = "Retorno combinado para amanha"
+  messageTemplateId = "follow_up"
+  renderedMessage = "Oi, Tutor! Retomando nosso contato conforme combinado."
+} | ConvertTo-Json
+
+Invoke-RestMethod `
+  -Uri "$base/api/leads/$leadId/contact-outcomes" `
+  -Method Post `
+  -Headers @{ "x-crm-api-key" = $apiKey } `
+  -ContentType "application/json" `
+  -Body $body
+```
+
+Exemplo `perdido`:
+
+```powershell
+$leadId = "COLE_O_LEAD_ID"
+$actionItemId = "COLE_O_ACTION_ITEM_ID"
+
+$body = @{
+  actionItemId = $actionItemId
+  outcome = "perdido"
+  channel = "whatsapp"
+  reason = "preco"
+  summary = "Lead optou por nao seguir"
+} | ConvertTo-Json
+
+Invoke-RestMethod `
+  -Uri "$base/api/leads/$leadId/contact-outcomes" `
+  -Method Post `
+  -Headers @{ "x-crm-api-key" = $apiKey } `
+  -ContentType "application/json" `
+  -Body $body
+```
+
+Regras operacionais:
+
+- `actionItemId`, quando enviado, deve pertencer ao mesmo `leadId`;
+- cria `crm_interactions` com historico de outcome;
+- conclui item atual e gera proxima `action_item` quando aplicavel;
+- nao duplica `action_item` aberta para mesmo `lead + type + due_at`;
+- outcomes de encerramento fecham fila aberta sem apagar historico;
+- `sem_resposta` usa cadencia automatica de tentativa em timezone operacional `America/Sao_Paulo`;
+- `cliente_convertido` usa status `compareceu`, por compatibilidade com o enum atual do banco;
+- `nutricao_campanha` usa status `reativar_depois`, por compatibilidade com o enum atual do banco.
+
+Observacoes para frontend:
+
+- o response inclui dados de contato, lead, action_items abertos, interacoes recentes e recomendacao operacional;
+- `contact.notes`, `lead.entryAt` e `lead.updatedAt` podem ser usados no drawer de acompanhamento;
+- campos internos como `outcome`, `action_item` e status snake_case devem ser traduzidos na UI antes de exibir ao operador.
 
 ## Manual Leads
 
@@ -107,12 +225,13 @@ Payload:
   "phone": "11999990000",
   "entryMethod": "whatsapp",
   "attendant": "equipe",
+  "entryDate": "2026-06-01",
   "nextAction": "fazer_follow_up",
   "nextActionAt": "2026-06-02",
   "petName": "Mel",
-  "breed": "Shih tzu",
-  "estimatedWeight": "8kg",
-  "serviceInterest": "banho",
+  "sourceDetail": "anuncio stories",
+  "campaign": "meta_junho",
+  "additionalNote": "Lead pediu retorno apos 18h",
   "initialNote": "Primeiro contato manual"
 }
 ```
@@ -125,12 +244,13 @@ $body = @{
   phone = "11999990000"
   entryMethod = "whatsapp"
   attendant = "equipe"
+  entryDate = "2026-06-01"
   nextAction = "fazer_follow_up"
   nextActionAt = "2026-06-02"
   petName = "Mel"
-  breed = "Shih tzu"
-  estimatedWeight = "8kg"
-  serviceInterest = "banho"
+  sourceDetail = "anuncio stories"
+  campaign = "meta_junho"
+  additionalNote = "Lead pediu retorno apos 18h"
   initialNote = "Primeiro contato manual"
 } | ConvertTo-Json
 
@@ -154,7 +274,8 @@ Resposta operacional:
 
 Regras:
 
-- normaliza telefone;
+- normaliza telefone para formato Brasil (`55 + DDD + numero`);
+- usa `entryDate` para preencher `leads.first_message_at` quando enviado;
 - cria/vincula `contact` por `normalized_phone`;
 - nao duplica lead ativo para o mesmo contato;
 - registra `crm_interaction` inicial;
@@ -399,6 +520,7 @@ Exemplo resumido de resposta:
   "actionItems": {
     "pendentes": [],
     "vencidos": [],
+    "concluidosHoje": [],
     "retomarAtendimento": [],
     "followUpsAgendados": [],
     "revisaoLideranca": [],
@@ -406,6 +528,7 @@ Exemplo resumido de resposta:
   },
   "leads": {
     "followUpVencido": [],
+    "semProximaAcao": [],
     "semInteracao24h": []
   },
   "messages": {
@@ -445,6 +568,13 @@ Observacao:
 Guia de uso:
 
 - `docs/web/dashboard.md`
+
+Modelo atual:
+
+- Mesa Operacional em Kanban/lista;
+- clique no card/linha abre `Acompanhamento do lead`;
+- atalho `WhatsApp` apenas abre a conversa pelo telefone;
+- mensagem recomendada, templates e midias recomendadas ficam fora da UI nesta fase.
 
 ## Webhook WhatsApp Inbound
 
