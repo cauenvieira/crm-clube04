@@ -16,7 +16,11 @@ type WorklistItemRow = {
   lead_status?: string | null;
   lead_source?: string | null;
   lead_campaign?: string | null;
+  lead_assigned_to?: string | null;
+  lead_pet_name?: string | null;
+  attempts_count?: number | null;
   reason?: string | null;
+  last_interaction_note?: string | null;
   created_at: Date | string;
 };
 
@@ -25,6 +29,8 @@ type WorklistLeadRow = {
   status: string;
   source: string | null;
   campaign: string | null;
+  assigned_to?: string | null;
+  pet_name?: string | null;
   next_action_at: Date | string | null;
   last_interaction_at: Date | string | null;
   contact_id: string | null;
@@ -47,26 +53,34 @@ type WorklistMessageRow = {
 export async function getOperationalWorklist(limit: number) {
   const generatedAt = new Date();
   const dayWindow = await worklistRepository.getOperationalDayWindow(operationalTimezone);
+  const dayStartIso = toIsoOrNull(dayWindow?.window_start);
+  const dayEndIso = toIsoOrNull(dayWindow?.window_end);
 
   const [
     pendingItems,
     overdueItems,
+    concludedToday,
     retomarAtendimento,
     followUpsAgendados,
     revisaoLideranca,
     novosLeads,
     leadsOverdue,
+    leadsWithoutNextAction,
     leadsWithoutInteraction,
     latestInbound
   ] =
     await Promise.all([
       worklistRepository.listPendingActionItems(limit),
       worklistRepository.listOverdueActionItems(limit),
+      dayStartIso && dayEndIso
+        ? worklistRepository.listConcludedActionItemsByWindow(limit, dayStartIso, dayEndIso)
+        : Promise.resolve([]),
       worklistRepository.listOpenActionItemsByTypes(limit, ["retomar_atendimento"]),
       worklistRepository.listOpenActionItemsByTypes(limit, ["fazer_follow_up", "follow_up_agendado"]),
       worklistRepository.listOpenActionItemsByTypes(limit, ["revisar_lideranca"]),
       worklistRepository.listOpenActionItemsByTypes(limit, ["follow_up_lead", "novo_lead"]),
       worklistRepository.listLeadsWithOverdueFollowUp(limit),
+      worklistRepository.listLeadsWithoutNextAction(limit),
       worklistRepository.listLeadsWithoutInteraction24h(limit),
       worklistRepository.listLatestInboundMessages(limit)
     ]);
@@ -79,6 +93,7 @@ export async function getOperationalWorklist(limit: number) {
     actionItems: {
       pendentes: pendingItems.map(mapActionItem),
       vencidos: overdueItems.map(mapActionItem),
+      concluidosHoje: concludedToday.map(mapActionItem),
       retomarAtendimento: retomarAtendimento.map(mapActionItem),
       followUpsAgendados: followUpsAgendados.map(mapActionItem),
       revisaoLideranca: revisaoLideranca.map(mapActionItem),
@@ -86,6 +101,7 @@ export async function getOperationalWorklist(limit: number) {
     },
     leads: {
       followUpVencido: leadsOverdue.map(mapLead),
+      semProximaAcao: leadsWithoutNextAction.map(mapLead),
       semInteracao24h: leadsWithoutInteraction.map(mapLead)
     },
     messages: {
@@ -109,7 +125,11 @@ function mapActionItem(row: WorklistItemRow) {
     leadStatus: row.lead_status ?? null,
     leadSource: row.lead_source ?? null,
     leadCampaign: row.lead_campaign ?? null,
+    assignedTo: row.lead_assigned_to ?? null,
+    petName: row.lead_pet_name ?? null,
     reason: row.reason ?? null,
+    attemptsCount: row.attempts_count ?? null,
+    lastInteractionNote: row.last_interaction_note ?? null,
     createdAt: toIsoOrNull(row.created_at)
   };
 }
@@ -120,6 +140,8 @@ function mapLead(row: WorklistLeadRow) {
     status: row.status,
     source: row.source,
     campaign: row.campaign,
+    assignedTo: row.assigned_to ?? null,
+    petName: row.pet_name ?? null,
     nextActionAt: toIsoOrNull(row.next_action_at),
     lastInteractionAt: toIsoOrNull(row.last_interaction_at),
     contactId: row.contact_id,

@@ -30,6 +30,7 @@ export type LeadRow = {
   source: string | null;
   campaign: string | null;
   assigned_to: string | null;
+  first_message_at: Date | string | null;
   next_action_at: Date | string | null;
   last_interaction_at: Date | string | null;
   created_at: Date | string;
@@ -62,6 +63,7 @@ type LeadCreateInput = {
   petBreed?: string;
   petSize?: string;
   serviceInterest?: string;
+  firstMessageAtIso: string;
   nextActionAtIso: string;
 };
 
@@ -138,9 +140,9 @@ export async function createLead(client: PoolClient, input: LeadCreateInput) {
   const result = await client.query<LeadRow>(
     `insert into leads (
       contact_id, pet_name, pet_breed, pet_size, service_interest, source, campaign,
-      status, assigned_to, next_action_at, last_interaction_at
+      status, assigned_to, first_message_at, next_action_at, last_interaction_at
     ) values (
-      $1, $2, $3, $4, $5, $6, $7, 'novo_lead', $8, $9, $9
+      $1, $2, $3, $4, $5, $6, $7, 'novo_lead', $8, $9, $10, $10
     )
     returning *`,
     [
@@ -152,6 +154,7 @@ export async function createLead(client: PoolClient, input: LeadCreateInput) {
       input.source,
       input.campaign,
       input.assignedTo,
+      input.firstMessageAtIso,
       input.nextActionAtIso
     ]
   );

@@ -12,7 +12,9 @@ export async function createManualLead(input: ManualLeadCreateInput) {
   if (!normalizedPhone) {
     throw new ApiError(400, "Telefone invalido");
   }
+  const tutorName = sanitizeOptional(input.tutorName) ?? "Sem nome";
 
+  const entryDateIso = toOperationalDueIso(input.entryDate ?? input.nextActionAt);
   const nextActionAtIso = toOperationalDueIso(input.nextActionAt);
   const actionType = mapManualLeadActionType(input.nextAction);
   const actionTitle = mapActionTitle(actionType);
@@ -22,7 +24,7 @@ export async function createManualLead(input: ManualLeadCreateInput) {
     const contact =
       existingContact ??
       (await manualLeadRepository.createContact(client, {
-        name: input.tutorName,
+        name: tutorName,
         phone: input.phone,
         normalizedPhone,
         source: "manual_entry"
@@ -34,12 +36,13 @@ export async function createManualLead(input: ManualLeadCreateInput) {
       (await manualLeadRepository.createLead(client, {
         contactId: contact.id,
         source: "manual_entry",
-        campaign: input.entryMethod,
+        campaign: sanitizeOptional(input.campaign) ?? input.entryMethod,
         assignedTo: input.attendant,
         petName: input.petName,
         petBreed: input.breed,
         petSize: input.estimatedWeight,
         serviceInterest: input.serviceInterest,
+        firstMessageAtIso: entryDateIso,
         nextActionAtIso
       }));
 
@@ -187,14 +190,23 @@ function buildInitialInteractionNotes(input: ManualLeadCreateInput): string {
   const parts: string[] = [];
 
   parts.push(`entry_method: ${input.entryMethod}`);
+  if (input.entryDate) parts.push(`entry_date: ${input.entryDate}`);
   parts.push(`next_action: ${input.nextAction}`);
   parts.push(`next_action_at: ${input.nextActionAt}`);
+  if (input.sourceDetail) parts.push(`source_detail: ${input.sourceDetail}`);
+  if (input.campaign) parts.push(`campaign: ${input.campaign}`);
 
   if (input.petName) parts.push(`pet_name: ${input.petName}`);
   if (input.breed) parts.push(`breed: ${input.breed}`);
   if (input.estimatedWeight) parts.push(`estimated_weight: ${input.estimatedWeight}`);
   if (input.serviceInterest) parts.push(`service_interest: ${input.serviceInterest}`);
+  if (input.additionalNote) parts.push(`additional_note: ${input.additionalNote}`);
   if (input.initialNote) parts.push(`initial_note: ${input.initialNote}`);
 
   return parts.join(" | ");
+}
+
+function sanitizeOptional(value: string | null | undefined) {
+  const normalized = value?.trim();
+  return normalized ? normalized : null;
 }

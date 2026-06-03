@@ -14,7 +14,7 @@ export async function getOperationalSummary() {
 
   const [actionItemsRow, leadsRow, messagesRow] = await Promise.all([
     summaryRepository.getActionItemsSummary(windowStartIso, windowEndIso),
-    summaryRepository.getLeadsSummary(),
+    summaryRepository.getLeadsSummary(windowStartIso, windowEndIso),
     summaryRepository.getMessagesSummary(windowStartIso, windowEndIso)
   ]);
 
@@ -31,11 +31,14 @@ export async function getOperationalSummary() {
       emAndamento: toInt(actionItemsRow?.em_andamento),
       concluidoHoje: toInt(actionItemsRow?.concluido_hoje),
       ignoradoHoje: toInt(actionItemsRow?.ignorado_hoje),
-      vencidos: toInt(actionItemsRow?.vencidos)
+      vencidos: toInt(actionItemsRow?.vencidos),
+      escaladosLideranca: toInt(actionItemsRow?.escalados_lideranca)
     },
     leads: {
       novoLead: toInt(leadsRow?.novo_lead),
+      novosHoje: toInt(leadsRow?.novos_hoje),
       comFollowUpVencido: toInt(leadsRow?.com_follow_up_vencido),
+      semProximaAcao: toInt(leadsRow?.sem_proxima_acao),
       semInteracao24h: toInt(leadsRow?.sem_interacao_24h)
     },
     messages: {

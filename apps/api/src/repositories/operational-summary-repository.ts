@@ -44,7 +44,11 @@ export async function getActionItemsSummary(dayStartIso: string, dayEndIso: stri
         where status = any($3::action_item_status[])
           and due_at is not null
           and due_at < now()
-      )::int as vencidos
+      )::int as vencidos,
+      count(*) filter (
+        where status = any($3::action_item_status[])
+          and type = 'revisar_lideranca'
+      )::int as escalados_lideranca
     from action_items`,
     [dayStartIso, dayEndIso, overdueActionItemStatuses]
   );
@@ -52,10 +56,14 @@ export async function getActionItemsSummary(dayStartIso: string, dayEndIso: stri
   return result.rows[0];
 }
 
-export async function getLeadsSummary() {
+export async function getLeadsSummary(dayStartIso: string, dayEndIso: string) {
   const result = await postgresPool.query(
     `select
       count(*) filter (where status = 'novo_lead')::int as novo_lead,
+      count(*) filter (
+        where created_at >= $2::timestamptz
+          and created_at < $3::timestamptz
+      )::int as novos_hoje,
       count(*) filter (
         where status = any($1::lead_status[])
           and next_action_at is not null
@@ -63,10 +71,14 @@ export async function getLeadsSummary() {
       )::int as com_follow_up_vencido,
       count(*) filter (
         where status = any($1::lead_status[])
+          and next_action_at is null
+      )::int as sem_proxima_acao,
+      count(*) filter (
+        where status = any($1::lead_status[])
           and (last_interaction_at is null or last_interaction_at < now() - interval '24 hours')
       )::int as sem_interacao_24h
     from leads`,
-    [activeLeadStatuses]
+    [activeLeadStatuses, dayStartIso, dayEndIso]
   );
 
   return result.rows[0];
