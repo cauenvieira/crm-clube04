@@ -1,3 +1,18 @@
+@import "tailwindcss";
+
+@theme {
+  --color-clube-orange: #f97316;
+  --color-clube-orange-strong: #ea580c;
+  --color-clube-bg: #f8f9fb;
+  --color-clube-sidebar: #111827;
+  --color-clube-card: #ffffff;
+  --color-clube-border: #e5e7eb;
+  --color-clube-muted: #64748b;
+  --color-clube-success: #16a34a;
+  --color-clube-warning: #f59e0b;
+  --color-clube-danger: #dc2626;
+}
+
 :root {
   color-scheme: light;
   font-family: "Inter", "Segoe UI", Roboto, Arial, sans-serif;
@@ -30,7 +45,8 @@ p {
 .sidebar {
   background: #111827;
   color: #f9fafb;
-  padding: 20px 16px;
+  padding: 24px 16px;
+  border-right: 1px solid #0f172a;
 }
 
 .sidebar-title {
@@ -48,6 +64,7 @@ p {
   color: inherit;
   cursor: pointer;
   margin-bottom: 6px;
+  font-weight: 600;
 }
 
 .sidebar-link.active {
@@ -87,8 +104,10 @@ p {
 }
 
 .app-content {
-  padding: 20px;
+  padding: 28px 24px;
   min-width: 0;
+  width: min(1480px, 100%);
+  margin: 0 auto;
 }
 
 .page-grid {
@@ -100,7 +119,8 @@ p {
   background: #ffffff;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
-  padding: 14px;
+  padding: 18px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
 }
 
 .card-head {

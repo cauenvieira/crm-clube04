@@ -1,4 +1,4 @@
-import { Badge } from "./Badge";
+import { UIStatusChip } from "./ui/status-chip";
 
 type Props = {
   title: string;
@@ -13,9 +13,9 @@ export function Topbar({ title, subtitle, hasApiKey }: Props) {
         <h1>{title}</h1>
         {subtitle ? <p>{subtitle}</p> : null}
       </div>
-      <Badge tone={hasApiKey ? "success" : "warning"}>
+      <UIStatusChip tone={hasApiKey ? "success" : "warning"}>
         {hasApiKey ? "API key configurada" : "API key pendente"}
-      </Badge>
+      </UIStatusChip>
     </header>
   );
 }
