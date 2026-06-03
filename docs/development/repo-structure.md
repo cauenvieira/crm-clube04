@@ -23,6 +23,22 @@ scripts/
 docs/        architecture, product, integrations, operations, backlog
 ```
 
+Frontend UI Foundation:
+
+```text
+apps/web/src/components/ui/  shared UI primitives for dashboard work
+docs/frontend/               design system, components catalog and Lovable adaptation guide
+```
+
+Specialized context docs:
+
+```text
+docs/backend/api-agent.md
+docs/qa/verification-agent.md
+docs/product/lead-operational-scope.md
+docs/development/sprint-plan-template.md
+```
+
 ## Where to add new files
 
 - New API endpoint:
@@ -33,7 +49,20 @@ docs/        architecture, product, integrations, operations, backlog
 
 - New dashboard feature:
   - UI and state: `apps/web/src`
+  - shared UI primitives: `apps/web/src/components/ui`
+  - frontend context: `docs/frontend/design-system.md`
   - shared API client/types: `apps/web/src/*` or `packages/shared` if truly cross-app
+
+- New frontend pattern or Lovable adaptation:
+  - document design rule in `docs/frontend`
+  - do not copy Lovable architecture or mock data
+
+- New backend/API behavior:
+  - consult `docs/backend/api-agent.md`
+  - confirm schema compatibility before using new columns/status values
+
+- New QA/verification rule:
+  - document in `docs/qa/verification-agent.md` or `docs/development/testing-strategy.md`
 
 - New worker job:
   - job module under `apps/worker/src/jobs/<domain>`

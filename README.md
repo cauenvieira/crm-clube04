@@ -62,7 +62,14 @@ npm run verify:all
 - Estrategia de testes: `docs/development/testing-strategy.md`
 - Workflow de trabalho no Codex: `docs/development/codex-workflow.md`
 - Instrucoes curtas para Codex: `docs/development/codex-custom-instructions.md`
+- Sprint template: `docs/development/sprint-plan-template.md`
 - Higiene de dados de dev: `docs/development/dev-data.md`
+- Frontend design system: `docs/frontend/design-system.md`
+- Catalogo de componentes: `docs/frontend/components-catalog.md`
+- Adaptacao Lovable: `docs/frontend/lovable-adaptation-guide.md`
+- Backend API agent: `docs/backend/api-agent.md`
+- QA/validacao agent: `docs/qa/verification-agent.md`
+- Escopo Jornada do Lead: `docs/product/lead-operational-scope.md`
 - Roadmap: `docs/roadmap.md`
 - Backlog: `docs/tasks.md`
 - Integracao n8n inbound: `docs/integrations/n8n-whatsapp-inbound.md`

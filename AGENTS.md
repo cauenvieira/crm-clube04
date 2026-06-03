@@ -15,6 +15,7 @@ Construir um CRM operacional para o Clube04 Mogi, com foco em rotina de atendime
 
 ## Regras operacionais do Codex
 
+- Antes de tarefas gerais, ler `AGENTS.md`, `README.md`, `docs/development/codex-workflow.md` e `docs/development/testing-strategy.md`.
 - Ler os docs pedidos no prompt antes de alterar arquivos.
 - Manter mudancas pequenas, incrementais e com escopo limitado.
 - Nao misturar feature com refatoracao ampla na mesma tarefa.
@@ -22,6 +23,16 @@ Construir um CRM operacional para o Clube04 Mogi, com foco em rotina de atendime
 - Nao commitar sem revisao final explicita no thread.
 - Nao alterar API, schema ou endpoints sem autorizacao explicita.
 - Nao versionar arquivos temporarios locais (`.tmp/`, relatorios locais, screenshots locais).
+- Se a worktree estiver suja, confirmar `git status --short`; `docs/project-state.md` e `docs/tasks.md` podem conter estado em reconciliacao.
+
+## Contexto por tipo de tarefa
+
+- Frontend deve consultar `docs/frontend/design-system.md`.
+- Frontend com referencia Lovable deve consultar `docs/frontend/lovable-adaptation-guide.md`.
+- Backend/API deve consultar `docs/backend/api-agent.md`.
+- Produto/Jornada do Lead deve consultar `docs/product/lead-operational-scope.md`.
+- Validacao/QA deve consultar `docs/qa/verification-agent.md`.
+- Estrutura de sprint deve usar `docs/development/sprint-plan-template.md`.
 
 ## Validacao obrigatoria
 
