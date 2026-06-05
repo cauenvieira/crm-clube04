@@ -1,13 +1,27 @@
 # REST API
 
-Base local:
+## Papel na hierarquia
+
+Este documento descreve o contrato REST atualmente documentado para o CRM Clube04.
+
+Autoridade:
+- Para formato de endpoints, payloads e respostas HTTP, este documento e a referencia de consulta.
+- Para comportamento operacional da Jornada do Lead, prevalecem:
+  - `docs/product/lead-operational-contract.md`
+  - `docs/product/lead-import-normalization.md`
+  - `docs/qa/lead-business-rules-test-matrix.md`
+- Para schema, enums e compatibilidade de banco, consultar tambem `docs/database/schema.md`.
+
+Este documento nao deve criar regra operacional por inferencia. Se o endpoint expor regra de lead, a regra deve estar protegida no contrato operacional e na matriz de testes.
+
+## Base local
 
 ```powershell
 $base = "http://localhost:3000"
 $apiKey = (Get-Content .env | Where-Object { $_ -match '^CRM_API_SECRET=' }) -replace '^CRM_API_SECRET=', ''
 ```
 
-## Autenticacao Interna
+## Autenticacao interna
 
 Quando `CRM_API_SECRET` estiver definido no ambiente da API, todas as rotas `/api/*` exigem:
 
@@ -17,6 +31,59 @@ x-crm-api-key: <valor de CRM_API_SECRET>
 
 `GET /health` continua publico e nao precisa de header.
 
+Decisao relacionada:
+- `docs/decisions/004-api-key-before-auth.md`
+
+## Indice de endpoints
+
+### Publico
+
+- `GET /health`
+
+### CRM base
+
+- `POST /api/contacts`
+- `GET /api/contacts`
+- `GET /api/contacts/:contactId`
+- `PATCH /api/contacts/:contactId`
+- `POST /api/leads`
+- `GET /api/leads`
+- `PATCH /api/leads/:leadId`
+- `GET /api/leads/search`
+- `GET /api/leads/export.csv`
+- `POST /api/conversations`
+- `GET /api/conversations`
+- `GET /api/conversations/:conversationId/messages`
+- `POST /api/messages`
+- `GET /api/messages`
+- `POST /api/crm-interactions`
+- `GET /api/crm-interactions`
+
+### Jornada do Lead operacional
+
+- `GET /api/leads/:leadId/operational-context`
+- `POST /api/leads/:leadId/contact-outcomes`
+- `POST /api/manual-leads`
+
+### Action items e operacao diaria
+
+- `POST /api/action-items/generate`
+- `GET /api/action-items`
+- `POST /api/action-items/:actionItemId/complete`
+- `POST /api/action-items/:actionItemId/cancel`
+- `GET /api/operational-summary`
+- `GET /api/operational-worklist`
+
+### Dashboard dev/local
+
+- `GET /dashboard`
+- `GET /dashboard/app.js`
+- `GET /dashboard/styles.css`
+
+### Webhooks
+
+- `POST /api/webhooks/whatsapp/inbound`
+
 ## Health
 
 ```powershell
@@ -25,7 +92,7 @@ curl.exe "$base/health"
 
 ## Contacts
 
-Criar contato:
+### Criar contato
 
 ```powershell
 curl.exe -X POST "$base/api/contacts" -H "Content-Type: application/json" -H "x-crm-api-key: $apiKey" -d "{\"name\":\"Tutor Teste\",\"phone\":\"(11) 99999-0001\",\"source\":\"manual\",\"type\":\"lead\"}"
@@ -33,19 +100,19 @@ curl.exe -X POST "$base/api/contacts" -H "Content-Type: application/json" -H "x-
 
 Se outro contato for criado com o mesmo telefone normalizado, a API retorna `200` com o contato existente e `created: false`.
 
-Listar contatos:
+### Listar contatos
 
 ```powershell
 curl.exe "$base/api/contacts" -H "x-crm-api-key: $apiKey"
 ```
 
-Buscar por id:
+### Buscar por id
 
 ```powershell
 curl.exe "$base/api/contacts/CONTACT_ID" -H "x-crm-api-key: $apiKey"
 ```
 
-Atualizar:
+### Atualizar contato
 
 ```powershell
 curl.exe -X PATCH "$base/api/contacts/CONTACT_ID" -H "Content-Type: application/json" -H "x-crm-api-key: $apiKey" -d "{\"notes\":\"Contato prefere WhatsApp.\"}"
@@ -53,32 +120,36 @@ curl.exe -X PATCH "$base/api/contacts/CONTACT_ID" -H "Content-Type: application/
 
 ## Leads
 
-Criar lead com contato existente:
+### Criar lead com contato existente
 
 ```powershell
 curl.exe -X POST "$base/api/leads" -H "Content-Type: application/json" -H "x-crm-api-key: $apiKey" -d "{\"contact_id\":\"CONTACT_ID\",\"pet_name\":\"Mel\",\"service_interest\":\"banho\",\"source\":\"manual\",\"status\":\"novo_lead\"}"
 ```
 
-Criar lead junto com contato:
+### Criar lead junto com contato
 
 ```powershell
 curl.exe -X POST "$base/api/leads" -H "Content-Type: application/json" -H "x-crm-api-key: $apiKey" -d "{\"contact\":{\"name\":\"Lead Integrado\",\"phone\":\"11999990002\",\"source\":\"manual\"},\"pet_name\":\"Thor\",\"service_interest\":\"tosa\",\"source\":\"manual\",\"status\":\"novo_lead\"}"
 ```
 
-Listar com filtros:
+### Listar leads com filtros
 
 ```powershell
 curl.exe "$base/api/leads?status=novo_lead" -H "x-crm-api-key: $apiKey"
 curl.exe "$base/api/leads?assigned_to=atendente1&source=manual" -H "x-crm-api-key: $apiKey"
 ```
 
-Atualizar:
+### Atualizar lead
 
 ```powershell
 curl.exe -X PATCH "$base/api/leads/LEAD_ID" -H "Content-Type: application/json" -H "x-crm-api-key: $apiKey" -d "{\"status\":\"em_atendimento\",\"next_action_at\":\"2026-06-01T12:00:00.000Z\"}"
 ```
 
-Busca operacional de leads (telefone, tutor, doguinho, status e origem):
+## Busca operacional e exportacao de leads
+
+### Busca operacional
+
+Busca por telefone, tutor, doguinho, status e origem:
 
 ```powershell
 curl.exe "$base/api/leads/search?phone=5511999999999&limit=10" -H "x-crm-api-key: $apiKey"
@@ -89,26 +160,28 @@ curl.exe "$base/api/leads/search?status=em_atendimento&source=manual_entry&limit
 Retorno minimo:
 
 - `contact`
-- `active_lead` (quando existir)
-- `latest_lead` (inclui leads encerrados para busca/auditoria)
-- `open_action_items` (quando existir)
+- `active_lead`, quando existir
+- `latest_lead`, incluindo leads encerrados para busca/auditoria
+- `open_action_items`, quando existir
 
-Exportacao CSV:
+### Exportacao CSV
 
 ```powershell
 curl.exe "$base/api/leads/export.csv?status=em_atendimento&limit=1000" -H "x-crm-api-key: $apiKey" -o leads.csv
 ```
 
-Regras:
+Regras documentadas:
 
 - retorna `text/csv; charset=utf-8` com BOM UTF-8;
 - usa `;` como separador;
 - nome sugerido de arquivo: `leads-clube04-YYYY-MM-DD.csv`;
 - campos: nome do tutor, telefone, telefone normalizado, origem, status, proxima acao, data proxima acao, data entrada, ultimo resultado, ultima observacao, tentativas, criado em, atualizado em.
 
+A exportacao pode ser usada para conferencia operacional, mas arquivos CSV reais nao devem ser versionados.
+
 ## Lead Operational Cycle
 
-Contexto operacional do lead:
+### Contexto operacional do lead
 
 ```powershell
 $leadId = "COLE_O_LEAD_ID"
@@ -119,7 +192,12 @@ Invoke-RestMethod `
   -Headers @{ "x-crm-api-key" = $apiKey }
 ```
 
-Registrar resultado de atendimento:
+Objetivo:
+- retornar contexto suficiente para atendimento e acompanhamento;
+- evitar que frontend reconstrua regra operacional por conta propria;
+- apoiar drawer/tela de acompanhamento do lead.
+
+### Registrar resultado de atendimento
 
 ```text
 POST /api/leads/:leadId/contact-outcomes
@@ -146,7 +224,7 @@ Aliases legados aceitos por compatibilidade:
 - `escalar_lideranca` -> `enviar_analise_lideranca`
 - `virou_cliente` -> `cliente_convertido`
 
-Exemplo `continuar_atendimento`:
+### Exemplo `continuar_atendimento`
 
 ```powershell
 $leadId = "COLE_O_LEAD_ID"
@@ -170,7 +248,7 @@ Invoke-RestMethod `
   -Body $body
 ```
 
-Exemplo `perdido`:
+### Exemplo `perdido`
 
 ```powershell
 $leadId = "COLE_O_LEAD_ID"
@@ -192,7 +270,7 @@ Invoke-RestMethod `
   -Body $body
 ```
 
-Regras operacionais:
+### Regras operacionais do endpoint
 
 - `actionItemId`, quando enviado, deve pertencer ao mesmo `leadId`;
 - cria `crm_interactions` com historico de outcome;
@@ -203,11 +281,9 @@ Regras operacionais:
 - `cliente_convertido` usa status `compareceu`, por compatibilidade com o enum atual do banco;
 - `nutricao_campanha` usa status `reativar_depois`, por compatibilidade com o enum atual do banco.
 
-Observacoes para frontend:
-
-- o response inclui dados de contato, lead, action_items abertos, interacoes recentes e recomendacao operacional;
-- `contact.notes`, `lead.entryAt` e `lead.updatedAt` podem ser usados no drawer de acompanhamento;
-- campos internos como `outcome`, `action_item` e status snake_case devem ser traduzidos na UI antes de exibir ao operador.
+Observacao:
+- As diferencas entre linguagem operacional e enum fisico do banco estao descritas em `docs/database/schema.md`.
+- Mudanca nessa compatibilidade exige tarefa especifica de schema/API/regra.
 
 ## Manual Leads
 
@@ -283,19 +359,19 @@ Regras:
 
 ## Conversations
 
-Criar conversa:
+### Criar conversa
 
 ```powershell
 curl.exe -X POST "$base/api/conversations" -H "Content-Type: application/json" -H "x-crm-api-key: $apiKey" -d "{\"contact_id\":\"CONTACT_ID\",\"channel\":\"whatsapp\",\"provider\":\"manual\",\"provider_conversation_id\":\"conv-teste-001\"}"
 ```
 
-Listar:
+### Listar conversas
 
 ```powershell
 curl.exe "$base/api/conversations" -H "x-crm-api-key: $apiKey"
 ```
 
-Buscar mensagens da conversa:
+### Buscar mensagens da conversa
 
 ```powershell
 curl.exe "$base/api/conversations/CONVERSATION_ID/messages" -H "x-crm-api-key: $apiKey"
@@ -303,15 +379,16 @@ curl.exe "$base/api/conversations/CONVERSATION_ID/messages" -H "x-crm-api-key: $
 
 ## Messages
 
-Criar mensagem:
+### Criar mensagem
 
 ```powershell
 curl.exe -X POST "$base/api/messages" -H "Content-Type: application/json" -H "x-crm-api-key: $apiKey" -d "{\"conversation_id\":\"CONVERSATION_ID\",\"provider\":\"manual\",\"provider_message_id\":\"msg-teste-001\",\"direction\":\"inbound\",\"message_type\":\"text\",\"from_number\":\"11999990001\",\"to_number\":\"1140000000\",\"body\":\"Ola, quero banho para meu pet\",\"timestamp\":\"2026-05-31T12:00:00.000Z\",\"raw_payload\":{\"source\":\"manual-test\"}}"
 ```
 
-Idempotencia: reenviar o mesmo `provider + provider_message_id` retorna `200` com a mensagem existente e `created: false`.
+Idempotencia:
+- reenviar o mesmo `provider + provider_message_id` retorna `200` com a mensagem existente e `created: false`.
 
-Listar mensagens:
+### Listar mensagens
 
 ```powershell
 curl.exe "$base/api/messages" -H "x-crm-api-key: $apiKey"
@@ -319,7 +396,7 @@ curl.exe "$base/api/messages" -H "x-crm-api-key: $apiKey"
 
 ## CRM Interactions
 
-Registrar interacao:
+### Registrar interacao
 
 ```powershell
 curl.exe -X POST "$base/api/crm-interactions" -H "Content-Type: application/json" -H "x-crm-api-key: $apiKey" -d "{\"contact_id\":\"CONTACT_ID\",\"lead_id\":\"LEAD_ID\",\"interaction_type\":\"whatsapp\",\"channel\":\"manual\",\"responsible\":\"equipe\",\"result\":\"respondeu\",\"notes\":\"Cliente pediu valores.\",\"next_action_at\":\"2026-06-01T13:00:00.000Z\",\"increment_attempts\":true}"
@@ -331,21 +408,22 @@ Quando `lead_id` for enviado, a API conclui automaticamente action_items abertos
 - `follow_up_agendado`
 - `lead_sem_interacao`
 
-Listar interacoes:
+### Listar interacoes
 
 ```powershell
 curl.exe "$base/api/crm-interactions?lead_id=LEAD_ID" -H "x-crm-api-key: $apiKey"
 ```
 
+Observacao:
+- Para o ciclo operacional atual da Jornada do Lead, preferir `POST /api/leads/:leadId/contact-outcomes` quando o objetivo for registrar resultado de atendimento com efeitos de ciclo de vida.
+
 ## Action Items
 
-Gerar Acao do Dia a partir de leads:
+### Gerar Acao do Dia a partir de leads
 
 ```powershell
-$apiKey = (Get-Content .env | Where-Object { $_ -match '^CRM_API_SECRET=' }) -replace '^CRM_API_SECRET=', ''
-
 Invoke-RestMethod `
-  -Uri "http://localhost:3000/api/action-items/generate" `
+  -Uri "$base/api/action-items/generate" `
   -Method Post `
   -Headers @{ "x-crm-api-key" = $apiKey } `
   -ContentType "application/json" `
@@ -362,7 +440,7 @@ Resposta:
 }
 ```
 
-Listar itens da Acao do Dia:
+### Listar itens da Acao do Dia
 
 ```powershell
 curl.exe "$base/api/action-items" -H "x-crm-api-key: $apiKey"
@@ -383,14 +461,13 @@ curl.exe "$base/api/action-items?status=pendente&type=follow_up_lead&priority=90
 curl.exe "$base/api/action-items?lead_id=LEAD_ID&type=follow_up_lead" -H "x-crm-api-key: $apiKey"
 ```
 
-Como obter `action_item_id` real antes de `complete/cancel`:
+### Obter `action_item_id` real antes de complete/cancel
 
 ```powershell
-$apiKey = (Get-Content .env | Where-Object { $_ -match '^CRM_API_SECRET=' }) -replace '^CRM_API_SECRET=', ''
 $leadId = "COLE_O_LEAD_ID_AQUI"
 
 $pendingItems = Invoke-RestMethod `
-  -Uri "http://localhost:3000/api/action-items?lead_id=$leadId&status=pendente&limit=100" `
+  -Uri "$base/api/action-items?lead_id=$leadId&status=pendente&limit=100" `
   -Method Get `
   -Headers @{ "x-crm-api-key" = $apiKey }
 
@@ -402,26 +479,24 @@ $actionItemId = $pendingItems.data[0].id
 $actionItemId
 ```
 
-Concluir action item:
+### Concluir action item
 
 ```powershell
-$apiKey = (Get-Content .env | Where-Object { $_ -match '^CRM_API_SECRET=' }) -replace '^CRM_API_SECRET=', ''
-
 Invoke-RestMethod `
-  -Uri "http://localhost:3000/api/action-items/$actionItemId/complete" `
+  -Uri "$base/api/action-items/$actionItemId/complete" `
   -Method Post `
   -Headers @{ "x-crm-api-key" = $apiKey } `
   -ContentType "application/json" `
   -Body "{}"
 ```
 
-Cancelar action item (compatibilidade com schema atual: `cancel` usa status `ignorado`):
+### Cancelar action item
+
+Compatibilidade com schema atual: `cancel` usa status `ignorado`.
 
 ```powershell
-$apiKey = (Get-Content .env | Where-Object { $_ -match '^CRM_API_SECRET=' }) -replace '^CRM_API_SECRET=', ''
-
 Invoke-RestMethod `
-  -Uri "http://localhost:3000/api/action-items/$actionItemId/cancel" `
+  -Uri "$base/api/action-items/$actionItemId/cancel" `
   -Method Post `
   -Headers @{ "x-crm-api-key" = $apiKey } `
   -ContentType "application/json" `
@@ -436,54 +511,22 @@ Endpoint somente leitura:
 GET /api/operational-summary
 ```
 
-Exemplo PowerShell:
+Exemplo:
 
 ```powershell
-$apiKey = (Get-Content .env | Where-Object { $_ -match '^CRM_API_SECRET=' }) -replace '^CRM_API_SECRET=', ''
-
 Invoke-RestMethod `
-  -Uri "http://localhost:3000/api/operational-summary" `
+  -Uri "$base/api/operational-summary" `
   -Method Get `
   -Headers @{ "x-crm-api-key" = $apiKey }
 ```
 
-Exemplo de resposta:
-
-```json
-{
-  "generatedAt": "2026-05-31T15:00:00.000Z",
-  "timezone": "America/Sao_Paulo",
-  "businessDate": "2026-05-31",
-  "window": {
-    "start": "2026-05-31T03:00:00.000Z",
-    "end": "2026-06-01T03:00:00.000Z"
-  },
-  "actionItems": {
-    "pendente": 4,
-    "emAndamento": 1,
-    "concluidoHoje": 3,
-    "ignoradoHoje": 1,
-    "vencidos": 2
-  },
-  "leads": {
-    "novoLead": 5,
-    "comFollowUpVencido": 2,
-    "semInteracao24h": 3
-  },
-  "messages": {
-    "inboundHoje": 8,
-    "ultimaInboundEm": "2026-05-31T14:58:10.000Z"
-  }
-}
-```
-
 Criterio usado para "hoje":
 
-- timezone operacional: `America/Sao_Paulo`.
-- `businessDate` representa a data local em Sao Paulo.
-- `window.start` e `window.end` representam a janela do dia operacional em Sao Paulo, serializada em ISO UTC.
-- `actionItems.concluidoHoje`: `status=concluido` com `completed_at` na janela.
-- `actionItems.ignoradoHoje`: `status=ignorado` com `coalesce(completed_at, updated_at)` na janela.
+- timezone operacional: `America/Sao_Paulo`;
+- `businessDate` representa a data local em Sao Paulo;
+- `window.start` e `window.end` representam a janela do dia operacional em Sao Paulo, serializada em ISO UTC;
+- `actionItems.concluidoHoje`: `status=concluido` com `completed_at` na janela;
+- `actionItems.ignoradoHoje`: `status=ignorado` com `coalesce(completed_at, updated_at)` na janela;
 - `messages.inboundHoje`: `direction=inbound` com `created_at` na janela.
 
 ## Operational Worklist
@@ -498,44 +541,28 @@ Query params opcionais:
 
 - `limit` (default `10`, max `50`)
 
-Exemplo PowerShell:
+Exemplo:
 
 ```powershell
-$apiKey = (Get-Content .env | Where-Object { $_ -match '^CRM_API_SECRET=' }) -replace '^CRM_API_SECRET=', ''
-
 Invoke-RestMethod `
-  -Uri "http://localhost:3000/api/operational-worklist?limit=10" `
+  -Uri "$base/api/operational-worklist?limit=10" `
   -Method Get `
   -Headers @{ "x-crm-api-key" = $apiKey }
 ```
 
-Exemplo resumido de resposta:
+Buckets documentados:
 
-```json
-{
-  "generatedAt": "2026-05-31T15:00:00.000Z",
-  "timezone": "America/Sao_Paulo",
-  "businessDate": "2026-05-31",
-  "limit": 10,
-  "actionItems": {
-    "pendentes": [],
-    "vencidos": [],
-    "concluidosHoje": [],
-    "retomarAtendimento": [],
-    "followUpsAgendados": [],
-    "revisaoLideranca": [],
-    "novosLeads": []
-  },
-  "leads": {
-    "followUpVencido": [],
-    "semProximaAcao": [],
-    "semInteracao24h": []
-  },
-  "messages": {
-    "ultimasInbound": []
-  }
-}
-```
+- `actionItems.pendentes`
+- `actionItems.vencidos`
+- `actionItems.concluidosHoje`
+- `actionItems.retomarAtendimento`
+- `actionItems.followUpsAgendados`
+- `actionItems.revisaoLideranca`
+- `actionItems.novosLeads`
+- `leads.followUpVencido`
+- `leads.semProximaAcao`
+- `leads.semInteracao24h`
+- `messages.ultimasInbound`
 
 Criterios de ordenacao:
 
@@ -549,7 +576,7 @@ Criterios de ordenacao:
 - `leads.semInteracao24h`: `last_interaction_at asc nulls first`, `created_at asc`
 - `messages.ultimasInbound`: `created_at desc`
 
-## Dashboard
+## Dashboard dev/local
 
 Painel web local/dev servido pela API:
 
@@ -560,20 +587,17 @@ Assets servidos pela API:
 - `GET /dashboard/app.js`
 - `GET /dashboard/styles.css`
 
-Observacao:
+Observacoes:
 
-- `/dashboard/app.js` e `/dashboard/styles.css` servem o bundle real de `apps/web/dist`.
-- se o build do frontend nao existir, a API retorna erro explicito para evitar fallback enganoso.
+- `/dashboard/app.js` e `/dashboard/styles.css` servem o bundle real de `apps/web/dist`;
+- se o build do frontend nao existir, a API retorna erro explicito para evitar fallback enganoso;
+- guia funcional: `docs/web/dashboard.md`.
 
-Guia de uso:
-
-- `docs/web/dashboard.md`
-
-Modelo atual:
+Modelo atual documentado:
 
 - Mesa Operacional em Kanban/lista;
-- clique no card/linha abre `Acompanhamento do lead`;
-- atalho `WhatsApp` apenas abre a conversa pelo telefone;
+- clique no card/linha abre acompanhamento do lead;
+- atalho WhatsApp apenas abre a conversa pelo telefone;
 - mensagem recomendada, templates e midias recomendadas ficam fora da UI nesta fase.
 
 ## Webhook WhatsApp Inbound
@@ -606,9 +630,12 @@ Resposta inclui:
 - `lead`
 - `created` com flags de `contact`, `conversation`, `message` e `lead`
 
+Decisao relacionada:
+- `docs/decisions/003-whatsapp-through-n8n.md`
+
 ## Validacao automatica
 
-Bateria completa recomendada antes de entrega/commit:
+Bateria completa recomendada antes de entrega/commit de mudancas gerais:
 
 ```powershell
 npm run verify:all
@@ -630,3 +657,16 @@ $env:CRM_API_SECRET = "troque_por_um_valor_local_forte"
 ```
 
 Se `CRM_API_SECRET` tambem estiver no `.env`, o script carrega esse valor automaticamente.
+
+## Politica de manutencao
+
+Atualizar este documento quando houver:
+
+- endpoint novo, removido ou alterado;
+- mudanca de payload, query param, status HTTP ou erro controlado;
+- mudanca em auth/API key;
+- mudanca em bucket do summary/worklist;
+- mudanca em comportamento de webhook;
+- mudanca em compatibilidade de enum operacional com enum fisico do banco.
+
+Mudancas de Jornada do Lead devem atualizar tambem o contrato operacional e a matriz de testes quando alterarem regra de negocio.
