@@ -58,6 +58,7 @@ Snapshot do estado tecnico commitado do CRM Clube04.
   - `npm run verify:operational-summary`
   - `npm run verify:operational-worklist`
   - `npm run verify:lead-operational-cycle`
+  - `npm run verify:lead-operational-scenarios`
   - `npm run verify:all`
   - `npm run verify:data-cleanliness`
 
@@ -84,7 +85,7 @@ Esses itens devem ser refeitos usando UI Foundation e referencia Lovable, uma te
 
 ## Lacunas conhecidas
 
-- Lacunas de teste ainda existem para checklist de lideranca, decisao da lideranca, alertas de atrasado, backlog e ciclo longo.
+- Lacunas de teste ainda existem para checklist de lideranca, decisao da lideranca, backlog e ciclo longo.
 - Importacao robusta da planilha ainda precisa de verificacoes automatizadas especificas.
 - Base de Leads visual ainda nao foi refeita com UI Foundation.
 - Mesa Operacional ainda nao foi refeita com UI Foundation.

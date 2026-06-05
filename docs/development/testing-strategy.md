@@ -46,6 +46,7 @@ Exemplos:
 npm run verify:operational-summary
 npm run verify:operational-worklist
 npm run verify:lead-operational-cycle
+npm run verify:lead-operational-scenarios
 ```
 
 Usar quando alterar Jornada do Lead, action items, summary, worklist ou regras de operacao.

@@ -38,6 +38,7 @@ Para Jornada do Lead, considerar tambem:
 npm run verify:operational-summary
 npm run verify:operational-worklist
 npm run verify:lead-operational-cycle
+npm run verify:lead-operational-scenarios
 ```
 
 ### Frontend/dashboard

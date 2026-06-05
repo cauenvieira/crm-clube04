@@ -18,6 +18,7 @@
     "verify:operational-summary": "tsx scripts/verify/verify-operational-summary.ts",
     "verify:operational-worklist": "tsx scripts/verify/verify-operational-worklist.ts",
     "verify:lead-operational-cycle": "tsx scripts/verify/verify-lead-operational-cycle.ts",
+    "verify:lead-operational-scenarios": "tsx scripts/verify/verify-lead-operational-scenarios.ts",
     "verify:dashboard": "tsx scripts/verify/verify-dashboard.ts",
     "verify:frontend": "playwright test",
     "verify:data-cleanliness": "tsx scripts/verify/verify-data-cleanliness.ts",

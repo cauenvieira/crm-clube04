@@ -16,6 +16,7 @@ const stages: Stage[] = [
   { name: "verify:operational-summary", command: "npm", args: ["run", "verify:operational-summary"] },
   { name: "verify:operational-worklist", command: "npm", args: ["run", "verify:operational-worklist"] },
   { name: "verify:lead-operational-cycle", command: "npm", args: ["run", "verify:lead-operational-cycle"] },
+  { name: "verify:lead-operational-scenarios", command: "npm", args: ["run", "verify:lead-operational-scenarios"] },
   { name: "verify:dashboard", command: "npm", args: ["run", "verify:dashboard"] },
   { name: "verify:frontend", command: "npm", args: ["run", "verify:frontend"] },
   { name: "n8n:list:workflows", command: "npm", args: ["run", "n8n:list:workflows"] }

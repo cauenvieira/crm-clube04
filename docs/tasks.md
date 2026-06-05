@@ -36,21 +36,22 @@ Milestones:
 8. `[done][P0][M0]` Reconciliar `docs/web/dashboard.md` antes de rebuild visual.
 9. `[todo][P0][M1]` Adicionar cobertura automatizada para checklist de analise da lideranca.
 10. `[todo][P0][M1]` Adicionar cobertura automatizada para decisao da lideranca.
-11. `[todo][P0][M1]` Adicionar cobertura automatizada para alertas de atrasado, backlog e ciclo longo.
-12. `[todo][P0][M3]` Adicionar verificacao de importacao para regras de de-para da planilha.
-13. `[todo][P0][M1]` Sprint 1A: Base de Leads sistematizada usando `components/ui`.
-14. `[todo][P0][M2]` Sprint 2A: Mesa Operacional usando `components/ui`.
-15. `[todo][P1][M1]` Sprint 3: Dashboard de Leads e Resumo Diario.
-16. `[todo][P0][M1]` Criar relatorio diario de operacao com base em summary + worklist.
-17. `[todo][P1][M5]` Definir arquitetura v1 da Jornada do Cliente pos-conversao.
-18. `[todo][P1][M1]` Padronizar metricas de desempenho por resultado de interacao.
-19. `[todo][P1][M4]` Preparar trilha controlada para WAHA real, somente inbound primeiro.
-20. `[todo][P1][M4]` Iniciar sincronizacao Clube04 somente leitura por etapas.
-21. `[todo][P1][M6]` Evoluir auth e auditoria para uso operacional real.
-22. `[todo][P1][M4]` Reavaliar mensagens recomendadas, templates e midias em fluxo menos intrusivo.
-23. `[todo][P2][M1]` Evoluir Base de Leads com configuracao de colunas e ordenacao.
-24. `[todo][P2][M6]` Avaliar exportacao XLSX para uso gerencial.
-25. `[todo][P2][M1]` Definir estrategia de merge real de contatos/telefones duplicados.
+11. `[done][P0][M1]` Adicionar cobertura automatizada para cenarios operacionais simulados da Jornada do Lead.
+12. `[todo][P0][M1]` Adicionar cobertura automatizada para backlog e ciclo longo quando houver bucket/endpoint dedicado.
+13. `[todo][P0][M3]` Adicionar verificacao de importacao para regras de de-para da planilha.
+14. `[todo][P0][M1]` Sprint 1A: Base de Leads sistematizada usando `components/ui`.
+15. `[todo][P0][M2]` Sprint 2A: Mesa Operacional usando `components/ui`.
+16. `[todo][P1][M1]` Sprint 3: Dashboard de Leads e Resumo Diario.
+17. `[todo][P0][M1]` Criar relatorio diario de operacao com base em summary + worklist.
+18. `[todo][P1][M5]` Definir arquitetura v1 da Jornada do Cliente pos-conversao.
+19. `[todo][P1][M1]` Padronizar metricas de desempenho por resultado de interacao.
+20. `[todo][P1][M4]` Preparar trilha controlada para WAHA real, somente inbound primeiro.
+21. `[todo][P1][M4]` Iniciar sincronizacao Clube04 somente leitura por etapas.
+22. `[todo][P1][M6]` Evoluir auth e auditoria para uso operacional real.
+23. `[todo][P1][M4]` Reavaliar mensagens recomendadas, templates e midias em fluxo menos intrusivo.
+24. `[todo][P2][M1]` Evoluir Base de Leads com configuracao de colunas e ordenacao.
+25. `[todo][P2][M6]` Avaliar exportacao XLSX para uso gerencial.
+26. `[todo][P2][M1]` Definir estrategia de merge real de contatos/telefones duplicados.
 
 ## Divida tecnica prioritaria
 
@@ -71,7 +72,8 @@ Milestones:
 - `[done][P0][M1]` Criar matriz de testes das regras da Jornada do Lead.
 - `[todo][P0][M1]` Adicionar cobertura automatizada para checklist de analise da lideranca.
 - `[todo][P0][M1]` Adicionar cobertura automatizada para decisao da lideranca.
-- `[todo][P0][M1]` Adicionar cobertura automatizada para alertas de atrasado, backlog e ciclo longo.
+- `[done][P0][M1]` Adicionar cobertura automatizada para cenarios operacionais simulados da Jornada do Lead.
+- `[todo][P0][M1]` Adicionar cobertura automatizada para backlog e ciclo longo quando houver bucket/endpoint dedicado.
 - `[todo][P0][M3]` Adicionar verificacao de importacao para regras de de-para da planilha.
 - `[todo][P1][M3]` Criar relatorio de invalidos/quarentena para importacao da planilha.
 - `[todo][P1][M3]` Consolidar deduplicacao ativa por telefone na importacao.

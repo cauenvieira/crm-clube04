@@ -20,6 +20,7 @@ Principais:
 - npm run verify:operational-summary
 - npm run verify:operational-worklist
 - npm run verify:lead-operational-cycle
+- npm run verify:lead-operational-scenarios
 - npm run verify:all
 - npm run verify:data-cleanliness
 
@@ -31,22 +32,22 @@ Frontend quando aplicavel:
 
 | Regra | Descricao | Teste atual | Cobertura |
 |---|---|---|---|
-| LOR-001 | Novo lead entra em fila operacional | smoke:api | parcial |
+| LOR-001 | Novo lead entra em fila operacional | smoke:api, verify:lead-operational-scenarios | coberto |
 | LOR-002 | Lead pode existir sem nome se telefone for valido | smoke:api | parcial |
 | LOR-003 | Criacao manual nao duplica lead ativo | smoke:api | coberto |
-| LOR-010 | Sem resposta cria proxima tentativa | verify:lead-operational-cycle | coberto |
-| LOR-011 | Cadencia de tentativas | verify:lead-operational-cycle | parcial |
-| LOR-012 | Limite de tentativas envia para lideranca | verify:lead-operational-cycle | coberto |
-| LOR-020 | Envio para lideranca exige autoanalise | pendente | nao coberto |
-| LOR-021 | Lideranca decide destino | pendente | nao coberto |
+| LOR-010 | Sem resposta cria proxima tentativa | verify:lead-operational-cycle, verify:lead-operational-scenarios | coberto |
+| LOR-011 | Cadencia de tentativas | verify:lead-operational-cycle, verify:lead-operational-scenarios | parcial |
+| LOR-012 | Limite de tentativas envia para lideranca | verify:lead-operational-cycle, verify:lead-operational-scenarios | coberto |
+| LOR-020 | Envio para lideranca exige autoanalise | verify:lead-operational-scenarios registra lacuna | nao implementado |
+| LOR-021 | Lideranca decide destino | verify:lead-operational-scenarios registra lacuna | nao implementado |
 | LOR-030 | Lideranca avalia processo | pendente | nao coberto |
 | LOR-031 | Lead fora do perfil gera feedback marketing | pendente | nao coberto |
 | LOR-032 | Processo ruim gera feedback operacional | pendente | nao coberto |
-| LOR-040 | Atender hoje | verify:operational-worklist | parcial |
-| LOR-041 | Atrasado ate 7 dias | pendente | nao coberto |
-| LOR-042 | Backlog acima de 7 dias | pendente | nao coberto |
-| LOR-043 | Lead ativo acima de 60 dias | pendente | nao coberto |
-| LOR-044 | Lead ativo sem proxima acao | verify:operational-summary | parcial |
+| LOR-040 | Atender hoje | verify:operational-worklist, verify:lead-operational-scenarios | parcial |
+| LOR-041 | Atrasado ate 7 dias | verify:lead-operational-scenarios | coberto |
+| LOR-042 | Backlog acima de 7 dias | verify:lead-operational-scenarios registra lacuna | nao implementado |
+| LOR-043 | Lead ativo acima de 60 dias | verify:lead-operational-scenarios registra lacuna | nao implementado |
+| LOR-044 | Lead ativo sem proxima acao | verify:operational-summary, verify:lead-operational-scenarios | coberto |
 | LOR-050 | Taxa de conversao | pendente | nao coberto |
 | IMP-001 | Normalizacao de telefone | smoke:api | parcial |
 | IMP-002 | Nome vazio | smoke:api | parcial |
@@ -67,7 +68,6 @@ Frontend quando aplicavel:
 Prioridade 1:
 - LOR-020 checklist antes da lideranca;
 - LOR-021 decisao da lideranca;
-- LOR-041 atrasado ate 7 dias;
 - LOR-042 backlog acima de 7 dias;
 - LOR-043 ciclo acima de 60 dias.
 
