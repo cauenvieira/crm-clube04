@@ -1,0 +1,49 @@
+﻿name: Sync ChatGPT sources to Google Drive
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "**/*.md"
+      - ".github/workflows/sync-chatgpt-sources.yml"
+      - "scripts/sync-chatgpt-sources/**"
+
+  workflow_dispatch:
+
+concurrency:
+  group: sync-chatgpt-sources
+  cancel-in-progress: true
+
+jobs:
+  sync:
+    name: Sync Markdown sources
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build ChatGPT source folder
+        run: node scripts/sync-chatgpt-sources/build-chatgpt-sources.mjs
+
+      - name: Install rclone
+        run: |
+          curl https://rclone.org/install.sh | sudo bash
+
+      - name: Configure rclone
+        env:
+          RCLONE_CONFIG_DRIVE: ${{ secrets.RCLONE_CONFIG_DRIVE }}
+        run: |
+          mkdir -p ~/.config/rclone
+          printf "%s" "$RCLONE_CONFIG_DRIVE" > ~/.config/rclone/rclone.conf
+          rclone version
+          rclone lsd drive:
+
+      - name: Dry run sync
+        run: |
+          rclone sync .chatgpt-sources drive:"Contextos CHATGPT/CRM Clube04/Fontes ChatGPT/repo-docs" --dry-run --progress
+
+      - name: Sync to Google Drive
+        run: |
+          rclone sync .chatgpt-sources drive:"Contextos CHATGPT/CRM Clube04/Fontes ChatGPT/repo-docs" --progress
