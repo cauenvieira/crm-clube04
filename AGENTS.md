@@ -78,3 +78,28 @@ Relatorio final deve ser compacto e conter:
 5. Validacoes executadas.
 6. Riscos/limitacoes.
 7. Proximo passo recomendado.
+
+<!-- CRM-CLUBE04-OPERATIONAL-BUSINESS-RULES -->
+
+## Operational business rules
+
+Before changing lead lifecycle behavior, read:
+
+- docs/product/lead-operational-contract.md
+- docs/product/lead-import-normalization.md
+- docs/qa/lead-business-rules-test-matrix.md
+
+Do not change the following unless the corresponding product rule and test matrix are updated in the same task:
+
+- lead statuses;
+- action item types;
+- outcome behavior;
+- leadership review rules;
+- attempt cadence;
+- import normalization;
+- conversion, loss, and disqualification rules;
+- operational alerts;
+- dashboard indicator definitions.
+
+Backend owns lifecycle behavior. Critical lead movement must not be implemented as frontend-only behavior.
+

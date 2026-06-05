@@ -56,3 +56,15 @@ Prioridade:
 - Validacao final obrigatoria em sequencia com `npm run verify:all`, salvo docs-only.
 - Nao considerar falha paralela como conclusiva sem rerun sequencial.
 - Se a worktree estiver suja, confirmar se `project-state` e `tasks` representam apenas estado commitado ou tambem pendencias.
+
+<!-- CRM-CLUBE04-TASKS-OPERATIONAL-RULES -->
+
+## Operational rules backlog
+
+- [done] Create lead operational business rule contract.
+- [done] Create lead import normalization rules.
+- [done] Create lead business rule test matrix.
+- [todo] Add automated coverage for leadership review checklist.
+- [todo] Add automated coverage for delayed, backlog, and long-cycle alerts.
+- [todo] Add import verification for spreadsheet de-para rules.
+

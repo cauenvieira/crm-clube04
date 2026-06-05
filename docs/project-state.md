@@ -83,3 +83,16 @@ Esses itens devem ser refeitos usando `components/ui` e referencia Lovable, uma 
 4. Corrigir `docs/web/dashboard.md` e `docs/api/rest-api.md` apos a separacao.
 5. Iniciar Sprint 1A: Base de Leads usando UI Foundation.
 6. Depois seguir para Mesa Operacional e Dashboard/Resumo Diario.
+
+<!-- CRM-CLUBE04-PROJECT-STATE-OPERATIONAL-RULES -->
+
+## Operational rule contract
+
+The lead lifecycle now has an explicit operational contract:
+
+- `docs/product/lead-operational-contract.md`
+- `docs/product/lead-import-normalization.md`
+- `docs/qa/lead-business-rules-test-matrix.md`
+
+Future backend, frontend, import, and automation work must preserve these rules or update the contract and test matrix in the same task.
+

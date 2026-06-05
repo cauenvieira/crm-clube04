@@ -73,3 +73,16 @@ npm run verify:all
 - Roadmap: `docs/roadmap.md`
 - Backlog: `docs/tasks.md`
 - Integracao n8n inbound: `docs/integrations/n8n-whatsapp-inbound.md`
+
+<!-- CRM-CLUBE04-README-OPERATIONAL-RULES -->
+
+### Operational lead rules
+
+The Lead Journey business rules are documented in:
+
+- `docs/product/lead-operational-contract.md`
+- `docs/product/lead-import-normalization.md`
+- `docs/qa/lead-business-rules-test-matrix.md`
+
+These files are the source of truth for lead lifecycle behavior, import normalization, and business-rule test coverage.
+
