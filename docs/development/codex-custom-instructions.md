@@ -1,29 +1,69 @@
-# Codex Custom Instructions (Stable)
+# Codex Custom Instructions
 
-Use this as a compact base for Codex custom instructions.
+Use este arquivo como base compacta para instrucoes personalizadas do Codex no projeto CRM Clube04.
 
-## Core rules
+## Contexto
 
-- Read the docs referenced in the prompt before editing.
-- Keep changes small and scoped; do not mix feature work with large refactors.
-- Do not change API, schema, endpoints, n8n workflows, or Docker setup unless explicitly requested.
-- Do not commit secrets, `.env`, local exports, real data files, or `.tmp` artifacts.
-- Keep technical docs and code comments ASCII-only.
+Voce esta trabalhando no CRM Clube04, um centro de operacoes e controle em evolucao para o Clube04 Mogi das Cruzes.
 
-## Validation rules
+O foco funcional atual e a Jornada do Lead, mas o produto deve evoluir para apoiar atendimento, WhatsApp, agenda, clientes, pacotes, metas, equipe, producao, NPS, indicadores e automacoes.
 
-- Run `npm run verify:all` before closing tasks.
-- Run tests sequentially; do not execute smoke/verify scripts in parallel.
-- For frontend changes, include `npm run verify:frontend`.
+Nao trate como SaaS generico. Respeite a operacao real do Clube04.
 
-## Git workflow rules
+## Regras principais
 
-- Git is the source of truth.
-- Do not use `git add -A`.
-- Do not commit without final review in the thread.
-- Report `git status --short` and `git diff --stat` in the final summary.
+- Leia `AGENTS.md` antes de editar.
+- Siga a hierarquia de `docs/development/documentation-hierarchy.md`.
+- Consulte os docs especificos da tarefa antes de alterar arquivos.
+- Mantenha mudancas pequenas, incrementais e com escopo limitado.
+- Nao misture feature com refatoracao ampla.
+- Nao altere API, schema, endpoints, n8n, Docker ou integracoes sensiveis sem pedido explicito.
+- Nao versionar segredos, `.env`, `.tmp`, dados reais, CSV, XLSX, dumps, logs, screenshots, zips ou backups locais.
+- Use ASCII-only por padrao em docs tecnicos, codigo, comentarios e exemplos.
 
-## Reporting rules
+## Jornada do Lead
 
-- Keep final report compact: what changed, files changed, validations, risks, next step.
-- Include full logs only for errors or non-trivial troubleshooting.
+Antes de alterar comportamento operacional da Jornada do Lead, leia:
+
+- `docs/product/lead-operational-contract.md`
+- `docs/product/lead-import-normalization.md`
+- `docs/qa/lead-business-rules-test-matrix.md`
+
+Nao alterar status, action item, outcome, cadencia, lideranca, perda, desqualificacao, conversao, importacao, normalizacao ou indicadores sem atualizar docs e matriz/testes na mesma tarefa.
+
+O backend e dono do ciclo de vida. Movimentacao critica nao deve ser apenas visual no frontend.
+
+## Git
+
+- Git e a fonte de verdade.
+- Nao usar `git add -A`.
+- Nao usar `git add .` sem revisao explicita.
+- Nao commitar sem revisao final no thread.
+- Reportar `git status --short` e `git diff --stat`.
+- Se houver risco de perda de trabalho, pedir `git status --short`, `git diff` e `git stash list`.
+
+## Validacao
+
+Escolha validacoes proporcionais ao escopo.
+
+- Docs-only: `git diff --check` e `npm run verify:data-cleanliness`.
+- Backend/API: `npm run smoke:api`, verifies especificos e, quando aplicavel, `npm run verify:all`.
+- Frontend: `npm run verify:frontend`, `npm run verify:dashboard` e validacao visual quando possivel.
+- Mudancas gerais: `npm run build`, `npm run lint`, `npm run verify:all`, `npm run verify:data-cleanliness`.
+
+Nao executar smoke/verify em paralelo no mesmo banco local.
+
+## Fechamento
+
+Relatorio final compacto:
+
+1. O que mudou.
+2. Arquivos alterados.
+3. Validacoes executadas.
+4. Decisoes relevantes.
+5. Riscos ou pendencias.
+6. Se docs/backlog/matriz foram atualizados.
+7. `git status --short`.
+8. Proximo passo recomendado.
+
+Logs completos apenas para erros ou troubleshooting.

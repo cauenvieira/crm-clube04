@@ -1,16 +1,27 @@
 # Lead Operational Scope
 
-Escopo de produto para transformar a planilha Jornada do Lead em CRM operacional.
+## Status deste documento
+
+Este e um documento auxiliar de escopo da Jornada do Lead.
+
+Ele descreve a intencao de produto e os limites dos proximos sprints, mas nao e a fonte de verdade para enums, status, outcomes, cadencia, regras de lideranca, importacao ou indicadores.
+
+Em caso de conflito, vencem:
+
+1. `docs/product/lead-operational-contract.md`
+2. `docs/product/lead-import-normalization.md`
+3. `docs/qa/lead-business-rules-test-matrix.md`
 
 ## Objetivo
 
-Substituir a rotina manual da Jornada do Lead por um fluxo operacional no CRM:
+Substituir a rotina manual da planilha Jornada do Lead por um fluxo operacional no CRM:
 
 - cadastrar lead;
 - organizar fila diaria;
 - registrar resultado da interacao;
 - criar proxima acao;
-- acompanhar ate conversao, perda, desqualificacao ou nutricao.
+- acompanhar ate conversao, perda, desqualificacao ou nutricao/campanha;
+- gerar historico e rastreabilidade para lideranca.
 
 ## Incluido nos proximos sprints
 
@@ -36,55 +47,17 @@ Substituir a rotina manual da Jornada do Lead por um fluxo operacional no CRM:
 - Jornada completa do Cliente pos-conversao.
 - Pacotes.
 - NPS.
-- ERP.
+- ERP/Clube04 em modo escrita.
 
-## Status operacional v1
+## Status e resultados operacionais
 
-Estados de trabalho sugeridos:
+Nao usar este arquivo como fonte para nomes finais de status, action items ou outcomes.
 
-- `novo_lead`: lead entrou e precisa de primeiro contato.
-- `em_atendimento`: conversa ativa.
-- `aguardando_resposta`: equipe aguardando retorno do tutor.
-- `agendado`: lead marcou horario.
-- `convertido_cliente`: conversao confirmada.
-- `perdido`: lead encerrou sem interesse comercial.
-- `desqualificado`: dados invalidos ou lead fora do perfil.
-- `nutricao`: saiu da fila diaria e pode receber campanha futura.
-- `revisao_lideranca`: precisa decisao da lideranca.
+Consultar:
 
-Antes de implementar, conferir compatibilidade com enums existentes no banco.
-
-## Resultado da interacao v1
-
-Resultados controlados para registro:
-
-- `nao_respondeu`
-- `chamar_depois`
-- `continuar_atendimento`
-- `agendou`
-- `sem_interesse`
-- `dados_invalidos`
-- `escalar_lideranca`
-- `virou_cliente`
-- `enviar_nutricao`
-
-## Motivos de perda
-
-- `preco`
-- `localizacao`
-- `sem_taxi_dog`
-- `ja_resolveu`
-- `nao_tem_interesse`
-- `outro`
-
-## Motivos de desqualificacao
-
-- `telefone_invalido`
-- `fora_area`
-- `servico_nao_atendido`
-- `duplicado`
-- `spam`
-- `outro`
+- `docs/product/lead-operational-contract.md`
+- `docs/product/lead-import-normalization.md`
+- `docs/qa/lead-business-rules-test-matrix.md`
 
 ## Nutricao e campanha
 
@@ -106,13 +79,18 @@ Usar quando:
 - conflito de classificacao;
 - potencial comercial relevante;
 - duvida sobre perda/desqualificacao;
-- lead importado com informacao inconsistente.
+- lead importado com informacao inconsistente;
+- atendimento precisa de decisao ou feedback.
 
 Analise da Lideranca deve ter fila propria e nao competir com follow-up comum.
 
+As regras detalhadas de envio, autoanalise, decisao e auditoria ficam no contrato operacional.
+
 ## Regra para sair da fila diaria
 
-Lead sai da fila diaria quando:
+Lead sai da fila diaria quando o contrato operacional indicar que nao ha acao humana diaria pendente.
+
+Exemplos esperados:
 
 - virou cliente;
 - foi perdido com motivo registrado;
@@ -122,3 +100,7 @@ Lead sai da fila diaria quando:
 - foi escalado para analise da lideranca.
 
 Historico nunca deve ser apagado.
+
+## Observacao
+
+Este arquivo deve permanecer curto. Regras detalhadas devem ser registradas no contrato operacional ou na matriz de testes, nao aqui.
