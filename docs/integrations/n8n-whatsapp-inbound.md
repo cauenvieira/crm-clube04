@@ -1,194 +1,209 @@
 # n8n WhatsApp Inbound (Local)
 
-Este guia mostra o fluxo minimo para testar entrada de mensagem WhatsApp no CRM via n8n local, sem WAHA direto.
-
 ## Objetivo
 
-Receber um webhook manual no n8n e encaminhar payload normalizado para:
+Documentar o fluxo minimo de entrada de mensagem WhatsApp no CRM via n8n local.
 
-`POST /api/webhooks/whatsapp/inbound`
+Fluxo atual:
+
+```text
+Webhook n8n local -> payload normalizado -> POST /api/webhooks/whatsapp/inbound -> CRM
+```
+
+Nesta etapa nao ha WAHA real direto, envio de WhatsApp, IA autonoma ou resposta automatica para cliente.
+
+## Autoridade documental
+
+Este guia descreve integracao. Ele nao altera regra operacional da Jornada do Lead.
+
+Se envolver status, outcome, fila, tentativa, conversao, perda, nutricao ou lideranca, ler obrigatoriamente:
+
+- `docs/product/lead-operational-contract.md`
+- `docs/product/lead-import-normalization.md`
+- `docs/qa/lead-business-rules-test-matrix.md`
+
+Contrato tecnico do endpoint:
+
+- `docs/api/rest-api.md`
+- `docs/decisions/003-whatsapp-through-n8n.md`
+- `docs/decisions/005-versioned-n8n-workflows.md`
 
 ## Servico n8n local
 
-- URL do editor n8n local: `http://localhost:5678`
-- Usuario e senha padrao local (se nao alterado no `.env`): `admin` / `admin_local_only`
-- Imagem Docker oficial: `docker.n8n.io/n8nio/n8n`
-- Versao local controlada por `N8N_VERSION` no `.env`
+- Editor local: `http://localhost:5678`
+- Imagem: `docker.n8n.io/n8nio/n8n`
+- Versao controlada por `N8N_VERSION` no `.env`
+- Workflow oficial: `infra/n8n/workflows/whatsapp-inbound-test.json`
+- ID oficial: `52RxSSXMQ4Zaitnw`
 
-## URL da API dentro da rede Docker
+## Endpoint chamado pelo n8n
 
-No node `HTTP Request` do n8n, usar:
+Dentro da rede Docker, usar:
 
-`http://crm-api:3000/api/webhooks/whatsapp/inbound`
+```text
+http://crm-api:3000/api/webhooks/whatsapp/inbound
+```
 
-Header obrigatorio:
+Headers obrigatorios:
 
-- `x-crm-api-key: <valor de CRM_API_SECRET>`
+```text
+Content-Type: application/json
+x-crm-api-key: <CRM_API_SECRET>
+```
 
-## Workflow versionado no repositorio
+Nao salvar segredo real no JSON versionado.
 
-Arquivo importavel:
+## Importacao do workflow versionado
 
-- `infra/n8n/workflows/whatsapp-inbound-test.json`
+```powershell
+cd "C:\Users\cauev\OneDrive\Documentos\CRM Clube04"
 
-Fluxo:
-
-Webhook n8n -> payload normalizado -> HTTP Request CRM inbound
-
-## Fluxo de importacao (recomendado via CLI)
-
-Com os containers ativos:
-
-```bash
 npm run n8n:import:workflows
-```
-
-O comando usa o mount read-only da pasta versionada:
-
-- host: `infra/n8n/workflows`
-- container: `/workflows`
-
-Comando equivalente:
-
-```bash
-docker compose exec -T n8n n8n import:workflow --separate --input=/workflows
-```
-
-Importante sobre duplicidade:
-
-- O import sobrescreve por `id` do workflow JSON, nao por `name`.
-- O arquivo versionado `infra/n8n/workflows/whatsapp-inbound-test.json` deve manter `id` estavel.
-- ID oficial atual: `52RxSSXMQ4Zaitnw`.
-- Se houver duplicados com mesmo nome, remover duplicados pela UI e manter apenas o workflow com ID oficial antes de reimportar.
-
-Para listar workflows importados:
-
-```bash
 npm run n8n:list:workflows
 ```
 
-## Como o payload e normalizado no workflow
+Comando equivalente no container:
 
-O node `Set Normalized Payload` envia:
+```powershell
+docker compose exec -T n8n n8n import:workflow --separate --input=/workflows
+```
+
+O import sobrescreve por `id`, nao por `name`.
+
+## Payload normalizado esperado
+
+O workflow deve enviar para a API um JSON com estes campos minimos:
 
 ```json
 {
   "provider": "waha",
-  "providerMessageId": "{{$json.body.providerMessageId || $execution.id}}",
-  "providerConversationId": "{{$json.body.fromNumber}}",
-  "fromNumber": "{{$json.body.fromNumber}}",
-  "toNumber": "5511470000000",
-  "contactName": "{{$json.body.contactName}}",
-  "body": "{{$json.body.body}}",
-  "messageType": "text",
-  "direction": "inbound",
-  "timestamp": "{{$now.toISO()}}",
-  "source": "whatsapp",
-  "campaign": "n8n_manual_test",
-  "rawPayload": "{{$json}}"
-}
-```
-
-## Como configurar o header x-crm-api-key
-
-No node `HTTP Request CRM Inbound`:
-
-- URL: `http://crm-api:3000/api/webhooks/whatsapp/inbound`
-- Header `Content-Type`: `application/json`
-- Header `x-crm-api-key`: usar o segredo local
-
-Opcao recomendada:
-
-- Definir `CRM_API_SECRET` no ambiente do servico n8n e usar expressao:
-  - `{{$env.CRM_API_SECRET}}`
-- Em n8n `2.22.4`, para ambiente local, o compose define:
-  - `N8N_BLOCK_ENV_ACCESS_IN_NODE=false`
-  - Sem isso, o node pode falhar com `access to env vars denied`.
-
-Opcao manual:
-
-- Preencher o header no node com o mesmo valor de `CRM_API_SECRET` usado pela API.
-
-Importante:
-
-- Nao versionar segredo real no JSON do workflow.
-
-## Teste manual rapido
-
-No workflow importado:
-
-1. Clique em `Execute workflow` para abrir o webhook de teste
-2. Use a URL de teste no formato `http://localhost:5678/webhook-test/whatsapp-inbound-test`
-3. Envie o payload abaixo
-
-### Diferenca entre /webhook-test e /webhook
-
-- `/webhook-test/...`: usado para teste manual no editor; exige clicar em `Execute workflow`.
-- `/webhook/...`: usado com workflow ativo em execucao normal; nao depende do botao `Execute workflow`.
-
-Payload de exemplo para chamar o webhook do n8n:
-
-```json
-{
+  "providerMessageId": "n8n_test_001",
+  "providerConversationId": "5511999999999",
   "fromNumber": "5511999999999",
+  "toNumber": "5511470000000",
   "contactName": "Maria Teste n8n",
   "body": "Ola, gostaria de saber valores de banho",
-  "providerMessageId": "n8n_test_001"
+  "messageType": "text",
+  "direction": "inbound",
+  "timestamp": "2026-06-05T12:00:00.000Z",
+  "source": "whatsapp",
+  "campaign": "n8n_manual_test",
+  "rawPayload": {}
 }
 ```
 
-Exemplo por `curl.exe` no host:
+Regras tecnicas:
+
+- `provider + providerMessageId` define idempotencia de mensagem.
+- `fromNumber` deve ser normalizavel pelo CRM.
+- `direction` nesta fase deve ser `inbound`.
+- `rawPayload` preserva contexto tecnico para auditoria local.
+
+## Configuracao segura do header
+
+Opcao recomendada local:
+
+1. Definir `CRM_API_SECRET` no `.env` usado pelo Docker Compose.
+2. No node HTTP Request, usar expressao:
+
+```text
+{{$env.CRM_API_SECRET}}
+```
+
+Para o n8n acessar env vars em node, o compose local usa:
+
+```text
+N8N_BLOCK_ENV_ACCESS_IN_NODE=false
+```
+
+Validar no container:
+
+```powershell
+docker compose exec n8n printenv N8N_BLOCK_ENV_ACCESS_IN_NODE
+```
+
+Resultado esperado local:
+
+```text
+false
+```
+
+## Teste manual pelo n8n
+
+1. Abrir o workflow no n8n.
+2. Clicar em `Execute workflow`.
+3. Chamar a URL de teste:
+
+```text
+http://localhost:5678/webhook-test/whatsapp-inbound-test
+```
+
+Exemplo:
 
 ```powershell
 curl.exe -X POST "http://localhost:5678/webhook-test/whatsapp-inbound-test" -H "Content-Type: application/json" -d "{\"fromNumber\":\"5511999999999\",\"contactName\":\"Maria Teste n8n\",\"body\":\"Ola, gostaria de saber valores de banho\",\"providerMessageId\":\"n8n_test_001\"}"
 ```
 
-## Como verificar se o CRM recebeu lead/mensagem
-
-1. Verificar saude da API:
+## Verificacao no CRM
 
 ```powershell
-curl.exe "http://localhost:3000/health"
+$base = "http://localhost:3000"
+$apiKey = (Get-Content .env | Where-Object { $_ -match '^CRM_API_SECRET=' }) -replace '^CRM_API_SECRET=', ''
+
+curl.exe "$base/health"
+curl.exe "$base/api/leads?source=whatsapp" -H "x-crm-api-key: $apiKey"
+curl.exe "$base/api/messages" -H "x-crm-api-key: $apiKey"
 ```
 
-2. Listar leads:
+Ao reenviar o mesmo `providerMessageId`, a API nao deve duplicar mensagem.
+
+## Diferenca entre webhook-test e webhook
+
+- `/webhook-test/...`: teste manual no editor, exige `Execute workflow`.
+- `/webhook/...`: execucao normal com workflow ativo.
+
+Para esta fase, preferir `/webhook-test/...`.
+
+## Troubleshooting
+
+### Erro de API key
+
+Conferir:
+
+- `CRM_API_SECRET` no `.env` da API;
+- `CRM_API_SECRET` no ambiente do n8n;
+- header `x-crm-api-key` no node HTTP Request.
+
+### Env vars negadas no n8n
+
+Conferir:
 
 ```powershell
-$apiKey = "troque_por_um_valor_local_forte"
-curl.exe "http://localhost:3000/api/leads?source=whatsapp" -H "x-crm-api-key: $apiKey"
+docker compose exec n8n printenv N8N_BLOCK_ENV_ACCESS_IN_NODE
 ```
 
-3. Listar mensagens:
+Valor esperado local/dev: `false`.
 
-```powershell
-curl.exe "http://localhost:3000/api/messages" -H "x-crm-api-key: $apiKey"
-```
+### Bad request no HTTP Request
 
-4. Validar no retorno se a mensagem foi criada sem duplicacao ao reenviar mesmo `providerMessageId`.
+Conferir se o body final inclui:
 
-## Uso de CRM_API_SECRET no n8n
+- `provider`
+- `providerMessageId`
+- `fromNumber`
+- `body`
+- `direction`
+- `timestamp`
 
-Para nao hardcodar segredo:
+### Duplicidade no n8n
 
-- defina `CRM_API_SECRET` no `.env` usado pelo Docker Compose;
-- no node HTTP Request, use `{{$env.CRM_API_SECRET}}` no header `x-crm-api-key`.
+Se houver workflows duplicados com mesmo nome, manter apenas o workflow com ID oficial e reimportar.
 
-Validacao rapida do erro `access to env vars denied`:
+## Fora do escopo atual
 
-1. Conferir no container:
-   - `docker compose exec n8n printenv N8N_BLOCK_ENV_ACCESS_IN_NODE`
-2. Valor esperado para local/dev:
-   - `false`
-
-Validacao rapida para `Bad request - please check your parameters` no HTTP Request:
-
-1. Conferir no node `Set Normalized Payload` se `provider` esta como `waha`.
-2. Confirmar que o body final inclui `providerMessageId`, `fromNumber`, `body`, `direction` e `timestamp`.
-3. Confirmar que o HTTP Request envia `Content-Type: application/json` e body JSON (`={{ $json }}`).
-
-## Observacoes
-
-- Nesta etapa nao ha integracao direta com WAHA.
-- Nesta etapa nao ha envio de WhatsApp.
-- Nesta etapa nao ha IA.
-- O endpoint do CRM ja cuida de idempotencia por `provider + providerMessageId`.
+- WAHA real direto.
+- Envio outbound.
+- Bot automatico.
+- IA respondendo cliente.
+- Campanhas ativas.
+- Uso com dados reais sem autorizacao.

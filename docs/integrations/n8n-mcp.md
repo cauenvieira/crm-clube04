@@ -2,52 +2,88 @@
 
 ## Objetivo
 
-Habilitar MCP instance-level do n8n local para inspecao e apoio tecnico no ajuste de workflows, reduzindo configuracao manual campo por campo.
+Definir uso controlado do MCP instance-level do n8n local para inspecao e apoio tecnico.
 
-## Diretriz principal
+MCP ajuda a consultar e diagnosticar workflows, mas nao substitui Git, docs ou revisao humana.
 
-- Git continua sendo a fonte da verdade para workflows versionados.
-- Workflows devem continuar em `infra/n8n/workflows`.
+## Hierarquia
 
-## Regras de uso no projeto
+Em caso de conflito:
+
+1. Git e arquivos versionados vencem estado observado via MCP.
+2. `infra/n8n/workflows/*` vence workflow alterado manualmente na UI.
+3. `docs/decisions/005-versioned-n8n-workflows.md` vence este guia.
+4. MCP e ferramenta auxiliar, nao fonte de verdade.
+
+## Regras de uso
 
 - Nao commitar tokens, segredos ou credenciais reais.
-- Configuracao real do Codex deve ficar no `config.toml` do usuario, nunca no repositorio.
-- Comecar uso de MCP apenas para listar e inspecionar workflows.
-- Nao ativar workflow de producao sem aprovacao.
+- Configuracao real do cliente MCP deve ficar no ambiente do usuario, nunca no repo.
+- Usar MCP primeiro para listar e inspecionar.
 - Nao alterar credenciais via MCP.
+- Nao ativar workflow real sem aprovacao.
 - Nao executar fluxo com dados reais sem aprovacao.
+- Se MCP revelar divergencia entre UI e Git, registrar no fechamento da tarefa.
 
-## Modo local (UI manual)
+## Modo local atual
 
-No ambiente local/dev, o projeto usa configuracao manual pela UI do n8n para MCP:
+No ambiente local/dev, a configuracao e manual pela UI do n8n:
 
-- `N8N_MCP_MANAGED_BY_ENV=false`
-- `N8N_MCP_ACCESS_ENABLED=false`
+```text
+N8N_MCP_MANAGED_BY_ENV=false
+N8N_MCP_ACCESS_ENABLED=false
+```
 
-Com isso, a tela `Settings > Instance-level MCP` fica editavel e permite abrir `Connection details` para gerar token.
+Com isso, `Settings > Instance-level MCP` fica editavel para ativacao local e copia dos detalhes de conexao.
 
 ## Validacao rapida
 
-```bash
+```powershell
+cd "C:\Users\cauev\OneDrive\Documentos\CRM Clube04"
+
 docker compose exec n8n printenv N8N_MCP_MANAGED_BY_ENV
 docker compose exec n8n printenv N8N_MCP_ACCESS_ENABLED
 ```
 
-Resultado esperado:
+Resultado esperado no modo manual/local:
 
-- `false`
-- `false`
+```text
+false
+false
+```
 
-## Fluxo recomendado para habilitar MCP na UI local
+## Fluxo recomendado para habilitar localmente
 
-1. Abrir `http://localhost:5678`
-2. Ir em `Settings > Instance-level MCP`
-3. Ativar `Enable MCP access`
-4. Abrir `Connection details`
-5. Copiar token e detalhes de conexao para uso local no cliente MCP
+1. Abrir `http://localhost:5678`.
+2. Ir em `Settings > Instance-level MCP`.
+3. Ativar `Enable MCP access`.
+4. Abrir `Connection details`.
+5. Copiar token e detalhes para o cliente MCP local.
+6. Guardar configuracao fora do repo.
 
-Importante:
+## Uso permitido nesta fase
 
-- Nao commitar token no repositorio.
-- Configuracao do cliente MCP deve ficar no arquivo local do usuario (exemplo: `config.toml`), nao no Git.
+Permitido:
+
+- listar workflows;
+- consultar nodes;
+- comparar workflow UI versus JSON versionado;
+- apoiar troubleshooting.
+
+Nao permitido sem tarefa propria:
+
+- criar workflow produtivo;
+- alterar credenciais;
+- executar fluxo com dados reais;
+- substituir workflow versionado apenas pela UI;
+- versionar token MCP.
+
+## Fechamento de tarefa MCP
+
+Informar:
+
+- o que foi apenas inspecionado;
+- se houve alteracao manual;
+- se o JSON versionado precisa ser atualizado;
+- se houve risco de segredo;
+- proximos passos para versionamento.
