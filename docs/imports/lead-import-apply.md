@@ -73,6 +73,23 @@ Parametros aceitos pela remediacao:
 - sem chamadas de API;
 - sem arquivo real versionado.
 
+## Diagnostico/reset local de importacoes antigas
+
+Quando o banco local acumular importacoes antigas com labels divergentes, usar os scripts de dev-data:
+
+```powershell
+npm run dev:diagnose-imported-leads
+npm run dev:reset-imported-leads
+```
+
+O diagnostico e somente leitura. O reset e dry-run por padrao e so aplica com:
+
+```powershell
+npm run dev:reset-imported-leads:apply
+```
+
+Esse reset nao faz parte do fluxo normal de importacao. Ele existe para higiene do banco local/dev antes de testes operacionais. Ele nao usa `TRUNCATE`, nao apaga registros ambiguos e nao deve ser executado em ambiente real.
+
 ## Conversao
 
 - `Pessoa.csv` e apoio inicial de crosscheck por telefone.

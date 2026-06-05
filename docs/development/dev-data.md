@@ -10,6 +10,9 @@ Este documento e operacional/tecnico. Ele nao define regra de negocio da Jornada
 
 - `npm run dev:cleanup-test-data`
 - `npm run dev:cleanup-test-data:apply`
+- `npm run dev:diagnose-imported-leads`
+- `npm run dev:reset-imported-leads`
+- `npm run dev:reset-imported-leads:apply`
 - `npm run dev:seed-dashboard`
 - `npm run verify:data-cleanliness`
 
@@ -58,6 +61,60 @@ Comportamento:
 - remove/recria somente dados do proprio seed;
 - serve para validar leitura visual, nao como fonte de regra de negocio.
 
+## Diagnostico/reset de importacao antiga
+
+Scripts:
+
+- `scripts/dev-data/dev-diagnose-imported-leads.ts`
+- `scripts/dev-data/dev-reset-imported-leads.ts`
+
+Uso esperado:
+
+- `dev:diagnose-imported-leads` e somente leitura.
+- `dev:reset-imported-leads` e dry-run por padrao.
+- `dev:reset-imported-leads:apply` apaga apenas candidatos com marcadores explicitos e exige ambiente local/dev.
+
+Marcadores de importacao antiga considerados:
+
+- `spreadsheet_import`;
+- `importado da planilha`;
+- `planilha`;
+- `lead_import`;
+- `remediation`;
+- `remediacao`.
+
+Labels legados ou ruidosos diagnosticados:
+
+- `convertido_cliente`;
+- `sem_retorno`;
+- `revisao_lideranca`;
+- `revisao_manual`;
+- `validar_conversao`;
+- `lead_sem_interacao`;
+- `follow_up_agendado`;
+- `follow_up_lead`.
+
+Regras de seguranca:
+
+- nao usa `TRUNCATE`;
+- nao apaga por nome, telefone ou texto livre isolado;
+- nao apaga registros ambiguos automaticamente;
+- nao imprime nome ou telefone nos exemplos;
+- apaga contatos somente quando nao ha dependencias nao importadas;
+- usa transacao no apply.
+
+Se o objetivo for preparar o dashboard apos validacoes, a ordem recomendada e:
+
+```powershell
+npm run verify:all
+npm run dev:reset-imported-leads
+npm run dev:reset-imported-leads:apply
+npm run dev:cleanup-test-data:apply
+npm run dev:seed-dashboard
+```
+
+Nao rodar `dev:reset-imported-leads:apply` em tarefas de diagnostico sem aprovacao explicita.
+
 ## Comandos PowerShell
 
 Dry-run de limpeza:
@@ -82,6 +139,18 @@ Validar residuos:
 
 ```powershell
 npm run verify:data-cleanliness
+```
+
+Diagnosticar importacao antiga:
+
+```powershell
+npm run dev:diagnose-imported-leads
+```
+
+Dry-run do reset de importacao antiga:
+
+```powershell
+npm run dev:reset-imported-leads
 ```
 
 Preparar dashboard limpo para revisao visual:
