@@ -1,9 +1,28 @@
 # Lead Import Dry-Run v1
 
+## Papel na hierarquia
+
+Documento de execucao do dry-run de importacao da Jornada do Lead.
+
+O dry-run valida plano e normalizacao sem escrever no banco.
+
+Fontes superiores:
+
+- `docs/product/lead-operational-contract.md`
+- `docs/product/lead-import-normalization.md`
+- `docs/qa/lead-business-rules-test-matrix.md`
+
 ## Objetivo
 
-Executar uma simulacao de importacao da planilha Jornada do Lead sem gravar no banco e sem chamar a API.
-O foco e mostrar o que seria criado, atualizado, rejeitado ou enviado para revisao manual.
+Simular a importacao da planilha de leads para prever:
+
+- contatos que seriam criados ou vinculados;
+- leads que seriam criados ou preservados;
+- action items que seriam gerados;
+- registros invalidos;
+- duplicidades;
+- casos de quarentena;
+- risco de conversao insegura.
 
 ## Comando
 
@@ -11,80 +30,98 @@ O foco e mostrar o que seria criado, atualizado, rejeitado ou enviado para revis
 npm run import:lead-spreadsheet:dry-run -- ".tmp\imports\02 - Controle - Jornada do Lead Whatsapp.xlsx"
 ```
 
+Se o dry-run usar tambem `Pessoa.csv`, preferir o comando documentado em `lead-customer-crosscheck.md`.
+
 ## Garantias de seguranca
 
 - somente leitura da planilha local;
-- somente leitura do banco (consultas `SELECT` para detectar contatos/leads existentes);
-- sem `INSERT`, `UPDATE`, `DELETE` ou `TRUNCATE`;
-- sem chamadas para endpoints da API;
-- sem geracao de arquivo derivado com dados reais fora de `.tmp/`.
+- apenas consultas ao banco quando necessario;
+- sem `INSERT`;
+- sem `UPDATE`;
+- sem `DELETE`;
+- sem `TRUNCATE`;
+- sem chamada para API;
+- sem arquivo derivado com dados reais fora de `.tmp/`;
+- saida compartilhavel deve mascarar telefone e nome.
+
+## Entrada
+
+Arquivo sensivel fora do Git:
+
+```powershell
+.tmp\imports\02 - Controle - Jornada do Lead Whatsapp.xlsx
+```
+
+## Saida esperada
+
+O relatorio deve conter:
+
+- linhas lidas;
+- linhas validas;
+- linhas invalidas;
+- contatos que seriam criados;
+- contatos que seriam vinculados;
+- leads que seriam criados;
+- leads ativos preservados;
+- action items planejados;
+- duplicidades ativas;
+- status canonico planejado;
+- motivos de invalidos/quarentena;
+- amostra mascarada.
 
 ## Regras de deduplicacao
 
 1. Chave operacional inicial: `normalized_phone`.
-2. Linhas do mesmo telefone sao consolidadas em um unico plano.
-3. Estado atual consolidado e escolhido por recencia:
-   1. `Data atendimento`
-   2. `Data Prox Acao`
-   3. `Entrada lead`
-4. Mesmo telefone com nomes de tutor diferentes vai para revisao manual.
+2. Linhas do mesmo telefone sao consolidadas.
+3. Linha mais recente deve ser escolhida por data confiavel.
+4. Mesmo telefone com nomes conflitantes deve ir para quarentena ou lideranca conforme criterio.
+5. Lead ativo existente nao deve ser duplicado.
+6. Lead final so deve ser reaberto com regra explicita.
 
-## Regras de status e proxima acao (canonicas v1)
+## Regras de status
 
-Status:
+Nao usar labels legados como destino novo.
 
-- `Em espera -> novo_lead`
-- `Em atendimento -> em_atendimento`
-- `Agendamento realizado -> agendado`
-- `Pagamento realizado -> sinal de conversao (nao vira status canonico proprio)`
-- `Jornada Concluida -> sinal de conversao (nao vira status canonico proprio)`
-- `Sem retorno -> sem_retorno`
-- desconhecido -> revisao manual
+Usar os status do contrato:
 
-Proxima acao:
+- `novo_lead`
+- `em_atendimento`
+- `aguardando_resposta`
+- `agendado`
+- `convertido`
+- `perdido`
+- `desqualificado`
+- `nutricao_campanha`
+- `revisar_lideranca`
 
-- `Continuar atendimento -> fazer_follow_up` (gera action item)
-- `Analise Lideranca -> revisao_lideranca` (gera action item)
-- `Jornada Concluida -> nenhuma` (se confirmado em `Pessoa.csv`) ou `retomar_atendimento` (se nao confirmado)
-- `Sem retorno -> retomar_atendimento` (gera action item se houver vencimento)
-- desconhecido -> revisao manual
+Casos desconhecidos devem ir para invalidos/quarentena ou receber tratamento conservador documentado.
 
-Observacao:
+## Regras de action item
 
-- na estrategia v1, a confirmacao final de conversao usa crosscheck com `Pessoa.csv`;
-- por isso, `Jornada Concluida` e `Pagamento realizado` nao encerram automaticamente a jornada.
+Action items permitidos para fila final:
 
-## Como interpretar o relatorio
+- `atender_hoje`
+- `fazer_follow_up`
+- `retomar_atendimento`
+- `revisar_lideranca`
 
-O relatorio mostra:
+`validar_conversao` pode aparecer somente como etapa tecnica de relatorio, nao como fila principal final.
 
-- volume total de linhas e classificacao (validas, rejeitadas, revisao manual);
-- deduplicacao por telefone (unicos e duplicados);
-- operacoes simuladas:
-  - `create_contact`
-  - `link_existing_contact`
-  - `create_lead`
-  - `update_existing_lead`
-  - `create_action_item`
-  - `create_interaction_snapshot`
-  - `reject_row`
-  - `manual_review`
-- top motivos de rejeicao e revisao manual;
-- amostras limitadas (max 20) com dados truncados.
+## Criterio para prosseguir
 
-## Limitacoes do dry-run
+Prosseguir para apply somente quando:
 
-- nao executa escrita real no CRM;
-- nao reconstrui historico completo de interacoes antigas;
-- nao cria cliente automaticamente;
-- depende de validacao humana para casos ambiguos (status/acao desconhecidos, tutor conflitante).
+- volume de invalidos foi entendido;
+- duplicidades foram revisadas;
+- crosscheck de conversao foi feito quando necessario;
+- status/proximas acoes nao suportados foram resolvidos ou quarentenados;
+- relatorio nao contem dado real versionado;
+- lideranca/operacao validou amostra critica.
 
-## Criterio para evoluir para importador apply
+## Limitacoes
 
-Antes do modo apply:
-
-1. validar dicionario canonico com operacao;
-2. validar regras de deduplicacao e conflitos de tutor;
-3. aceitar volume residual de revisao manual;
-4. definir trilha de auditoria (`raw_imports`/metadata) para cada linha aplicada;
-5. manter `dry-run` como etapa obrigatoria antes de qualquer escrita.
+- nao grava no CRM;
+- nao reconstrui historico completo;
+- nao cria clientes automaticamente;
+- nao prova conversao sozinho;
+- nao substitui validacao humana de casos ambiguos.

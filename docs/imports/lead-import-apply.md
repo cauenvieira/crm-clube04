@@ -1,15 +1,28 @@
 # Lead Import Apply and Remediation v1
 
+## Papel na hierarquia
+
+Documento de execucao do apply local/dev e da remediacao da fila apos importacao da Jornada do Lead.
+
+Fontes superiores:
+
+- `docs/product/lead-operational-contract.md`
+- `docs/product/lead-import-normalization.md`
+- `docs/qa/lead-business-rules-test-matrix.md`
+
 ## Objetivo
 
-Trazer backlog da planilha para o CRM e, em seguida, remediar a fila operacional para uso diario no dashboard/worklist.
+Aplicar a importacao da planilha no CRM local/dev, com seguranca, idempotencia e remediacao da fila operacional.
 
-Escopo de escrita mantido:
+## Escopo de escrita
+
+Permitido:
 
 - `contacts`
 - `leads`
-- `crm_interactions` (snapshot inicial)
+- `crm_interactions`
 - `action_items`
+- tabelas tecnicas de auditoria/importacao, quando ja existirem e estiverem documentadas.
 
 Fora de escopo:
 
@@ -17,10 +30,13 @@ Fora de escopo:
 - `pets`
 - `appointments`
 - `packages`
+- exclusao de dados
+- operacao em producao
+- escrita no sistema oficial Clube04
 
 ## Comandos
 
-Import apply (com planilha e Pessoa.csv):
+Import apply com planilha e base de clientes:
 
 ```powershell
 npm run import:lead-spreadsheet:apply -- ".tmp\imports\02 - Controle - Jornada do Lead Whatsapp.xlsx" ".tmp\imports\Pessoa.csv"
@@ -34,69 +50,122 @@ npm run remediate:lead-import-worklist
 npm run remediate:lead-import-worklist -- --apply --confirm-local-dev --daily-limit=30
 ```
 
-Observacao:
+Parametros aceitos pela remediacao:
 
-- o comando de remediacao aceita `--daily-limit=30` e `--daily-limit 30`;
-- o comando tambem aceita `--start-date=YYYY-MM-DD` e `--start-date YYYY-MM-DD`.
+```powershell
+--daily-limit=30
+--daily-limit 30
+--start-date=YYYY-MM-DD
+--start-date YYYY-MM-DD
+```
 
 ## Regras de seguranca
 
-- dry-run por padrao em import e remediacao;
-- apply so com `--apply --confirm-local-dev`;
-- bloqueio para `NODE_ENV=production`;
-- bloqueio para host/db local suspeito;
+- dry-run por padrao;
+- apply apenas com `--apply --confirm-local-dev`;
+- bloquear `NODE_ENV=production`;
+- bloquear host/db nao local quando houver regra de protecao;
 - sem `DELETE`;
 - sem `TRUNCATE`;
 - sem apagar dados existentes;
-- transacao unica com rollback em erro;
-- sem chamadas de API.
+- transacao unica quando possivel;
+- rollback em erro;
+- sem chamadas de API;
+- sem arquivo real versionado.
 
-## Conversao e fila operacional final
+## Conversao
 
-- `Pessoa.csv` e fonte de verdade inicial para conversao por telefone.
-- Se telefone existe em `Pessoa.csv`: lead tratado como convertido (`compareceu`) e sai da fila de lead.
-- Se telefone nao existe em `Pessoa.csv`: permanece na Jornada do Lead.
-- `validar_conversao` deixa de ser fila principal.
+- `Pessoa.csv` e apoio inicial de crosscheck por telefone.
+- Conversao segura vira status operacional `convertido`.
+- Telefone encontrado sozinho nao basta se houver conflito critico.
+- Planilha com conclusao/pagamento sem confirmacao segura nao deve encerrar lead automaticamente.
+- `convertido_cliente` e label legado; nao usar como novo status documental.
 
-Fila principal apos remediacao:
+## Fila operacional final
 
-- `retomar_atendimento`
-- `fazer_follow_up`
-- `revisar_lideranca`
-- `novo_lead` (entrada nova, nao backlog historico)
+Apos remediacao, fila principal deve conter:
 
-## Data Prox Acao valida (janela operacional atual)
+- `atender_hoje`;
+- `fazer_follow_up`;
+- `retomar_atendimento`;
+- `revisar_lideranca`.
 
-- janela fixa atual: `2026-06-01` ate `2026-06-30`;
-- Data Prox Acao valida dentro da janela vira `fazer_follow_up`;
-- fora da janela, vencida, vazia ou inconsistente: entra em backlog `retomar_atendimento`.
+Itens ruidosos ou legados devem ser encerrados, ignorados ou migrados conforme regra documentada:
+
+- `lead_sem_interacao`;
+- `follow_up_agendado`;
+- `follow_up_lead`;
+- `validar_conversao`;
+- outros labels que nao pertencam ao contrato.
 
 ## Backlog em lotes
 
-- limite padrao: `30` por dia (`--daily-limit`);
-- `--start-date=YYYY-MM-DD` opcional;
-- sem `--start-date`, usa proximo dia operacional;
+Regra padrao:
+
+- limite padrao: `30` leads por dia;
+- parametro: `--daily-limit`;
+- `--start-date` opcional;
+- sem start date, usar proximo dia operacional;
 - dias operacionais v1: terca a sabado.
 
-## Revisao lideranca como excecao
+Essa regra e operacional e deve ser atualizada no contrato/matriz se virar comportamento definitivo do produto.
 
-`revisar_lideranca` so quando houver criterio critico:
+## Revisao de lideranca
+
+Criar `revisar_lideranca` apenas com criterio critico:
 
 - telefone duplicado com nomes conflitantes;
 - conflito forte de nome com base cliente;
-- `Tentativa numero >= 12` sem conversao;
-- observacao com sinal critico;
-- impossivel classificar com seguranca.
+- tentativa alta sem conversao;
+- observacao sensivel;
+- impossibilidade de classificar com seguranca.
 
-Se planilha indica Analise Lideranca sem criterio critico, o caso volta para `retomar_atendimento`.
+Se planilha indica lideranca sem criterio critico, classificar como `retomar_atendimento` ou quarentena, conforme seguranca.
 
-## Estado local apos remediacao
+## Resultado esperado do apply
 
-No ambiente local atual (baseline de validacao), a distribuicao operacional ficou:
+Relatorio local deve mostrar:
 
-- `convertido_cliente` por Pessoa.csv: 277
-- `retomar_atendimento`: 1407
-- `fazer_follow_up`: 33
-- `revisar_lideranca`: 32
+- contatos criados;
+- contatos vinculados;
+- leads criados;
+- leads preservados;
+- action items criados;
+- action items ignorados/fechados;
+- conversoes confirmadas;
+- invalidos/quarentena;
+- duplicados ativos;
+- erros por motivo.
 
-Esses valores podem oscilar levemente com execucoes de smoke/verify, mas a regra-alvo da fila permanece a mesma.
+Nao incluir dados pessoais completos em logs compartilhados.
+
+## Validacao
+
+Depois de apply/remediacao:
+
+```powershell
+npm run verify:data-cleanliness
+```
+
+Quando houver alteracao de codigo:
+
+```powershell
+npm run verify:all
+```
+
+ou verificacoes especificas de importacao, quando existirem.
+
+## Estado local e numeros historicos
+
+Qualquer numero de uma execucao especifica deve ser tratado como snapshot local, nao como regra.
+
+Se for necessario registrar numeros, indicar:
+
+- data;
+- commit;
+- script;
+- flags;
+- ambiente;
+- se os dados eram reais/sensiveis.
+
+Nao versionar relatorio real.

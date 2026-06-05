@@ -1,15 +1,35 @@
 # Lead Customer Crosscheck Dry-Run v1
 
+## Papel na hierarquia
+
+Documento de dry-run para cruzar leads da planilha com a base de clientes exportada.
+
+Este processo apoia a decisao de conversao, mas nao cria nova regra superior ao contrato operacional.
+
+Fontes superiores:
+
+- `docs/product/lead-operational-contract.md`
+- `docs/product/lead-import-normalization.md`
+- `docs/qa/lead-business-rules-test-matrix.md`
+
 ## Objetivo
 
-Cruzar a planilha Jornada do Lead com `Pessoa.csv` para validar conversao de lead em cliente sem gravar dados no CRM.
+Cruzar a planilha Jornada do Lead com `Pessoa.csv` para identificar sinais de conversao por telefone normalizado sem gravar dados no CRM.
 
 ## Arquivos de entrada
 
-- planilha: `02 - Controle - Jornada do Lead Whatsapp.xlsx` (aba `Jornada do Lead`);
-- base cliente: `Pessoa.csv`.
+Arquivos locais sensiveis:
 
-`Pessoa.csv` passa a ser fonte inicial de verdade para conversao de cliente, com chave natural por telefone normalizado.
+```powershell
+.tmp\imports\02 - Controle - Jornada do Lead Whatsapp.xlsx
+.tmp\imports\Pessoa.csv
+```
+
+Regras:
+
+- ambos devem ficar fora do Git;
+- saidas com dados reais devem ficar em `.tmp/`;
+- qualquer amostra compartilhada deve mascarar telefone e nome.
 
 ## Comando
 
@@ -17,138 +37,93 @@ Cruzar a planilha Jornada do Lead com `Pessoa.csv` para validar conversao de lea
 npm run import:lead-spreadsheet:crosscheck-dry-run -- ".tmp\imports\02 - Controle - Jornada do Lead Whatsapp.xlsx" ".tmp\imports\Pessoa.csv"
 ```
 
-## Garantias de seguranca
+## Garantias
 
-- sem `INSERT`, `UPDATE`, `DELETE`, `TRUNCATE`;
-- sem chamadas para API;
-- sem exportacao de dados reais para fora de `.tmp/`;
-- saida com telefone mascarado e nome parcial.
+- sem `INSERT`;
+- sem `UPDATE`;
+- sem `DELETE`;
+- sem `TRUNCATE`;
+- sem chamada de API;
+- sem exportacao versionavel de dados reais.
 
 ## Regras de comparacao
 
-1. Telefone em `Pessoa.csv` e normalizado e extraido mesmo com texto livre no campo `Telefones`.
-2. Telefone normalizado e chave natural de comparacao entre planilha e base cliente.
-3. `contact_id` continua sendo chave tecnica no banco CRM.
-4. Telefone nao deve ser unica chave primaria do banco.
-
-## Status canonicos simplificados
-
-- `novo_lead`
-- `em_atendimento`
-- `agendado`
-- `convertido_cliente`
-- `sem_retorno`
-- `revisao_lideranca`
-- `desqualificado`
-- `revisao_manual`
-
-Mapeamento base:
-
-- `Em espera -> novo_lead`
-- `Em atendimento -> em_atendimento`
-- `Agendamento realizado -> agendado`
-- `Pagamento realizado -> sinal de conversao (nao vira status canonico proprio)`
-- `Jornada Concluida -> sinal de conversao (nao vira status canonico proprio)`
-- `Sem retorno -> sem_retorno`
-- `Analise Lideranca -> revisao_lideranca`
-- desconhecido -> `revisao_manual`
-
-Observacao: `Pagamento realizado` e `Jornada Concluida` nao confirmam conversao sozinhos; passam por validacao contra `Pessoa.csv`.
-
-## Proximas acoes canonicas simplificadas
-
-- `fazer_follow_up`
-- `revisar_lideranca`
-- `retomar_atendimento`
-- `nenhuma`
-- `revisao_manual`
-
-Mapeamento base:
-
-- `Continuar atendimento -> fazer_follow_up`
-- `Analise Lideranca -> revisar_lideranca`
-- `Jornada Concluida -> nenhuma` (quando confirmado em `Pessoa.csv`) ou `retomar_atendimento` (quando nao confirmado)
-- `Sem retorno -> retomar_atendimento`
-- desconhecido -> `revisao_manual`
+1. Extrair telefones de `Pessoa.csv` mesmo quando o campo vier com texto livre.
+2. Normalizar telefone conforme `lead-import-normalization.md`.
+3. Comparar por `normalized_phone`.
+4. Telefone e chave operacional de apoio, nao identidade perfeita.
+5. Nome divergente ou telefone compartilhado deve virar risco/alerta.
 
 ## Regra de conversao
 
-1. Se telefone do lead existir em `Pessoa.csv`:
-   - marcar `conversao_confirmada` no dry-run;
-   - quando planilha indicar conclusao/agendamento/pagamento, status final pode virar `convertido_cliente`.
-2. Se planilha indicar conclusao/pagamento e telefone nao existir em `Pessoa.csv`:
-   - nao manter status transitorio;
-   - classificar como `retomar_atendimento` na fila operacional.
-3. Se nao converteu e `Data Prox Acao` esta vencida:
-   - action item `retomar_atendimento`.
-4. Se caso tem criterio critico de lideranca (conflito de nomes, tentativa >= 12, observacao sensivel, classificacao insegura):
-   - action item `revisar_lideranca`.
-5. Se planilha indicava `Analise Lideranca` sem criterio critico:
-   - reclassificar para `retomar_atendimento`.
+Conversao confirmada exige combinacao segura:
 
-## Fila operacional final apos remediacao
+- telefone do lead encontrado em `Pessoa.csv`;
+- sinal coerente na planilha ou outro criterio documentado;
+- ausencia de conflito critico de identidade.
 
-Depois da importacao, a fila principal deve usar:
+Quando confirmado:
 
-- `retomar_atendimento`
-- `fazer_follow_up`
-- `revisar_lideranca`
-- `novo_lead` (novas entradas)
+- status operacional: `convertido`;
+- action item diario: none;
+- origem/campanha devem ser preservadas para ROI futuro.
 
-`validar_conversao` nao permanece como fila principal.
+Quando nao confirmado:
 
-## Prioridade de classificacao (v1)
+- nao encerrar automaticamente;
+- se a planilha indicava conclusao/pagamento, enviar para `retomar_atendimento` ou quarentena conforme risco;
+- nao usar `convertido_cliente` como status novo.
 
-1. Conversao confirmada por telefone em `Pessoa.csv` + sinal de conclusao/agendamento/pagamento:
-   - `status = convertido_cliente`
-   - `action = nenhuma`
-2. `Jornada Concluida` ou `Pagamento realizado` sem telefone na base cliente:
+## Fila operacional final
+
+Apos crosscheck e remediacao, a fila principal deve conter apenas action items operacionais validos:
+
+- `atender_hoje`;
+- `fazer_follow_up`;
+- `retomar_atendimento`;
+- `revisar_lideranca`.
+
+`validar_conversao` e etapa tecnica de conferência, nao fila final.
+
+## Prioridade de classificacao
+
+1. Conversao segura:
+   - `status = convertido`
+   - `action = none`
+2. Conclusao/pagamento sem confirmacao segura:
+   - `status = em_atendimento` ou quarentena
+   - `action = retomar_atendimento`
+3. Analise de lideranca sem criterio critico:
    - `status = em_atendimento`
    - `action = retomar_atendimento`
-3. Sinal de analise de lideranca sem criterio critico:
-   - `status = em_atendimento`
-   - `action = retomar_atendimento`
-4. Apenas casos criticos de lideranca:
-   - `status = revisao_lideranca`
+4. Lideranca com criterio critico:
+   - `status = revisar_lideranca`
    - `action = revisar_lideranca`
-5. `Data Prox Acao` vencida e lead fora dos grupos acima:
+5. Proxima acao vencida:
    - `action = retomar_atendimento`
-6. `Continuar atendimento` sem vencimento:
+6. Proxima acao valida futura/hoje:
    - `action = fazer_follow_up`
-7. Desconhecido, conflito de status/acao ou conflito de tutor no mesmo telefone:
-   - `status/action = revisao_manual`
+7. Conflito inseguro:
+   - invalidos/quarentena com motivo `manual_review_required`
 
-## Regra de vencimento operacional
+## Relatorio esperado
 
-- timezone operacional: `America/Sao_Paulo`;
-- comparacao por data de negocio local (nao por UTC puro);
-- no relatorio de lideranca, a classificacao e separada em:
-  - `revisar_lideranca_total`
-  - `revisar_lideranca_vencida`
-  - `revisar_lideranca_sem_data`
-  - `revisar_lideranca_futura`
-  - `revisar_lideranca_com_cliente_encontrado`
-  - `revisar_lideranca_sem_cliente_encontrado`
+O relatorio deve separar:
 
-- no relatorio de retomada, a classificacao e separada em:
-  - `retomar_atendimento_total`
-  - `retomar_atendimento_por_status`
-  - `retomar_atendimento_por_atendente`
+- leads com cliente encontrado;
+- leads sem cliente encontrado;
+- possiveis conversoes seguras;
+- possiveis conversoes inseguras;
+- conflito de nome/telefone;
+- action item planejado;
+- amostra mascarada.
 
-## Tentativas e campos imutaveis
+## Criterio para apply
 
-- `Tentativa numero` entra como `legacy_attempt_count` no dry-run.
-- No futuro, contador operacional definitivo deve vir de `crm_interactions` e `messages`.
-- Campos que devem ser tratados como imutaveis (ou mudanca auditada):
-  - telefone normalizado;
-  - data original de entrada;
-  - origem inicial;
-  - campanha/metodo de entrada inicial.
+Antes de usar crosscheck em apply:
 
-## Criterio para evoluir para apply
-
-1. reduzir conflitos de nome/telefone;
-2. validar status simplificados com operacao;
-3. definir fila de revisao manual;
-4. manter cruzamento com `Pessoa.csv` como gate de conversao;
-5. rodar dry-run obrigatorio antes de qualquer escrita.
+- validar regra de normalizacao de telefone;
+- aceitar risco residual de telefone compartilhado;
+- documentar tratamento de conflitos;
+- manter dry-run obrigatorio;
+- nao transformar `Pessoa.csv` em dado versionado.
