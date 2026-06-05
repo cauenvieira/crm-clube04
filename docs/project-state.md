@@ -7,9 +7,10 @@ Snapshot do estado tecnico commitado do CRM Clube04.
 - Branch principal: `main`.
 - Fonte de verdade: repositorio Git `cauenvieira/crm-clube04`.
 - Fonte sincronizada para ChatGPT: Google Drive `Contextos CHATGPT/CRM Clube04/Fontes ChatGPT/repo-docs`.
-- Sync de fontes ChatGPT concluido em `c59ca15 chore: sync chatgpt markdown sources to drive`.
+- Sync de fontes ChatGPT configurado em `c59ca15 chore: sync chatgpt markdown sources to drive`.
+- O status efetivo do espelho deve ser conferido em `PROJECT_CONTEXT_INDEX.md` no Drive depois de cada push na `main`.
 - O espelho do Drive inclui apenas arquivos `.md` versionados e `PROJECT_CONTEXT_INDEX.md`.
-- A pasta `dados-sensiveis` no Drive fica fora do sync e pode conter a planilha de leads copiada manualmente.
+- A pasta `dados-sensiveis` no Drive fica fora do sync e pode conter a planilha de leads copiada manualmente. Dados reais continuam proibidos no Git.
 
 ## Implementado e commitado
 
@@ -29,10 +30,24 @@ Snapshot do estado tecnico commitado do CRM Clube04.
 - Tailwind CSS, Radix essencial, lucide, `components/ui` e tokens Clube04.
 - Frontend futuro deve usar `apps/web/src/components/ui`.
 
-### Documentacao especializada
+### Documentacao especializada e governanca documental
 
 - Docs especializados commitados em `5a4b5b4 docs: add specialized project context guides`.
-- Inclui orientacoes para frontend, backend, QA, Lovable, sprint e estrutura do repo.
+- Sync automatico de fontes ChatGPT criado em `c59ca15 chore: sync chatgpt markdown sources to drive`.
+- Hierarquia documental consolidada em fases docs-only, cobrindo:
+  - `AGENTS.md`;
+  - `README.md`;
+  - `docs/development/documentation-hierarchy.md`;
+  - docs de produto amplo e roadmap;
+  - contratos tecnicos de API, backend, banco e arquitetura;
+  - docs de frontend, UI Foundation e dashboard;
+  - docs de importacao e normalizacao da Jornada do Lead;
+  - docs de integracoes, n8n, WAHA e readmes locais;
+  - docs de QA, desenvolvimento, checklists, dev-data, estrutura e modelo conceitual.
+- Regra de autoridade vigente:
+  - contratos especificos vencem docs auxiliares;
+  - para Jornada do Lead, a fonte de verdade e `lead-operational-contract`, `lead-import-normalization` e matriz de testes;
+  - memoria de chat nunca vence doc versionado atual.
 
 ### Backend operacional da Jornada do Lead
 
@@ -56,12 +71,6 @@ Snapshot do estado tecnico commitado do CRM Clube04.
   - `65c14a1 docs: add lead operational business rules`
   - `cfd483d docs: add lead operational business rules`
 
-### Fontes sincronizadas para ChatGPT
-
-- GitHub Actions + rclone sincroniza arquivos Markdown para o Google Drive.
-- Commit: `c59ca15 chore: sync chatgpt markdown sources to drive`.
-- Documentacao: `docs/development/chatgpt-project-sources.md`.
-
 ## Rejeitado ou refazer
 
 - Redesenho pendente da Mesa Operacional.
@@ -75,11 +84,12 @@ Esses itens devem ser refeitos usando UI Foundation e referencia Lovable, uma te
 
 ## Lacunas conhecidas
 
-- `docs/api/rest-api.md` deve ser reconciliado apos os commits de backend operacional.
-- `docs/web/dashboard.md` deve ser revisado antes de servir como fonte para nova UI.
 - Lacunas de teste ainda existem para checklist de lideranca, decisao da lideranca, alertas de atrasado, backlog e ciclo longo.
 - Importacao robusta da planilha ainda precisa de verificacoes automatizadas especificas.
 - Base de Leads visual ainda nao foi refeita com UI Foundation.
+- Mesa Operacional ainda nao foi refeita com UI Foundation.
+- Auth de usuario, permissoes e auditoria seguem pendentes antes de uso operacional real.
+- WAHA real e sincronizacao Clube04 somente leitura continuam fora do escopo imediato.
 
 ## Nao implementado
 
@@ -111,12 +121,13 @@ Esses itens devem ser refeitos usando UI Foundation e referencia Lovable, uma te
 
 ## Proximo passo recomendado
 
-1. Concluir governanca documental e hierarquia dos arquivos Markdown.
-2. Reconciliar `docs/api/rest-api.md` com o backend operacional atual.
-3. Reconciliar `docs/web/dashboard.md` antes de nova UI.
-4. Priorizar lacunas de teste de regras operacionais da Jornada do Lead.
-5. Iniciar Sprint 1A: Base de Leads usando UI Foundation.
-6. Depois seguir para Mesa Operacional e Dashboard/Resumo Diario.
+1. Fechar lacunas de testes de regras operacionais da Jornada do Lead:
+   - checklist de analise da lideranca;
+   - decisao da lideranca;
+   - alertas de atrasado, backlog e ciclo longo.
+2. Iniciar Sprint 1A: Base de Leads sistematizada usando UI Foundation.
+3. Depois seguir para Mesa Operacional e Dashboard/Resumo Diario.
+4. Manter API, schema, importacao, frontend e docs sincronizados a cada tarefa.
 
 ## Regra de atualizacao
 
