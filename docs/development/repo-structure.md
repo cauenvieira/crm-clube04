@@ -1,95 +1,109 @@
 # Repo Structure
 
-## Current layout
+## Objetivo
+
+Documentar onde cada tipo de arquivo deve morar no CRM Clube04, mantendo o repositorio legivel para humanos, Codex e ChatGPT.
+
+Este documento complementa `docs/architecture/code-organization.md` e deve seguir a hierarquia definida em `docs/development/documentation-hierarchy.md`.
+
+## Layout principal
 
 ```text
 apps/
-  api/       Fastify API (routes, services, repositories, validation)
+  api/       Fastify API: routes, services, repositories, validation, integrations
   web/       React + Vite dashboard
-  worker/    background jobs and worker entrypoints
+  worker/    jobs, classificacoes e rotinas assincronas
 packages/
-  shared/    shared types and utilities
+  shared/    tipos e utilitarios realmente compartilhados
 infra/
-  db/        db bootstrap and versioned SQL migrations
-  n8n/       n8n versioned workflows and integration assets
+  db/        bootstrap e migrations SQL versionadas
+  n8n/       workflows versionados e ativos de integracao
 scripts/
-  smoke/                    API smoke flow scripts
-  verify/                   operational verification scripts
-  test-support/             shared test helpers (runId/http/cleanup/data)
-  dev-data/                 local cleanup and seed scripts
-  frontend-tests/           Playwright browser tests
-  imports/lead-spreadsheet/ spreadsheet import and dry-run tooling
-  remediation/              backlog remediation scripts
-docs/        architecture, product, integrations, operations, backlog
+  smoke/                    smoke tests da API
+  verify/                   verificacoes operacionais
+  test-support/             helpers de teste, runId, HTTP e cleanup
+  dev-data/                 cleanup e seed local
+  frontend-tests/           Playwright e validacoes de browser
+  imports/lead-spreadsheet/ importacao e dry-run da Jornada do Lead
+  remediation/              remediacao de backlog/worklist
+docs/        produto, arquitetura, API, QA, desenvolvimento, integracoes e backlog
 ```
 
-Frontend UI Foundation:
+## Docs por autoridade
 
-```text
-apps/web/src/components/ui/  shared UI primitives for dashboard work
-docs/frontend/               design system, components catalog and Lovable adaptation guide
-```
+- `AGENTS.md`: regras gerais e roteamento.
+- `README.md`: entrada humana e comandos principais.
+- `docs/project-state.md`: estado atual commitado.
+- `docs/tasks.md`: backlog e prioridade.
+- `docs/product/*`: produto e contratos operacionais.
+- `docs/api/*`, `docs/database/*`, `docs/backend/*`: contratos tecnicos.
+- `docs/frontend/*` e `docs/web/*`: UX, componentes e dashboard.
+- `docs/imports/*`: execucao e historico controlado de importacao.
+- `docs/integrations/*`: integracoes externas e n8n.
+- `docs/qa/*`: validacao e matriz de testes.
+- `docs/development/*`: fluxo de trabalho, checklists e suporte tecnico.
 
-Specialized context docs:
+## Onde adicionar novos arquivos
 
-```text
-docs/backend/api-agent.md
-docs/qa/verification-agent.md
-docs/product/lead-operational-scope.md
-docs/development/sprint-plan-template.md
-```
+### Novo endpoint API
 
-## Where to add new files
+- route: `apps/api/src/routes`
+- validation: `apps/api/src/validation`
+- service: `apps/api/src/services`
+- repository: `apps/api/src/repositories`
+- docs: `docs/api/rest-api.md`
 
-- New API endpoint:
-  - route: `apps/api/src/routes`
-  - validation: `apps/api/src/validation`
-  - service: `apps/api/src/services`
-  - repository: `apps/api/src/repositories`
+### Nova regra operacional de lead
 
-- New dashboard feature:
-  - UI and state: `apps/web/src`
-  - shared UI primitives: `apps/web/src/components/ui`
-  - frontend context: `docs/frontend/design-system.md`
-  - shared API client/types: `apps/web/src/*` or `packages/shared` if truly cross-app
+- contrato: `docs/product/lead-operational-contract.md`
+- normalizacao/importacao: `docs/product/lead-import-normalization.md`
+- matriz: `docs/qa/lead-business-rules-test-matrix.md`
+- implementacao: backend/service primeiro, nao frontend-only.
 
-- New frontend pattern or Lovable adaptation:
-  - document design rule in `docs/frontend`
-  - do not copy Lovable architecture or mock data
+### Nova feature frontend
 
-- New backend/API behavior:
-  - consult `docs/backend/api-agent.md`
-  - confirm schema compatibility before using new columns/status values
+- tela/componente: `apps/web/src`
+- primitivas: `apps/web/src/components/ui`
+- docs: `docs/frontend/*` e `docs/web/dashboard.md`
 
-- New QA/verification rule:
-  - document in `docs/qa/verification-agent.md` or `docs/development/testing-strategy.md`
+Nao criar biblioteca paralela de componentes.
 
-- New worker job:
-  - job module under `apps/worker/src/jobs/<domain>`
-  - shared domain logic in API/worker service modules only when reusable
+### Nova importacao
 
-- New integration:
-  - `apps/api/src/integrations` or `apps/worker/src/integrations` by runtime owner
-  - keep provider-specific transport details isolated
+- scripts: `scripts/imports/<dominio>`
+- docs: `docs/imports/*`
+- contrato de regra: `docs/product/*` quando afetar comportamento.
+- dados reais: apenas `.tmp/` ou Drive `dados-sensiveis`, nunca Git.
 
-- New validation script:
-  - `scripts/verify/verify-*.ts`
-  - include runId, deterministic output, and cleanup
+### Nova integracao
 
-- n8n workflows:
-  - `infra/n8n/workflows`
-  - keep stable workflow `id` in versioned JSON
+- API runtime: `apps/api/src/integrations/<provider>`
+- worker runtime: `apps/worker/src/...`
+- docs: `docs/integrations/*`
+- ADR: `docs/decisions/*` se for decisao relevante.
 
-## File size and split policy
+### Novo worker job
 
-- Target: keep source files below 250-300 lines.
-- If file exceeds that range:
-  - split by responsibility, not by arbitrary chunk;
-  - preserve clear naming;
-  - avoid generic catch-all files.
+- modulo: `apps/worker/src/jobs/<domain>`
+- readme local se o dominio precisar de contexto.
+- regra de negocio deve vir de contrato/documento superior, nao do readme local.
 
-## Change scope policy
+### Nova verificacao
 
-- Prefer small incremental changes.
-- Do not combine broad refactor with feature delivery.
-- If structural refactor is needed, document proposal first and apply separately.
+- script: `scripts/verify/verify-*.ts`
+- helper compartilhado: `scripts/test-support/*`
+- docs: `docs/qa/verification-agent.md` ou `docs/development/testing-strategy.md`
+
+## Politica de tamanho e divisao
+
+- Alvo: manter arquivos de codigo abaixo de 250-300 linhas.
+- Se passar disso, propor divisao por responsabilidade.
+- Evitar arquivos genericos como `utils.ts` sem dominio claro.
+- Migrations SQL podem ser maiores quando representam DDL versionado.
+
+## Politica de escopo
+
+- Mudancas pequenas e incrementais.
+- Nao misturar feature com refatoracao ampla.
+- Nao alterar schema/API/frontend/integracao sensivel sem escopo explicito.
+- Se uma mudanca estrutural for necessaria, documentar proposta antes.

@@ -1,73 +1,64 @@
-# Dev Data Hygiene v1
+# Dev Data Hygiene
 
 ## Objetivo
 
-Manter o banco local limpo para avaliacao visual e testes, sem risco de apagar dados reais por acidente.
+Manter o banco local util para testes e avaliacao visual, sem risco de apagar dados reais ou versionar dados sensiveis.
+
+Este documento e operacional/tecnico. Ele nao define regra de negocio da Jornada do Lead; para regras de lead, consultar o contrato operacional e a matriz de testes.
 
 ## Scripts
 
 - `npm run dev:cleanup-test-data`
 - `npm run dev:cleanup-test-data:apply`
 - `npm run dev:seed-dashboard`
+- `npm run verify:data-cleanliness`
 
-## Como funciona o cleanup
+## Principios
+
+- Dry-run por padrao.
+- Apply somente com confirmacao explicita.
+- Bloquear execucao em producao.
+- Bloquear host/db que nao pareca local/dev.
+- Nunca usar `TRUNCATE`.
+- Nunca apagar dados ambiguos.
+- Marcar dados artificiais com `runId` ou marcador deterministico.
+- Relatar ambiguos para revisao humana.
+
+## Cleanup de dados de teste
 
 Script: `scripts/dev-data/dev-cleanup-test-data.ts`
 
 Regras de seguranca:
 
-- `dry-run` por padrao (nao apaga nada).
-- So aplica delecao com `--apply --confirm-local-dev`.
+- `dry-run` por padrao.
+- Delecao apenas com `--apply --confirm-local-dev`.
 - Aborta se `NODE_ENV=production`.
-- Aborta se `POSTGRES_HOST` nao parecer local (`localhost`, `127.0.0.1`, `::1`, `postgres`, `host.docker.internal`).
+- Aborta se `POSTGRES_HOST` nao parecer local.
 - Aborta se o nome do banco nao parecer local/dev.
-- Nao usa `TRUNCATE`.
-- Nao apaga dados ambiguos.
-- Reporta contagens de dados ambiguos para revisao manual.
+- Nao remove dados sem marcador conhecido.
 
-Marcadores explicitos de limpeza:
+Marcadores aceitos:
 
-- `source`/`campaign` de smoke/verify/dev-seed
-- `source`/`campaign` com prefixo `test_run:`
-- `contacts.name` com prefixo `TESTE_CRM_`
-- `crm_interactions.notes` com marcador `TEST_RUN_ID=`
-- `campaign = n8n_direct_test`
-- `provider_message_id` e `provider_conversation_id` com prefixos de teste conhecidos
-- `raw_payload.source` conhecido de testes locais (ex.: `powershell-direct-test`)
-- `raw_payload.testRunId` gerado pelos verifies/smoke novos
+- `source`/`campaign` de smoke, verify ou dev-seed.
+- Prefixo `test_run:`.
+- `contacts.name` com prefixo `TESTE_CRM_`.
+- `crm_interactions.notes` com `TEST_RUN_ID=`.
+- `raw_payload.testRunId`.
+- Provider ids artificiais usados pelos testes locais.
 
-Relatorio de ambiguos no dry-run:
-
-- mostra contagens por tabela (`contacts`, `leads`, `messages`);
-- imprime ate 10 amostras por tabela com campos de apoio;
-- inclui motivo da ambiguidade e sugestao:
-  - `review marker before deleting`
-- ambiguos continuam somente em reporte, sem delecao automatica.
-
-## Como funciona o seed
+## Seed do dashboard
 
 Script: `scripts/dev-data/dev-seed-dashboard.ts`
 
 Comportamento:
 
-- cria massa pequena para visualizacao do dashboard;
-- usa marcador unico `dev_seed_dashboard`;
-- cria poucos registros em `contacts`, `leads`, `conversations`, `messages`, `action_items`;
-- remove e recria somente os dados do proprio seed (idempotente para dev).
+- cria massa pequena para visualizacao local;
+- usa marcador proprio;
+- cria apenas registros artificiais;
+- remove/recria somente dados do proprio seed;
+- serve para validar leitura visual, nao como fonte de regra de negocio.
 
-## Quando usar
-
-Use cleanup quando:
-
-- dashboard ficou poluido por dados de smoke/verify;
-- voce precisa resetar dados artificiais para revisar UX.
-
-Use seed quando:
-
-- precisa validar cards/listas do dashboard rapidamente;
-- quer uma base local pequena e previsivel para demos internas.
-
-## Exemplos PowerShell
+## Comandos PowerShell
 
 Dry-run de limpeza:
 
@@ -75,7 +66,7 @@ Dry-run de limpeza:
 npm run dev:cleanup-test-data
 ```
 
-Aplicar limpeza:
+Aplicar limpeza local/dev:
 
 ```powershell
 npm run dev:cleanup-test-data:apply
@@ -87,31 +78,33 @@ Aplicar seed do dashboard:
 npm run dev:seed-dashboard
 ```
 
-Executar bateria completa antes de commit:
-
-```powershell
-npm run verify:all
-```
-
-Validar residuos apos bateria (tambem roda dentro de `verify:all`):
+Validar residuos:
 
 ```powershell
 npm run verify:data-cleanliness
 ```
 
-Preparar dashboard limpo para avaliacao visual (apos validate):
+Preparar dashboard limpo para revisao visual:
 
 ```powershell
 npm run dev:cleanup-test-data:apply
 npm run dev:seed-dashboard
 ```
 
-Observacao:
+## Relacao com verify
 
-- `smoke:api` e scripts `verify:*` criam dados artificiais novamente no banco local.
-- Por isso, depois de `npm run verify:all`, rode cleanup apply + seed para voltar ao estado limpo de demonstracao.
-- os verifies/smoke atuais usam `runId` unico e tentam cleanup automatico no `finally`, inclusive em falha.
+`smoke:api` e `verify:*` podem criar dados artificiais no banco local.
 
-## Alerta
+Por isso:
 
-Nunca rode esses scripts em ambiente de producao.
+1. testes devem usar `runId` unico;
+2. cleanup deve rodar em `finally` quando possivel;
+3. `verify:data-cleanliness` deve verificar residuos;
+4. limpeza ampla continua proibida.
+
+## Alertas
+
+- Nunca rodar scripts de limpeza em ambiente real.
+- Nunca mover relatorios com dados reais para fora de `.tmp/`.
+- Nunca versionar base local, exports ou snapshots.
+- Se houver duvida se um dado e artificial, nao apagar automaticamente.

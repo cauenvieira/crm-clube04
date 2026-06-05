@@ -4,69 +4,115 @@
 
 Evoluir automacoes de forma segura, auditavel e incremental, sem pular para respostas autonomas ao cliente cedo demais.
 
-## 1) Automacoes simples por regra (fase inicial)
+Automacao no CRM Clube04 deve reduzir retrabalho e aumentar disciplina operacional, sem tirar controle humano de decisoes sensiveis.
 
-- Gatilhos por status de lead.
-- Gatilhos por prazo vencido (`next_action_at`, `last_interaction_at`).
-- Gatilhos por evento inbound de mensagem.
-- Gatilhos por pacote perto de acabar e cliente sem agenda (fase futura).
+## Principios
 
-## 2) Action items como motor inicial
+- Comecar por automacoes de apoio, nao atendimento autonomo.
+- Toda automacao deve deixar historico/auditoria.
+- Toda automacao deve ser reversivel ou neutralizavel.
+- Regras sensiveis devem morar em services/backend, nao apenas no frontend ou n8n.
+- Integracoes externas devem entrar por adaptadores.
+- IA entra como copiloto antes de executar acao real.
 
-- `action_items` e o mecanismo base de execucao diaria.
-- Regras criam tarefas com tipo, prioridade e prazo.
-- Equipe conclui/ignora/reagenda com historico.
-- Worklist e summary leem o mesmo estado para evitar divergencia.
+## Camada 1 - Regras simples por evento
 
-## 3) Tags automaticas
+Exemplos:
 
-- Aplicar tags por comportamento observado:
-  - sem resposta
-  - alto interesse
-  - risco de inatividade
-  - precisa revisao lideranca
-- Tags devem ser revisaveis e removiveis pela equipe.
+- lead criado;
+- mensagem inbound recebida;
+- `next_action_at` vencido;
+- lead ativo sem proxima acao;
+- limite de tentativas atingido;
+- pacote perto de acabar no futuro;
+- cliente sem agenda no futuro.
 
-## 4) Alertas de SLA
+Autoridade de regra:
 
-- Alertar atrasos de primeira resposta.
-- Alertar follow-up vencido.
-- Alertar fila critica acima de limiar.
-- Alertar queda de conversao por canal (fase posterior).
+- Jornada do Lead: contrato operacional e matriz de testes.
+- Integracoes: docs de integracao e ADRs.
+- Modulos futuros: roadmap/backlog ate virarem contrato.
 
-## 5) Relatorio diario automatizado
+## Camada 2 - Action items como motor inicial
 
-- Consolidar prioridade do dia por worklist.
-- Incluir blocos: pendencias, vencidos, risco de perda, movimento inbound.
-- Envio em canal interno no horario definido.
-- Historico de envios para auditoria.
+`action_items` e o mecanismo base da rotina diaria.
 
-## 6) IA em modo sugestao (futuro)
+Responsabilidades:
 
-- Sugerir proxima melhor acao.
-- Sugerir prioridade e resumo de contexto.
-- Sugerir classificacao de motivo/perda.
-- Nunca executar acao sensivel sem confirmacao humana nas fases iniciais.
+- materializar proximas acoes;
+- dar prioridade operacional;
+- permitir concluir, ignorar ou reagendar com historico;
+- alimentar worklist, summary e Mesa Operacional.
 
-## 7) Limites de seguranca
+A equipe opera a fila; o sistema garante que a fila seja coerente.
 
-1. Nao automatizar resposta ao cliente de forma autonoma no inicio.
+## Camada 3 - Alertas operacionais
+
+Alertas iniciais:
+
+- atender hoje;
+- follow-up vencido;
+- backlog acima de 7 dias;
+- lead ativo sem proxima acao;
+- ciclo longo;
+- necessidade real de revisao de lideranca.
+
+Alertas devem ser acionaveis. Se nao gerarem decisao ou acao, viram ruido.
+
+## Camada 4 - Relatorio diario automatizado
+
+Objetivo futuro:
+
+- consolidar prioridade do dia;
+- mostrar bloqueios;
+- expor atrasados/backlog;
+- resumir inbound/movimento;
+- orientar foco de atendimento e lideranca.
+
+Inicialmente, o relatorio deve refletir `operational-summary` e `operational-worklist`.
+
+## Camada 5 - WhatsApp e n8n
+
+n8n pode orquestrar entrada, normalizacao e envio para a API.
+
+Limites:
+
+- n8n nao deve ser fonte de verdade de regra de negocio;
+- workflow versionado fica no Git;
+- credenciais reais nunca entram no repo;
+- WAHA real fica fora do escopo atual ate rollout controlado;
+- nenhum envio ativo para cliente sem aprovacao.
+
+## Camada 6 - IA em modo sugestao
+
+Uso futuro:
+
+- sugerir proxima melhor acao;
+- resumir historico;
+- sugerir classificacao de motivo/perda;
+- sugerir prioridade;
+- apoiar simulacao de atendimento.
+
+Limites:
+
+- IA nao deve encerrar lead sozinha;
+- IA nao deve enviar mensagem real sem confirmacao humana nas fases iniciais;
+- IA nao deve alterar regra operacional sem documento/teste;
+- sugestao precisa ser auditavel.
+
+## Limites de seguranca
+
+1. Nao automatizar resposta autonoma ao cliente no inicio.
 2. Nao remover decisao humana em casos sensiveis.
-3. Toda automacao deve deixar trilha de auditoria.
-4. Regras devem ser reversiveis e com rollout gradual.
-5. Monitorar falso positivo/falso negativo de automacao.
+3. Nao executar acao externa real sem aprovacao.
+4. Nao alterar sistema Clube04 oficial automaticamente.
+5. Nao tratar n8n, IA ou frontend como autoridade de ciclo de vida.
+6. Antes de uso real: auth, permissoes, auditoria e observabilidade sao obrigatorios.
 
-## 8) Governanca tecnica
-
-- Integracoes por adaptadores, sem acoplamento direto ao dominio.
-- Idempotencia obrigatoria em eventos externos.
-- Retentativa com backoff e log de erro.
-- Ambientes de teste com dados artificiais para validar regras antes de uso real.
-
-## 9) Decisoes registradas
+## Decisoes atuais
 
 - Worklist e prioridade diaria prevalecem sobre Kanban para operacao.
-- Lead convertido continua no CRM como cliente, nao encerra a jornada.
+- Lead convertido continua no CRM como cliente, nao desaparece do relacionamento.
 - API key/localStorage e apenas para dev local.
-- Antes de uso real: autenticacao, permissoes e auditoria sao mandatarios.
-- IA entra como copiloto de atendimento, nao como atendimento autonomo.
+- Automacoes avancadas entram apos estabilizar M1/M2.
+- IA entra como copiloto, nao como atendimento autonomo.

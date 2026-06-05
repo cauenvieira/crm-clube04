@@ -1,24 +1,25 @@
 # QA Verification Agent
 
-Guia de validacao para tarefas do CRM Clube04.
+Guia de validacao para agentes, Codex e humanos no CRM Clube04.
 
 ## Regra principal
 
 Validacoes que usam o banco local compartilhado devem rodar em sequencia. Nao executar smoke/verify em paralelo.
 
-## Comandos por tipo de tarefa
+## Roteamento por tarefa
 
 ### Docs-only
 
-Quando a tarefa altera apenas docs:
+Usar quando somente arquivos `.md` mudaram.
 
 ```powershell
 git status --short
 git diff --stat
-git diff -- docs AGENTS.md README.md
+git diff --check
+npm run verify:data-cleanliness
 ```
 
-Nao rodar `verify:all` se nenhum codigo foi alterado.
+Nao rodar `verify:all` por padrao em docs-only.
 
 ### Backend/API
 
@@ -29,29 +30,42 @@ npm run smoke:api
 npm run verify:all
 ```
 
-Adicionar verify especifico quando a feature tiver fluxo operacional proprio.
+Adicionar verify especifico quando houver dominio operacional.
+
+Para Jornada do Lead, considerar tambem:
+
+```powershell
+npm run verify:operational-summary
+npm run verify:operational-worklist
+npm run verify:lead-operational-cycle
+```
 
 ### Frontend/dashboard
 
 ```powershell
 npm run build
 npm run lint
+npm run verify:dashboard
 npm run verify:frontend
 npm run verify:all
 ```
 
-Tambem fazer validacao visual com browser tooling quando disponivel.
+Tambem fazer validacao visual quando a mudanca for de layout ou fluxo.
 
-### Dados/importacao/remediacao
+### Importacao/remediacao
 
 ```powershell
 npm run verify:data-cleanliness
 npm run verify:all
 ```
 
+Quando houver script especifico de importacao/remediacao, rodar primeiro em dry-run.
+
 Scripts que escrevem dados devem usar `runId` e cleanup.
 
 ### n8n/workflows
+
+Somente quando workflow versionado for alterado:
 
 ```powershell
 npm run n8n:import:workflows
@@ -59,14 +73,15 @@ npm run n8n:list:workflows
 npm run verify:all
 ```
 
-So quando workflow for alterado.
+Nao executar workflow real com dados reais sem aprovacao.
 
 ## runId e cleanup
 
-- Todo teste que cria dado deve usar `runId` unico.
-- Cleanup deve rodar em `finally`.
-- Cleanup deve remover contatos, leads, mensagens, conversas, action items e interacoes criadas pelo teste quando aplicavel.
+- Todo teste que cria dado deve usar `runId` unico ou marcador deterministico.
+- Cleanup deve rodar em `finally` quando possivel.
+- Cleanup deve remover apenas dados criados pelo proprio teste.
 - Nunca usar `TRUNCATE` em scripts de validacao.
+- Dados ambiguos devem ser reportados, nao apagados automaticamente.
 
 ## Falhas
 
@@ -75,9 +90,10 @@ Relatorio de falha deve conter:
 - comando que falhou;
 - trecho curto do erro;
 - causa provavel;
-- contorno ou proxima acao.
+- proxima acao;
+- se houve risco de dado residual.
 
-Nao colar logs longos quando a causa esta clara.
+Nao colar logs longos quando a causa estiver clara.
 
 ## Relatorio de sucesso
 
@@ -89,7 +105,15 @@ Para comandos OK:
 
 ## Antes de commit
 
-- Rodar `npm run verify:all` em sequencia.
+- Rodar validacao proporcional.
 - Rodar `git status --short`.
 - Rodar `git diff --stat`.
+- Rodar `git diff --check`.
+- Confirmar ausencia de dados reais e segredos.
 - Nao usar `git add -A`.
+
+## Antes de push
+
+- Revisar `git diff --cached --stat`.
+- Confirmar que o commit tem escopo unico.
+- Se alterou `.md`, lembrar que o sync Google Drive roda apos push na `main`.

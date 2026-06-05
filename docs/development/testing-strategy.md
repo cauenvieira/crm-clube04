@@ -1,64 +1,133 @@
 # Testing Strategy
 
-## Goal
+## Objetivo
 
-Keep local validation deterministic, fast to run, and aligned with operational risk.
+Manter validacoes locais deterministicas, proporcionais ao risco e alinhadas com a operacao real do Clube04.
 
-## Test layers
+Build/lint nao bastam para considerar feature pronta quando ha regra operacional, API, importacao, integracao ou frontend com interacao.
 
-1. `smoke:api`
-- Quick API flow validation.
-- Covers core endpoints and idempotency basics.
-- Use on local iteration and in pre-commit battery.
-- Source path: `scripts/smoke/`.
+## Principios
 
-2. `verify:*` scripts
-- Operational validations by domain.
-- Examples: action items lifecycle, operational summary, worklist, dashboard, data cleanliness.
-- Must validate happy path plus at least one idempotency or validation/error path where relevant.
-- Source path: `scripts/verify/`.
+- Rodar smoke/verify em sequencia no banco local compartilhado.
+- Nao rodar baterias em paralelo no mesmo banco.
+- Todo script que escreve dados de teste deve usar `runId` ou marcador seguro.
+- Cleanup deve rodar em `finally` quando possivel.
+- Cleanup nunca deve usar `TRUNCATE` ou delecao ampla.
+- Falhas devem gerar diagnostico curto e acionavel.
 
-3. `verify:frontend`
-- Real browser validation (Playwright) for dashboard UX and interaction flow.
-- Required when frontend behavior changes.
-- Source path: `scripts/frontend-tests/`.
+## Camadas de validacao
 
-4. Data cleanliness checks
-- Ensure test artifacts are removed or tagged safely.
-- Use `verify:data-cleanliness` plus cleanup/seed scripts for local reset.
-- Source path: `scripts/dev-data/`.
+### 1. Build e lint
 
-## Mandatory execution order
+Objetivo: garantir compilacao e padrao minimo.
 
-- Always run tests sequentially on shared local DB.
-- Recommended final command:
+```powershell
+npm run build
+npm run lint
+```
 
-```bash
+### 2. Smoke API
+
+Objetivo: validar fluxo rapido da API e contratos basicos.
+
+```powershell
+npm run smoke:api
+```
+
+Usar quando alterar backend/API, schema, payload, services, repositories ou contratos REST.
+
+### 3. Verifies operacionais
+
+Objetivo: validar regras de dominio e leituras operacionais.
+
+Exemplos:
+
+```powershell
+npm run verify:operational-summary
+npm run verify:operational-worklist
+npm run verify:lead-operational-cycle
+```
+
+Usar quando alterar Jornada do Lead, action items, summary, worklist ou regras de operacao.
+
+### 4. Frontend
+
+Objetivo: validar dashboard no navegador real.
+
+```powershell
+npm run verify:dashboard
+npm run verify:frontend
+```
+
+Obrigatorio quando mudar `apps/web`, layout, interacoes, API key local, telas ou fluxo visual.
+
+### 5. Data cleanliness
+
+Objetivo: garantir que testes e scripts nao deixam residuos indevidos.
+
+```powershell
+npm run verify:data-cleanliness
+```
+
+Obrigatorio em docs-only dentro deste fluxo de governanca e em qualquer mudanca que escreva dados artificiais.
+
+### 6. Verify all
+
+Bateria completa sequencial para fechamento de mudancas com codigo.
+
+```powershell
 npm run verify:all
 ```
 
-- Do not run smoke/verify in parallel jobs or terminals.
+Nao usar como substituto para entender o risco da tarefa; usar como consolidacao final.
 
-## runId and cleanup rules
+## Quando adicionar ou atualizar teste
 
-- Any script that writes test data must generate a unique `runId`.
-- Persist marker fields so written data can be found and removed safely.
-- Cleanup must run in `finally`, including failure paths.
-- Cleanup must be scoped; never use destructive broad deletion or truncate.
+Adicionar/atualizar teste quando a tarefa mudar:
 
-## When to add new tests
+- contrato de API;
+- payload, status code, filtros ou idempotencia;
+- status/action/outcome da Jornada do Lead;
+- contadores operacionais;
+- worklist/summary/dashboard;
+- importacao ou remediacao;
+- integracao n8n/webhook/worker;
+- fluxo visual com impacto operacional.
 
-Add or update tests whenever a task changes:
+## Validacao docs-only
 
-- API contract (payload, status code, filtering, idempotency).
-- Operational counters or summaries.
-- Dashboard behavior or UX interactions.
-- Data import/remediation logic.
-- Integration boundaries (n8n/webhooks/worker flows).
+Para tarefa exclusivamente documental:
 
-## Definition of done for validation
+```powershell
+git diff --check
+npm run verify:data-cleanliness
+```
 
-- Feature is not done with build/lint only.
-- Required validations must be updated and executed.
-- Docs examples must be copyable and runnable without hidden steps.
-- Final report must include executed commands and concise pass/fail result.
+Nao rodar `verify:all` por padrao em docs-only, salvo se a documentacao revelar suspeita de regressao tecnica.
+
+## Relatorio de falha
+
+Informar:
+
+- comando que falhou;
+- trecho curto do erro;
+- causa provavel;
+- arquivo/regiao suspeita;
+- proxima acao.
+
+Nao colar logs longos quando a causa estiver clara.
+
+## Relatorio de sucesso
+
+Informar comandos e status OK. Nao colar log completo.
+
+## Definicao de pronto
+
+Uma tarefa tecnica so esta pronta quando:
+
+- comportamento implementado;
+- validacao proporcional executada;
+- docs atualizados quando necessario;
+- data-cleanliness preservado;
+- git diff revisado;
+- sem dados reais/segredos no Git.

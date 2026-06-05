@@ -1,23 +1,51 @@
 # Sprint Plan Template
 
-Use este template para tarefas maiores, especialmente frontend, backend operacional e produto.
+Use este template para tarefas maiores de frontend, backend operacional, importacao, integracao ou produto.
 
-## Objetivo
+## 1. Milestone
+
+Selecionar uma:
+
+- M0 Fundacao tecnica e governanca
+- M1 Jornada do Lead
+- M2 Mesa Operacional
+- M3 Importacao robusta e saneamento
+- M4 Atendimento e WhatsApp
+- M5 Jornada do Cliente
+- M6 Operacao, metas e gestao
+- M7 IA e automacao avancada
+
+Se a tarefa misturar milestones, dividir ou justificar explicitamente.
+
+## 2. Objetivo
 
 Descrever em uma frase o resultado operacional esperado.
 
-## Contexto
+Exemplo:
+
+```text
+Permitir que a equipe registre resultado de atendimento de um lead sem deixar o ciclo operacional inconsistente.
+```
+
+## 3. Contexto obrigatorio
 
 - Estado atual relevante.
+- Docs consultados.
 - Decisoes ja tomadas.
 - Dependencias conhecidas.
+- Riscos de regra de negocio, API, schema, frontend, dados ou integracao.
 
-## Fora de escopo
+## 4. Fonte de verdade
 
-- Listar explicitamente o que nao sera alterado.
-- Incluir API, schema, n8n, Docker, auth, testes ou UX quando forem proibidos.
+Listar docs obrigatorios para a tarefa.
 
-## Arquivos permitidos
+Para Jornada do Lead, sempre incluir:
+
+- `docs/product/lead-operational-contract.md`
+- `docs/product/lead-import-normalization.md`
+- `docs/qa/lead-business-rules-test-matrix.md`
+
+## 5. Escopo permitido
 
 ```text
 apps/...
@@ -25,52 +53,100 @@ docs/...
 scripts/...
 ```
 
-## Arquivos proibidos
+Ser especifico. Evitar escopo aberto.
+
+## 6. Fora de escopo
+
+Listar explicitamente o que nao sera alterado.
+
+Exemplos:
+
+- schema/migrations;
+- Docker/n8n;
+- frontend;
+- API;
+- auth;
+- regra operacional;
+- dados reais;
+- automacao externa.
+
+## 7. Arquivos proibidos
 
 ```text
-infra/db/...
-docker-compose.yml
-infra/n8n/workflows/...
-package-lock.json
+.env
+.tmp/
+.chatgpt-sources/
+node_modules/
+dist/
+*.csv
+*.xlsx
+*.zip
+*.log
 ```
 
-Ajustar a lista conforme a sprint.
+Adicionar outros conforme a tarefa.
 
-## Criterios de aceite
+## 8. Criterios de aceite
 
 - Comportamento esperado.
 - Estados vazios/erro.
-- Idempotencia ou validacao quando relevante.
+- Idempotencia/duplicidade quando relevante.
 - Sem regressao de contratos existentes.
+- Documentacao atualizada quando aplicavel.
 
-## Testes obrigatorios
+## 9. Validacoes obrigatorias
 
-- `npm run build`
-- `npm run lint`
-- smoke/verify especifico
-- `npm run verify:frontend` para frontend
-- `npm run verify:all` antes de commit
+Docs-only:
 
-Para docs-only, usar apenas `git diff --stat`, `git status --short` e diff dos docs.
+```powershell
+git diff --check
+npm run verify:data-cleanliness
+```
 
-## Relatorio final
+Backend/API:
+
+```powershell
+npm run build
+npm run lint
+npm run smoke:api
+npm run verify:all
+```
+
+Frontend:
+
+```powershell
+npm run build
+npm run lint
+npm run verify:dashboard
+npm run verify:frontend
+npm run verify:all
+```
+
+Importacao:
+
+```powershell
+npm run verify:data-cleanliness
+npm run verify:all
+```
+
+Ajustar conforme o risco.
+
+## 10. Relatorio final
 
 Incluir:
 
-- arquivos criados;
+- o que mudou;
 - arquivos alterados;
-- decisoes tecnicas;
-- problemas e contornos;
 - validacoes executadas;
-- riscos;
-- proximo passo.
+- se docs precisam atualizar;
+- se milestones/backlog mudaram;
+- git status esperado;
+- proximo passo recomendado.
 
-## Checklist antes de commit
+## 11. Git
 
-- `git status --short`
-- `git diff --stat`
-- testes obrigatorios OK
-- nenhuma credencial
-- nenhum dado real
-- nenhuma alteracao fora do escopo
-- nao usar `git add -A`
+- Revisar `git status --short`.
+- Revisar `git diff --stat`.
+- Usar `git add` com caminhos especificos.
+- Nao usar `git add -A`.
+- Nao commitar/push sem autorizacao.
