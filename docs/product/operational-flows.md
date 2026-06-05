@@ -1,87 +1,250 @@
 # Operational Flows
 
-## 1) Lead novo ate primeira resposta
+## Objetivo
 
-1. Entrada por webhook/API/manual.
-2. Normalizacao de contato e deduplicacao.
-3. Criacao/atualizacao de lead com status inicial.
-4. Geracao de action_item de resposta inicial.
-5. Atendimento executa e registra interaction.
+Descrever os fluxos operacionais do CRM Clube04 em nivel de produto, indicando o que e atual, o que e alvo de curto prazo e o que e futuro.
 
-## 2) Lead em atendimento ate agendamento
+Este documento nao substitui contratos especificos. Para Jornada do Lead, a fonte de verdade e o contrato operacional, a normalizacao de importacao e a matriz de testes.
 
-1. Lead recebe dono (`assigned_to`) e status operacional.
-2. Tentativas e observacoes sao registradas.
-3. Proxima acao e prazo sao definidos.
-4. Quando ha retorno positivo, registrar agendamento.
-5. Action_item pendente e concluido/atualizado.
+## Classificacao de maturidade
 
-## 3) Lead convertido em cliente
+- Atual: ja existe base tecnica ou comportamento implementado/documentado.
+- Alvo atual: deve guiar M1/M2 antes de novas frentes.
+- Futuro: roadmap, nao implementar sem nova decisao.
 
-1. Confirmacao de conversao comercial.
-2. Vinculo com customer e pet (quando disponivel).
-3. Fechamento de tarefas de funil de lead.
-4. Entrada imediata na Jornada do Cliente.
-5. Preservacao de origem/campanha para ROI.
+## Fluxos M1 - Jornada do Lead
 
-## 4) Lead sem retorno ate revisao de lideranca
+### 1. Lead novo ate primeira resposta
 
-1. Regras detectam prazo vencido ou baixa interacao.
-2. Lead entra em lista de risco na worklist.
-3. Equipe registra novas tentativas.
-4. Casos fora de script sobem para lideranca.
-5. Lideranca decide: insistir, pausar, desqualificar ou reativar depois.
+Maturidade:
+- Alvo atual.
 
-## 5) Cliente ativo ate recorrencia
+Fluxo:
+1. Lead entra por cadastro manual, importacao ou webhook.
+2. Sistema normaliza contato e valida duplicidade conforme regra vigente.
+3. Lead e criado ou atualizado com status operacional valido.
+4. Sistema cria ou expoe action item de primeira resposta quando necessario.
+5. Atendimento realiza contato e registra interaction.
+6. Sistema define proxima acao ou novo estado conforme resultado.
 
+Autoridade:
+- `docs/product/lead-operational-contract.md`.
+- `docs/product/lead-import-normalization.md`.
+- `docs/qa/lead-business-rules-test-matrix.md`.
+
+### 2. Lead em atendimento ate agendamento
+
+Maturidade:
+- Alvo atual.
+
+Fluxo:
+1. Lead recebe responsavel quando aplicavel.
+2. Atendente registra tentativa, observacao e resultado.
+3. Sistema calcula ou exige proxima acao.
+4. Lead segue em atendimento, aguardando resposta, follow-up ou escalonamento.
+5. Quando ha retorno positivo, registrar agendamento.
+6. Action item pendente e concluido, neutralizado ou substituido conforme regra.
+
+Cuidado:
+- lead ativo nao deve ficar sem proxima acao.
+- movimentacao critica deve gerar historico.
+
+### 3. Lead sem resposta ate analise da lideranca
+
+Maturidade:
+- Alvo atual.
+
+Fluxo:
+1. Atendente registra tentativas sem resposta.
+2. Sistema aplica cadencia e limite de tentativas.
+3. Ao atingir criterio de excecao, lead vai para analise de lideranca.
+4. Atendente deve preencher autoanalise quando exigido.
+5. Lideranca decide destino: insistir, pausar/nutricao, perder, desqualificar ou reativar depois.
+6. Decisao gera historico e atualiza action items.
+
+Cuidado:
+- analise de lideranca nao deve competir com follow-up comum.
+- decisao exige justificativa/auditoria.
+
+### 4. Lead agendado ate conversao
+
+Maturidade:
+- Alvo atual.
+
+Fluxo:
+1. Lead recebe registro de agendamento.
+2. Sai da fila comum de atendimento comercial.
+3. Permanece rastreavel para conversao.
+4. Quando o atendimento/venda for confirmado, lead vira cliente.
+5. Itens diarios abertos sao fechados ou neutralizados.
+6. Origem/campanha sao preservadas para analise futura.
+
+Cuidado:
+- conversao nao deve apagar historico da Jornada do Lead.
+
+### 5. Lead perdido, desqualificado ou nutricao
+
+Maturidade:
+- Alvo atual.
+
+Fluxo:
+1. Sistema exige motivo quando status final ou desqualificacao exigir.
+2. Historico registra decisao.
+3. Lead sai da fila diaria.
+4. Lead desqualificado nao deve ser tratado como perda comercial simples.
+5. Lead em nutricao/campanha nao deve consumir energia diaria da equipe.
+
+Cuidado:
+- nutricao nesta etapa nao significa automacao real de campanha.
+
+## Fluxos M2 - Mesa Operacional
+
+### 6. Rotina diaria da atendente
+
+Maturidade:
+- Alvo seguinte.
+
+Fluxo:
+1. Atendente abre Mesa Operacional.
+2. Sistema mostra atender hoje, atrasados, backlog e prioridades.
+3. Atendente executa contato a partir da worklist.
+4. Resultado gera historico e proxima acao.
+5. Itens concluidos saem da fila ativa.
+6. Lideranca acompanha desvios e casos escalados.
+
+Cuidado:
+- Kanban pode ajudar leitura de funil, mas worklist e mais critica para rotina diaria.
+
+### 7. Relatorio diario operacional
+
+Maturidade:
+- Alvo seguinte.
+
+Fluxo:
+1. Sistema coleta metricas de summary/worklist.
+2. Relatorio destaca volume, pendencias, atrasos, backlog, conversao e gargalos.
+3. Lideranca revisa desvios e define foco do dia.
+4. Historico do relatorio permite comparacao.
+5. Futuramente, relatorio pode ser enviado para canal interno.
+
+Cuidado:
+- relatorio deve gerar decisao operacional, nao apenas visualizacao.
+
+## Fluxos M3 - Importacao robusta
+
+### 8. Planilha legada ate base operacional
+
+Maturidade:
+- Alvo apos base M1.
+
+Fluxo:
+1. Planilha e lida em modo seguro, sem versionar dado real.
+2. Sistema normaliza campos conforme contrato de importacao.
+3. Registros invalidos vao para relatorio/quarentena.
+4. Duplicidade ativa por telefone e tratada de forma conservadora.
+5. Leads ativos importados recebem action item adequado.
+6. Leads finais/frios nao entram na fila diaria.
+
+Autoridade:
+- `docs/product/lead-import-normalization.md`.
+
+## Fluxos M4 - Atendimento e WhatsApp
+
+### 9. WhatsApp modo escuta
+
+Maturidade:
+- Futuro controlado.
+
+Fluxo:
+1. Canal recebe evento inbound.
+2. Adaptador/n8n normaliza payload.
+3. CRM aplica idempotencia.
+4. CRM atualiza conversa, mensagem e contexto.
+5. Se necessario, gera lead/action item.
+6. Atendimento humano assume resposta.
+
+Cuidado:
+- iniciar por modo escuta/inbound antes de qualquer automacao ativa.
+
+### 10. Templates e apoio ao atendimento
+
+Maturidade:
+- Futuro controlado.
+
+Fluxo:
+1. Atendente ve contexto do lead/cliente.
+2. Sistema sugere mensagem ou template.
+3. Humano revisa e envia.
+4. Resultado e registrado no historico.
+
+Cuidado:
+- IA nao deve enviar resposta autonoma sem supervisao e fallback.
+
+## Fluxos M5 - Jornada do Cliente
+
+### 11. Cliente ativo ate recorrencia
+
+Maturidade:
+- Futuro.
+
+Fluxo:
 1. Cliente convertido entra em rotina de acompanhamento.
-2. Monitorar servicos, agenda e pacote.
-3. Detectar risco: sem agenda, sem retorno, pacote perto de acabar.
-4. Gerar action_items de retencao.
-5. Registrar resultado e atualizar status.
+2. Sistema monitora servicos, agenda e pacotes.
+3. Regras detectam risco: sem agenda, sem retorno, pacote perto de acabar.
+4. Sistema gera action items de retencao.
+5. Atendimento registra resultado e atualiza status.
 
-## 6) Cliente inativo ate reativacao
+Cuidado:
+- nao iniciar M5 antes da conversao M1 estar confiavel.
 
+### 12. Cliente inativo ate reativacao
+
+Maturidade:
+- Futuro.
+
+Fluxo:
 1. Regras identificam inatividade por janela de dias.
-2. Segmentar clientes por risco e potencial.
-3. Criar tarefas de reativacao com prioridade.
-4. Executar contato e registrar interaction.
-5. Se reativado, retornar ao fluxo de cliente ativo.
+2. Clientes sao segmentados por risco e potencial.
+3. Sistema cria tarefas de reativacao.
+4. Atendimento executa contato e registra interaction.
+5. Se reativado, retorna ao fluxo de cliente ativo.
 
-## 7) Metas mensais ate metas diarias
+## Fluxos M6 - Operacao, metas e gestao
 
-1. Definir meta mensal por loja e colaborador.
-2. Distribuir meta diaria e semanal.
-3. Consolidar realizado do periodo.
-4. Calcular desvio e tendencia.
-5. Acionar alertas e ajustes de execucao.
+### 13. Metas mensais ate metas diarias
 
-## 8) Relatorio diario operacional
+Maturidade:
+- Futuro.
 
-1. Coletar metricas de summary/worklist.
-2. Gerar leitura por prioridade e bloqueios.
-3. Enviar para canal interno (chat/email no futuro).
-4. Lideranca revisa desvios e define foco do dia.
-5. Guardar historico de relatorio para comparacao.
+Fluxo:
+1. Lideranca define meta mensal por loja e/ou colaborador.
+2. Sistema distribui meta diaria e semanal.
+3. Realizado e consolidado por periodo.
+4. Sistema calcula desvio e tendencia.
+5. Lideranca ajusta foco operacional.
 
-## 9) WhatsApp modo escuta
+Cuidado:
+- separar configuracao, realizado, calculo e visualizacao.
 
-1. Canal recebe eventos inbound.
-2. n8n normaliza payload e envia para CRM.
-3. CRM aplica idempotencia e atualiza contexto.
-4. Se necessario, gera lead/action_item automaticamente.
-5. Atendimento assume fluxo humano de resposta.
+### 14. Producao e capacidade
 
-## 10) Futuro funil omnichannel
+Maturidade:
+- Futuro.
 
-1. Adaptadores de canal enviam payloads normalizados.
-2. CRM unifica eventos por contato e jornada.
-3. Atribuicao de origem preservada entre canais.
-4. Worklist prioriza por SLA e valor potencial.
-5. Relatorios comparam performance por canal e campanha.
+Fluxo:
+1. Sistema coleta agenda, servicos e producao.
+2. Capacidade e ocupacao sao calculadas.
+3. Desvios e gargalos sao destacados.
+4. Lideranca ajusta escala, foco comercial e oferta.
+
+Cuidado:
+- dados de origem incompletos podem gerar decisao incorreta.
 
 ## Decisoes operacionais transversais
 
-- Kanban e util para leitura de funil, mas worklist e mais critica para rotina diaria.
-- Tabela/exportacao continua obrigatoria para conferencia e gestao.
+- Worklist e prioridade operacional vencem dashboard cosmetico.
+- Tabela/exportacao continua importante para conferencia e gestao.
 - Integracoes entram por adaptadores com contratos estaveis.
+- Historico nunca deve ser apagado por conveniencia visual.
+- Toda movimentacao critica deve ser auditavel.
+- O backend deve ser dono das regras de ciclo de vida.

@@ -1,93 +1,233 @@
 # CRM Platform Roadmap
 
+## Objetivo
+
+Definir a direcao de produto do CRM Clube04 como centro operacional incremental para o Clube04 Mogi das Cruzes.
+
+Este documento orienta roadmap, prioridades e limites de escopo. Ele nao substitui contratos especificos de regra de negocio, API, schema ou testes.
+
+## Fonte de autoridade
+
+- Para hierarquia documental: `docs/development/documentation-hierarchy.md`.
+- Para estado atual: `docs/project-state.md`.
+- Para backlog: `docs/tasks.md`.
+- Para Jornada do Lead: `docs/product/lead-operational-contract.md`, `docs/product/lead-import-normalization.md` e `docs/qa/lead-business-rules-test-matrix.md`.
+
+Em caso de conflito entre este roadmap e um contrato operacional especifico, o contrato especifico vence.
+
 ## Visao do produto
 
-O CRM Clube04 deve evoluir de um conjunto de telas e endpoints para uma plataforma operacional comercial completa.
-O foco e conectar jornada de lead, atendimento, conversao, recorrencia e performance em um fluxo unico.
+O CRM Clube04 deve evoluir de um conjunto de telas e endpoints para um centro de operacoes e controle da unidade.
+
+O sistema deve apoiar a rotina real do Clube04 Mogi:
+
+- leads de trafego pago e WhatsApp;
+- atendimento humano disciplinado;
+- conversao em agendamento;
+- acompanhamento de recorrencia;
+- pacotes, renovacao e reativacao;
+- metas, equipe, producao e indicadores;
+- NPS, financeiro operacional e alertas;
+- automacoes controladas e IA em modo apoio.
+
+A Jornada do Lead e o foco funcional atual, mas nao e o limite final do produto.
 
 ## Principios de produto
 
-1. Operacao diaria primeiro: worklist e acao objetiva antes de relatorios sofisticados.
-2. Lead ao cliente: a jornada nao termina na conversao.
-3. Dados rastreaveis: origem, atribuicao e historico preservados desde o inicio.
-4. Crescimento modular: cada modulo com fronteira clara e contratos simples.
-5. Integracao por adaptadores: evitar acoplamento direto com canais e sistemas externos.
-6. Automacao com controle: IA e automacoes iniciam em modo sugestao e apoio.
-7. Seguranca evolutiva: API key local em dev; auth, permissoes e auditoria antes de uso real.
+1. Operacao diaria primeiro: a equipe precisa saber o que fazer hoje.
+2. Worklist antes de relatorio: painel bonito sem acao operacional gera pouco valor.
+3. Lead vira cliente: preservar continuidade depois da conversao.
+4. Regra no backend: movimentacao critica nao deve existir apenas no frontend.
+5. Dados rastreaveis: origem, campanha, tentativa, decisao e historico devem ser preservados.
+6. Integracoes por adaptadores: nao acoplar dominio diretamente a WhatsApp, n8n, WAHA ou ERP.
+7. Automacao com controle: IA e automacoes iniciam como sugestao, espelho, alerta ou apoio supervisionado.
+8. Evolucao incremental: cada milestone deve entregar valor operacional sem criar dependencias amplas demais.
+9. Documentacao viva: codigo, regra, teste e docs devem fechar juntos.
 
-## Estado atual (ja existe)
+## Estado atual resumido
 
-- API CRM com contatos, leads, conversas, mensagens e interactions.
-- Action items com geracao e ciclo de vida.
-- Webhook inbound WhatsApp de teste.
-- n8n local com fluxo versionado.
-- Operational summary e worklist.
-- Dashboard local/dev.
-- Higiene de dados dev e `verify:all` sequencial.
+Estado detalhado fica em `docs/project-state.md`.
 
-## Fases recomendadas
+Ja existe base tecnica para evolucao incremental:
 
-### Fase 1 - Base operacional (concluida/parcial)
+- monorepo Node/TypeScript;
+- Fastify API;
+- Postgres e Redis via Docker Compose;
+- React/Vite em `apps/web`;
+- n8n local versionado;
+- contatos, leads, conversas, mensagens, interacoes e action items;
+- worklist e summary operacional;
+- UI Foundation em `apps/web/src/components/ui`;
+- verificacoes operacionais e `verify:all` sequencial;
+- contrato operacional documentado para Jornada do Lead;
+- sync automatico dos Markdown para Google Drive `repo-docs`.
 
-- Cadastros basicos, funil inicial de lead e rotinas diarias.
-- Painel operacional com visao de prioridade.
-- Base de automacao por regra com action_items.
+## Milestones do produto
 
-### Fase 2 - Jornada do Lead robusta
+### M0 - Fundacao tecnica e governanca
 
-- Espelhar e substituir a planilha "Jornada do Lead".
-- Controle de tentativas, proxima acao, SLA e revisao de lideranca.
-- Tabela/exportacao para conferencia diaria.
+Objetivo:
+- manter repo, Docker, banco, scripts, UI Foundation, docs, fluxo seguro e fontes sincronizadas.
 
-### Fase 3 - Jornada do Cliente e recorrencia
+Status:
+- base tecnica criada;
+- hierarquia documental em consolidacao;
+- sync ChatGPT/Drive ativo.
 
-- Continuidade apos conversao: cliente, pet, atendimento e pacotes.
-- Riscos de inatividade, reativacao e follow-up de recorrencia.
-- Integracao com agenda/servicos/producao.
+Cuidado:
+- nao transformar M0 em reescrita ampla.
 
-### Fase 4 - Metas e performance
+### M1 - Jornada do Lead
 
-- Separar configuracao de metas, realizado, calculo e visualizacao.
-- Metas mensal/diaria por loja e colaborador.
-- Alertas de desvio e comparacao com historico.
+Objetivo:
+- substituir a planilha manual por fluxo operacional rastreavel de lead.
 
-### Fase 5 - Omnichannel e marketing/ROI
+Inclui:
+- base de leads;
+- importacao;
+- regras operacionais;
+- tentativas;
+- follow-up;
+- atrasados;
+- backlog;
+- analise de lideranca;
+- conversao;
+- historico e rastreabilidade.
 
-- Expandir para Instagram/Facebook e futuras entradas.
-- Atribuicao de origem e campanha ponta a ponta.
-- Integracoes com Meta Ads/Google Ads (quando pronto).
+Status:
+- foco funcional atual.
 
-### Fase 6 - Relatorios, automacao avancada e governanca
+Autoridade:
+- `docs/product/lead-operational-contract.md`;
+- `docs/product/lead-import-normalization.md`;
+- `docs/qa/lead-business-rules-test-matrix.md`.
 
-- Relatorio diario em canais internos (chat/email/etc.).
-- IA em modo sugestao para priorizacao e proxima melhor acao.
-- Auth real, permissoes por perfil e auditoria completa.
+### M2 - Mesa Operacional
 
-## Prioridades de curto prazo
+Objetivo:
+- dar visao diaria acionavel para atendimento e lideranca.
 
-1. Formalizar modulos e contratos de dados.
-2. Consolidar Jornada do Lead para operar sem planilha paralela.
-3. Expandir worklist e filtros de operacao.
-4. Preparar modulo de Metas com base historica consistente.
+Inclui:
+- atender hoje;
+- atrasados;
+- backlog;
+- analise de lideranca;
+- concluidos;
+- filtros;
+- movimentacao operacional;
+- indicadores de prioridade.
 
-## O que vem depois
+Dependencia:
+- M1 suficientemente consistente.
 
-- Omnichannel completo.
-- Integracoes de marketing e ROI.
-- Relatorios executivos e benchmarking por unidade/franqueado.
-- Automacoes de maior impacto com gates de seguranca.
+### M3 - Importacao robusta e saneamento
+
+Objetivo:
+- importar e reconciliar dados da planilha legada com seguranca.
+
+Inclui:
+- de-para da planilha;
+- invalidos;
+- deduplicacao;
+- normalizacao;
+- quarentena;
+- reimportacao segura.
+
+Autoridade:
+- `docs/product/lead-import-normalization.md`.
+
+### M4 - Atendimento e WhatsApp
+
+Objetivo:
+- unificar historico e preparar automacoes controladas de atendimento.
+
+Inclui:
+- historico;
+- templates;
+- automacoes;
+- n8n, WAHA, Z-API ou BSP;
+- transferencia para humano;
+- modo escuta antes de resposta automatica.
+
+Cuidado:
+- nao automatizar resposta autonoma ao cliente sem supervisao e sem fallback humano.
+
+### M5 - Jornada do Cliente
+
+Objetivo:
+- continuar relacionamento apos conversao.
+
+Inclui:
+- recorrencia;
+- pacotes;
+- renovacao;
+- reativacao;
+- aniversario;
+- NPS;
+- ClubeBox.
+
+Dependencia:
+- conversao e cadastro de cliente/pet confiaveis.
+
+### M6 - Operacao, metas e gestao
+
+Objetivo:
+- transformar dados operacionais em gestao diaria.
+
+Inclui:
+- metas;
+- producao por colaborador;
+- agenda;
+- banho, tosa e extras;
+- alertas;
+- dashboards;
+- financeiro operacional.
+
+Cuidado:
+- separar configuracao de metas, realizado, calculo e visualizacao.
+
+### M7 - IA e automacao avancada
+
+Objetivo:
+- apoiar decisao e execucao com IA controlada.
+
+Inclui:
+- assistente;
+- simulador;
+- recomendacoes;
+- classificacao;
+- RAG;
+- automacoes com gates de seguranca.
+
+Cuidado:
+- IA nao deve ser dona unica de decisao operacional sensivel.
+
+## Prioridade atual
+
+A prioridade de curto prazo e:
+
+1. concluir governanca documental dos Markdown;
+2. reconciliar API/docs apos backend operacional;
+3. reconciliar docs de dashboard antes do rebuild visual;
+4. fechar lacunas prioritarias da matriz de testes da Jornada do Lead;
+5. iniciar Base de Leads visual usando UI Foundation;
+6. evoluir Mesa Operacional depois da Base de Leads.
 
 ## O que nao fazer agora
 
-- Automatizar resposta autonoma ao cliente sem supervisao.
-- Acoplar API a um canal especifico sem camada adaptadora.
-- Misturar roadmap de dashboard com regras de negocio no backend.
-- Criar modulo de metas sem separar dados de configuracao e realizado.
+- Criar modulo futuro apenas porque parece util.
+- Implementar automacao real de WhatsApp sem modo controlado.
+- Criar metas sem separar configuracao, realizado e calculo.
+- Copiar arquitetura Lovable.
+- Reaproveitar frontend rejeitado sem avaliacao.
+- Alterar regra da Jornada do Lead por inferencia do codigo.
+- Misturar dashboard, regra de negocio e integracao externa na mesma tarefa.
 
-## Riscos de construir modulos soltos sem arquitetura
+## Riscos de produto
 
-- Duplicacao de regra e divergencia entre telas e relatorios.
-- Perda de contexto da jornada lead -> cliente.
-- Integracoes caras de manter por acoplamento pontual.
-- Dados sem confiabilidade para metas e decisao de lideranca.
-- Crescimento de custo operacional por retrabalho manual.
+- Tratar o CRM como SaaS generico e perder aderencia a operacao real do Clube04.
+- Criar telas sem disciplina operacional por tras.
+- Ter regras duplicadas entre frontend, backend, docs e planilha.
+- Avancar para Jornada do Cliente sem conversao de lead consistente.
+- Usar dados incompletos para metas e decisao de lideranca.
+- Automatizar atendimento antes de ter rastreabilidade, fallback e controle humano.
