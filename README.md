@@ -1,4 +1,4 @@
-# Clube04 CRM
+﻿# Clube04 CRM
 
 CRM operacional local para atendimento, follow-up e fila de trabalho do Clube04 Mogi.
 
@@ -76,13 +76,13 @@ npm run verify:all
 
 <!-- CRM-CLUBE04-README-OPERATIONAL-RULES -->
 
-### Operational lead rules
+### Regras operacionais da Jornada do Lead
 
-The Lead Journey business rules are documented in:
+As regras de negocio da Jornada do Lead estao documentadas em:
 
 - `docs/product/lead-operational-contract.md`
 - `docs/product/lead-import-normalization.md`
 - `docs/qa/lead-business-rules-test-matrix.md`
 
-These files are the source of truth for lead lifecycle behavior, import normalization, and business-rule test coverage.
+Esses arquivos sao a fonte de verdade para comportamento do ciclo de vida do lead, normalizacao de importacao e cobertura de testes das regras de negocio.
 

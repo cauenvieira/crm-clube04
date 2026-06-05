@@ -1,264 +1,257 @@
-# Lead Operational Contract
+# Contrato Operacional da Jornada do Lead
 
-## 1. Purpose
+## 1. Objetivo
 
-This document is the source of truth for the operational behavior of the Clube04 CRM Lead Journey.
+Este documento e a fonte de verdade para o comportamento operacional da Jornada do Lead no CRM Clube04.
 
-It defines how a lead moves through the system, which actions are automatic, which actions require a user decision, and which rules must be preserved by backend, frontend, tests, imports, automations, and future AI-assisted workflows.
+Ele define como um lead entra, evolui, fica pendente, vai para analise de lideranca, e encerrado, entra em nutricao/campanha ou vira cliente.
 
-No implementation should change lead lifecycle behavior without updating this document and the related test matrix.
+Nenhuma implementacao deve alterar comportamento operacional sem atualizar este documento e a matriz de testes relacionada.
 
-## 2. Principles
+## 2. Principios
 
-- The CRM exists to increase lead conversion and operational discipline.
-- The attendant should always know what to do today.
-- The system should create the next action automatically whenever possible.
-- The leadership queue should receive only leads that were already worked with minimum operational quality.
-- Cold leads should not consume the same daily energy as active leads.
-- The interface should be simple, but the business rules behind it must be consistent.
-- Every critical movement must create history/audit.
-- A lead should not stay in an active operational state without a next action.
-- Business rule changes require matching tests or an explicit test gap in the matrix.
+- O CRM existe para aumentar conversao e disciplina operacional.
+- A atendente deve saber claramente o que precisa fazer hoje.
+- O sistema deve criar proxima acao automaticamente sempre que possivel.
+- A lideranca deve receber apenas leads ja trabalhados corretamente.
+- Lead frio nao deve consumir a mesma energia diaria de lead ativo.
+- A interface deve ser simples; as regras por tras devem ser consistentes.
+- Toda movimentacao critica deve gerar historico/auditoria.
+- Lead ativo nao deve ficar sem proxima acao.
+- Mudanca de regra exige atualizacao de teste ou lacuna explicita na matriz.
 
-## 3. Core entities
+## 3. Entidades principais
 
-### 3.1 Lead
+### Lead
 
-A lead is a commercial opportunity before becoming a customer.
+Representa uma oportunidade comercial antes de virar cliente.
 
-Operational fields:
-- tutor name;
-- normalized phone;
-- pet name;
-- source;
-- source detail;
-- campaign;
-- assigned attendant;
+Campos operacionais relevantes:
+- tutor;
+- telefone normalizado;
+- pet;
+- origem;
+- detalhe da origem;
+- campanha;
+- responsavel;
 - status;
-- entry date;
-- first message date;
-- last interaction;
-- next action;
-- attempts count;
-- loss reason;
-- disqualification reason;
-- leadership review status.
+- data de entrada;
+- primeira mensagem;
+- ultima interacao;
+- proxima acao;
+- quantidade de tentativas;
+- motivo de perda;
+- motivo de desqualificacao;
+- status de analise da lideranca.
 
-### 3.2 Action item
+### Item de acao
 
-An action item is an operational task linked to a lead.
+Representa uma tarefa operacional vinculada ao lead.
 
-Main types:
+Tipos principais:
 - atender_hoje;
 - fazer_follow_up;
 - retomar_atendimento;
 - revisar_lideranca;
 - nutricao_campanha.
 
-### 3.3 Interaction
+### Interacao
 
-An interaction is an audit/history record for a contact, decision, movement, or operational note.
+Registro de historico/auditoria de contato, decisao, movimentacao ou anotacao operacional.
 
-Every relevant operational decision must generate an interaction.
+Toda decisao operacional relevante deve gerar interacao.
 
-## 4. Lead statuses
+## 4. Status operacionais
 
-### 4.1 novo_lead
+### novo_lead
 
-A newly created lead that has not been worked yet.
+Lead novo, ainda nao trabalhado.
 
-Rules:
-- every new lead must enter an operational queue;
-- the lead should appear on the operational desk;
-- the system should create or expose the first required action.
+Regras:
+- todo novo lead entra automaticamente na fila operacional do dia;
+- deve aparecer na Mesa Operacional;
+- deve gerar ou expor a primeira acao de atendimento.
 
-### 4.2 em_atendimento
+### em_atendimento
 
-A lead under active commercial handling.
+Lead em atendimento comercial ativo.
 
-Rules:
-- the lead consumes daily team energy;
-- it must have a next action;
-- if it has no next action, it must appear in an operational alert.
+Regras:
+- consome energia diaria da equipe;
+- deve ter proxima acao;
+- se nao tiver proxima acao, deve aparecer em alerta.
 
-### 4.3 aguardando_resposta
+### aguardando_resposta
 
-A lead already contacted and waiting for a response.
+Lead ja contatado e aguardando retorno.
 
-Rules:
-- the attempt must be registered;
-- the next contact must be calculated automatically when the user chooses no response;
-- the lead must not remain open without a planned next action.
+Regras:
+- tentativa deve ser registrada;
+- proximo contato deve ser calculado automaticamente;
+- nao pode ficar aberto sem proxima acao.
 
-### 4.4 agendado
+### agendado
 
-A lead that has an appointment scheduled.
+Lead com agendamento realizado.
 
-Rules:
-- it leaves the ordinary active commercial handling queue;
-- it remains traceable for conversion;
-- it still counts in conversion analysis.
+Regras:
+- sai da fila comum de atendimento comercial;
+- permanece rastreavel para conversao;
+- entra na analise de conversao.
 
-### 4.5 convertido
+### convertido
 
-A lead that became a customer.
+Lead virou cliente.
 
-Rules:
-- it leaves the Lead Journey;
-- it enters the Customer Journey;
-- it counts positively in conversion metrics;
-- open daily action items must be closed or neutralized.
+Regras:
+- sai da Jornada do Lead;
+- entra na Jornada do Cliente;
+- conta positivamente na conversao;
+- itens diarios abertos devem ser fechados ou neutralizados.
 
-### 4.6 perdido
+### perdido
 
-A lead closed as a commercial loss.
+Lead encerrado como perda comercial.
 
-Rules:
-- a loss reason is required;
-- history must be registered;
-- it must not remain in the daily action queue.
+Regras:
+- exige motivo;
+- gera historico;
+- nao permanece na fila diaria.
 
-### 4.7 desqualificado
+### desqualificado
 
-A lead that is not a valid commercial opportunity.
+Lead sem oportunidade comercial valida.
 
-Rules:
-- a disqualification reason is required;
-- it should not be treated as a simple commercial loss;
-- history must be registered;
-- it must not remain in the daily action queue.
+Regras:
+- exige motivo;
+- nao deve ser tratado como perda comercial simples;
+- gera historico;
+- nao permanece na fila diaria.
 
-### 4.8 nutricao_campanha
+### nutricao_campanha
 
-A cold lead that should not consume daily attendant energy.
+Lead frio, sem prioridade operacional diaria.
 
-Rules:
-- it leaves the daily operational queue;
-- it may be used for future recovery campaigns;
-- it must not remain pending in atender_hoje, fazer_follow_up, or retomar_atendimento.
+Regras:
+- sai da fila diaria;
+- pode receber campanhas futuras;
+- nao deve ficar em atender_hoje, fazer_follow_up ou retomar_atendimento.
 
-### 4.9 revisar_lideranca
+### revisar_lideranca
 
-A lead sent to leadership review.
+Lead enviado para analise da lideranca.
 
-Rules:
-- it requires attendant self-review;
-- leadership decides the next destination;
-- the decision must be justified and audited.
+Regras:
+- exige autoanalise da atendente;
+- lideranca decide o proximo destino;
+- decisao exige justificativa e auditoria.
 
-## 5. Entry rules
+## 5. Regras de entrada
 
-### LOR-001 - New lead enters an operational queue
+### LOR-001 - Novo lead entra em fila operacional
 
-When a lead is created manually, imported, or received through a webhook, the system must create or expose a next operational action.
+Quando um lead e criado manualmente, importado ou recebido por webhook, o sistema deve criar ou expor uma proxima acao operacional.
 
-Expected result:
-- lead is created with a valid operational status;
-- an open action item exists when the lead requires team action;
-- the lead appears in the operational desk when applicable;
-- creation is auditable.
+Resultado esperado:
+- lead criado com status valido;
+- item de acao aberto quando exigir atuacao;
+- lead visivel na Mesa Operacional;
+- criacao auditavel.
 
-Expected tests:
+Testes esperados:
 - smoke:api;
-- verify:lead-operational-cycle;
-- future manual lead specific verification.
+- verify:lead-operational-cycle.
 
-### LOR-002 - A lead may exist without a tutor name if the phone is valid
+### LOR-002 - Lead pode existir sem nome se telefone for valido
 
-The normalized phone is the minimum identity field for a lead.
+Telefone normalizado e o identificador minimo do lead.
 
-Expected result:
-- if tutor name is empty but phone is valid, use "Sem nome";
-- normalized phone must be stored;
-- lead without a valid phone must be rejected or sent to an invalid import report.
+Resultado esperado:
+- se tutor estiver vazio, usar "Sem nome";
+- telefone normalizado deve ser armazenado;
+- telefone invalido deve ser rejeitado ou ir para relatorio de invalidos.
 
-Expected tests:
+Testes esperados:
 - smoke:api;
-- future manual lead verification.
+- verificacao futura de lead manual/importacao.
 
-### LOR-003 - Manual lead creation should not duplicate active leads
+### LOR-003 - Criacao manual nao deve duplicar lead ativo
 
-When a manual lead is created with a phone that already has an active lead, the system must not create a duplicate active lead.
+Se ja existir lead ativo para o telefone, o sistema nao deve criar outro lead ativo duplicado.
 
-Expected result:
-- return the existing active lead or a duplicate signal;
-- preserve auditability;
-- avoid multiple active queues for the same contact.
+Resultado esperado:
+- retornar lead existente ou sinalizar duplicidade;
+- preservar auditoria;
+- evitar multiplas filas para o mesmo contato.
 
-Expected tests:
+Testes esperados:
 - smoke:api.
 
-## 6. Attempt and no-response rules
+## 6. Regras de tentativa e sem resposta
 
-### LOR-010 - No response creates the next attempt automatically
+### LOR-010 - Sem resposta cria proxima tentativa automaticamente
 
-When the attendant records sem_resposta, the backend must calculate the next contact date without requiring a manual date.
+Ao registrar sem_resposta, o backend deve calcular a proxima tentativa sem exigir data manual.
 
-Expected result:
-- attempts count is incremented;
-- last interaction is updated;
-- a new next action is created or updated;
-- history is registered.
+Resultado esperado:
+- attempts_count incrementado;
+- ultima interacao atualizada;
+- nova proxima acao criada/atualizada;
+- historico registrado.
 
-Expected tests:
+Testes esperados:
 - verify:lead-operational-cycle.
 
-### LOR-011 - Attempt cadence
+### LOR-011 - Cadencia de tentativas
 
-Initial suggested cadence:
-- attempt 1: next contact in 1 business day;
-- attempt 2: next contact in 2 business days;
-- attempt 3: next contact in 3 business days;
-- attempt 4: send to leadership review.
+Cadencia inicial:
+- tentativa 1: proximo contato em 1 dia util;
+- tentativa 2: proximo contato em 2 dias uteis;
+- tentativa 3: proximo contato em 3 dias uteis;
+- tentativa 4: enviar para revisar_lideranca.
 
-This cadence can be adjusted, but not only in code. Any change must update this contract and the test matrix.
+Qualquer mudanca nesta cadencia deve atualizar este documento e a matriz de testes.
 
-Expected tests:
-- verify:lead-operational-cycle;
-- future cadence-specific verification.
+### LOR-012 - Limite de tentativas envia para lideranca
 
-### LOR-012 - Attempt limit sends the lead to leadership review
+Ao atingir o limite de tentativas sem resposta, o lead deve sair da fila comum e entrar em revisar_lideranca.
 
-When the no-response attempt limit is reached, the lead must leave the ordinary queue and enter revisar_lideranca.
+Resultado esperado:
+- item revisar_lideranca criado;
+- itens antigos abertos fechados/cancelados/deduplicados;
+- historico registrado.
 
-Expected result:
-- revisar_lideranca action item is created;
-- old open action items are closed, canceled, or deduplicated according to the backend contract;
-- history is registered.
-
-Expected tests:
+Testes esperados:
 - verify:lead-operational-cycle.
 
-## 7. Sending a lead to leadership review
+## 7. Envio para lideranca
 
-### LOR-020 - Leadership review requires attendant self-review
+### LOR-020 - Envio para lideranca exige autoanalise
 
-Before sending a lead to leadership review, the system must require an attendant self-review checklist.
+Antes de enviar um lead para lideranca, o sistema deve exigir checklist de autoanalise.
 
-Minimum checklist:
-- I made the first contact within the expected time.
-- I was clear, polite, and respectful.
-- I explained how Clube04 works.
-- I presented real benefits, not only price.
-- I asked questions to understand the need.
-- I tried to handle objections.
-- I offered package or recurrence alternatives when applicable.
-- I registered a clear summary of the interaction.
-- The reason for sending to leadership is clear.
+Checklist minimo:
+- fiz o primeiro contato dentro do prazo esperado;
+- fui claro, simpatico e respeitoso;
+- expliquei como funciona o Clube04;
+- apresentei beneficios reais, nao apenas preco;
+- fiz perguntas para entender a necessidade;
+- tentei tratar objecoes;
+- ofereci pacote ou recorrencia quando cabivel;
+- registrei resumo claro do atendimento;
+- o motivo do envio para lideranca esta claro.
 
-Expected result:
-- the system should not allow leadership review without the checklist;
-- checklist answers must be stored in the history or review payload;
-- leadership must see the checklist before deciding.
+Resultado esperado:
+- sem checklist, nao permite envio;
+- checklist fica registrado;
+- lideranca visualiza antes de decidir.
 
-Expected tests:
-- pending.
+Testes esperados:
+- pendente.
 
-### LOR-021 - Leadership decides the next destination
+### LOR-021 - Lideranca decide o destino
 
-After review, leadership must choose a conclusion.
-
-Allowed conclusions:
+Conclusoes permitidas:
 - voltar_para_atendimento;
 - perdido;
 - desqualificado;
@@ -266,131 +259,97 @@ Allowed conclusions:
 - feedback_marketing;
 - feedback_atendimento.
 
-Each conclusion requires a justification.
+Cada conclusao exige justificativa.
 
-Expected tests:
-- pending.
+Testes esperados:
+- pendente.
 
-## 8. Leadership analysis rules
+## 8. Analise da lideranca
 
-### LOR-030 - Leadership evaluates process quality
+### LOR-030 - Lideranca avalia qualidade do processo
 
-Leadership must evaluate whether the process was followed correctly.
+Pontos avaliados:
+- tempo ate primeiro contato;
+- quantidade de tentativas;
+- qualidade da abordagem;
+- tratamento de objecoes;
+- clareza das anotacoes;
+- aderencia ao perfil Clube04;
+- qualidade da origem/campanha.
 
-Review points:
-- first contact time;
-- number of attempts;
-- quality of approach;
-- objection handling;
-- clarity of notes;
-- fit with Clube04 target profile;
-- source and campaign quality.
+### LOR-031 - Lead fora do perfil gera feedback para marketing
 
-Expected tests:
-- pending.
+Exemplos:
+- localizacao incompatível;
+- servico nao oferecido;
+- expectativa de preco fora do perfil;
+- contato invalido ou sem pet;
+- campanha trouxe publico errado.
 
-### LOR-031 - Poor-fit leads generate marketing feedback
+### LOR-032 - Processo ruim gera feedback operacional
 
-If the attendant followed the process correctly but the lead is poor fit, leadership should classify the reason and, when relevant, produce a signal for marketing.
+Exemplos:
+- demora no primeiro contato;
+- resposta fria ou incompleta;
+- diferenciais nao explicados;
+- objecoes nao tratadas;
+- pacote/recorrencia nao oferecidos;
+- registro incompleto.
 
-Examples:
-- incompatible location;
-- service not offered by Clube04;
-- price expectations far outside target;
-- invalid contact or no pet;
-- campaign brought the wrong audience.
+## 9. Alertas operacionais
 
-Expected tests:
-- pending.
+### LOR-040 - Atender hoje
 
-### LOR-032 - Poor process generates operational feedback
+Todo lead com acao vencendo hoje ou sem primeiro atendimento deve aparecer em atender_hoje.
 
-If the lead had potential but the process was weak, leadership must return the lead to atendimento or register operational feedback.
+### LOR-041 - Atrasado ate 7 dias
 
-Examples:
-- delayed first contact;
-- cold or incomplete answer;
-- Clube04 differentials were not explained;
-- objections were not handled;
-- package or recurrence was not offered when applicable;
-- record was incomplete.
+Lead com proxima acao vencida ha ate 7 dias deve aparecer como atrasado.
 
-Expected tests:
-- pending.
+### LOR-042 - Backlog acima de 7 dias
 
-## 9. Operational alerts
+Lead com proxima acao vencida ha mais de 7 dias deve aparecer como backlog.
 
-### LOR-040 - Attend today
+### LOR-043 - Lead ativo com mais de 60 dias
 
-Every lead with a due action today or missing initial service must appear in atender_hoje.
+Lead em atendimento ativo por mais de 60 dias sem conversao deve gerar alerta de ciclo longo.
 
-Expected tests:
-- verify:operational-worklist;
-- future business rule verification.
+Resultado esperado:
+- indicador visivel;
+- filtro disponivel;
+- lideranca consegue revisar.
 
-### LOR-041 - Delayed up to 7 days
+### LOR-044 - Lead ativo sem proxima acao
 
-A lead with a next action overdue by up to 7 days must appear as atrasado.
+Lead ativo sem proxima acao deve gerar alerta operacional.
 
-Expected tests:
-- pending.
-
-### LOR-042 - Backlog above 7 days
-
-A lead with a next action overdue by more than 7 days must appear as backlog.
-
-Expected tests:
-- pending.
-
-### LOR-043 - Active lead older than 60 days
-
-A lead that remains in active handling for more than 60 days without conversion must generate a long-cycle alert.
-
-Expected result:
-- visible indicator;
-- filterable list;
-- leadership can review.
-
-Expected tests:
-- pending.
-
-### LOR-044 - Lead without next action
-
-An active lead without a next action must generate an operational alert.
-
-Final statuses exempt from this rule:
+Status dispensados:
 - convertido;
 - perdido;
 - desqualificado;
 - nutricao_campanha.
 
-Expected tests:
-- verify:operational-summary;
-- future business rule verification.
+## 10. Indicadores da Mesa Operacional
 
-## 10. Operational desk indicators
-
-The operational desk should prioritize action indicators, not vanity metrics.
-
-Primary indicators:
+Indicadores principais:
 - atender hoje;
 - atrasados;
 - backlog;
 - em analise de lideranca;
 - concluidos hoje;
 - convertidos hoje;
-- active leads older than 60 days;
-- leads without next action;
-- accumulated conversion rate;
-- conversion rate by source/campaign;
-- average time to first contact;
-- average time to conversion.
+- leads ativos com mais de 60 dias;
+- leads sem proxima acao;
+- taxa de conversao acumulada;
+- taxa por origem/campanha;
+- tempo medio ate primeiro contato;
+- tempo medio ate conversao.
 
-Indicators should be clickable when possible.
+Indicadores devem ser clicaveis quando possivel.
 
-## 11. Lead movement rules
+## 11. Movimentacao do lead
 
-Allowed operational actions:
+Acoes permitidas:
 - registrar_contato;
 - sem_resposta;
 - continuar_atendimento;
@@ -402,39 +361,32 @@ Allowed operational actions:
 - nutricao_campanha;
 - voltar_para_atendimento.
 
-Rules:
-- every action must create history;
-- every action must close, update, or create the next action;
-- a lead cannot remain without next action except in final/cold statuses;
-- critical movement cannot be frontend-only;
-- backend owns lifecycle behavior.
+Regras:
+- toda acao gera historico;
+- toda acao fecha, atualiza ou cria proxima acao;
+- lead nao fica sem proxima acao, exceto em status final/frio;
+- movimentacao critica nao pode ser apenas visual no frontend;
+- backend e dono do ciclo de vida.
 
-## 12. Conversion metrics
+## 12. Conversao
 
-### LOR-050 - Conversion rate
+### LOR-050 - Taxa de conversao
 
-Conversion rate should measure the proportion of valid leads that became customers.
+Regra inicial:
+- convertido conta como conversao;
+- perdido conta contra conversao;
+- desqualificado pode ser excluido quando for falta de perfil;
+- nutricao_campanha deve ser reportado separadamente.
 
-Initial rule:
-- convertido counts as conversion;
-- perdido counts against conversion;
-- desqualificado may be excluded from commercial conversion when the reason is invalid fit;
-- nutricao_campanha remains open for long-term recovery and should be reported separately.
+## 13. Protocolo de mudanca
 
-Expected tests:
-- pending.
-
-## 13. Rule change protocol
-
-A change to any of the following requires updating this document and the test matrix:
-- lead statuses;
-- action item types;
-- outcome behavior;
-- leadership review rules;
-- attempt cadence;
-- import normalization;
-- conversion/loss/disqualification rules;
-- operational alerts;
-- dashboard indicator definitions.
-
-If a test does not exist yet, the test matrix must explicitly mark the gap.
+Mudancas nos itens abaixo exigem atualizacao deste contrato e da matriz de testes:
+- status do lead;
+- tipos de item de acao;
+- outcomes;
+- regras de lideranca;
+- cadencia de tentativas;
+- normalizacao de importacao;
+- regras de conversao/perda/desqualificacao;
+- alertas operacionais;
+- indicadores do dashboard.

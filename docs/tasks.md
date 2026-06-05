@@ -1,4 +1,4 @@
-# Tasks Backlog
+﻿# Tasks Backlog
 
 Status:
 
@@ -59,12 +59,12 @@ Prioridade:
 
 <!-- CRM-CLUBE04-TASKS-OPERATIONAL-RULES -->
 
-## Operational rules backlog
+## Backlog de regras operacionais
 
-- [done] Create lead operational business rule contract.
-- [done] Create lead import normalization rules.
-- [done] Create lead business rule test matrix.
-- [todo] Add automated coverage for leadership review checklist.
-- [todo] Add automated coverage for delayed, backlog, and long-cycle alerts.
-- [todo] Add import verification for spreadsheet de-para rules.
+- [done] Criar contrato operacional das regras da Jornada do Lead.
+- [done] Criar regras de normalizacao da importacao de leads.
+- [done] Criar matriz de testes das regras da Jornada do Lead.
+- [todo] Adicionar cobertura automatizada para checklist de analise da lideranca.
+- [todo] Adicionar cobertura automatizada para alertas de atrasado, backlog e ciclo longo.
+- [todo] Adicionar verificacao de importacao para regras de de-para da planilha.
 

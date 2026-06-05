@@ -1,4 +1,4 @@
-# Project State
+﻿# Project State
 
 Snapshot do estado tecnico local do CRM Clube04.
 
@@ -86,13 +86,13 @@ Esses itens devem ser refeitos usando `components/ui` e referencia Lovable, uma 
 
 <!-- CRM-CLUBE04-PROJECT-STATE-OPERATIONAL-RULES -->
 
-## Operational rule contract
+## Contrato operacional de regras
 
-The lead lifecycle now has an explicit operational contract:
+O ciclo de vida do lead agora possui um contrato operacional explicito:
 
 - `docs/product/lead-operational-contract.md`
 - `docs/product/lead-import-normalization.md`
 - `docs/qa/lead-business-rules-test-matrix.md`
 
-Future backend, frontend, import, and automation work must preserve these rules or update the contract and test matrix in the same task.
+Trabalhos futuros de backend, frontend, importacao e automacao devem preservar essas regras ou atualizar o contrato e a matriz de testes na mesma tarefa.
 

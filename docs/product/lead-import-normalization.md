@@ -1,67 +1,55 @@
-# Lead Import Normalization
+# Normalizacao da Importacao de Leads
 
-## 1. Purpose
+## 1. Objetivo
 
-This document defines how legacy lead spreadsheets are mapped into the CRM Lead Journey.
+Este documento define como planilhas legadas da Jornada do Lead entram no modelo operacional do CRM.
 
-Import behavior must follow the Lead Operational Contract:
-
+A importacao deve seguir:
 - docs/product/lead-operational-contract.md
 - docs/qa/lead-business-rules-test-matrix.md
 
-No import should create operational states that violate the lead lifecycle contract.
+Nenhuma importacao deve criar estados operacionais que violem o contrato do lead.
 
-## 2. Import principles
+## 2. Principios
 
-- Normalize before inserting.
-- Preserve source data when useful for audit.
-- Reject or quarantine invalid records instead of silently corrupting the CRM.
-- Avoid duplicate active leads for the same normalized phone.
-- Create operational action items according to the mapped state.
-- Do not import legacy ambiguity as a final status without a clear rule.
+- Normalizar antes de inserir.
+- Preservar dado original quando util para auditoria.
+- Rejeitar ou quarentenar registros invalidos.
+- Evitar duplicidade ativa por telefone.
+- Criar itens de acao conforme o estado mapeado.
+- Nao transformar ambiguidade da planilha em status final sem regra clara.
 
-## 3. Field mapping
+## 3. Mapeamento de campos
 
-### IMP-001 - Phone normalization
+### IMP-001 - Telefone
 
-Rules:
-- remove non-numeric characters;
-- if the number has 10 or 11 digits, prefix with 55;
-- if the number has 12 or 13 digits and starts with 55, keep it;
-- otherwise reject the record or send it to an invalid-record report.
+Regras:
+- remover caracteres nao numericos;
+- se tiver 10 ou 11 digitos, prefixar 55;
+- se tiver 12 ou 13 digitos e iniciar com 55, manter;
+- caso contrario, rejeitar ou enviar para relatorio de invalidos.
 
-Expected output:
-- normalized_phone in E.164-like BR format without plus sign;
-- invalid_phone flag or rejection report when invalid.
+### IMP-002 - Nome do tutor vazio
 
-Related tests:
-- smoke:api partial;
-- future import verification.
+Regras:
+- se telefone for valido e nome vazio, importar como "Sem nome";
+- registrar observacao de dado incompleto;
+- nao bloquear importacao apenas por nome ausente.
 
-### IMP-002 - Empty tutor name
+### IMP-003 - Pet
 
-Rules:
-- if phone is valid and tutor name is empty, import tutor name as "Sem nome";
-- add an observation that source name was empty;
-- do not block import only because tutor name is missing.
+Regras:
+- se existir, importar;
+- se estiver vazio, manter vazio/null;
+- falta de pet nao bloqueia lead com telefone valido.
 
-Related rule:
-- LOR-002.
+### IMP-004 - Origem
 
-### IMP-003 - Pet name
+Regras:
+- preservar origem bruta quando possivel;
+- normalizar valores comuns para relatorio.
 
-Rules:
-- if pet name exists, import it;
-- if empty, keep empty/null and do not invent a pet name;
-- pet name absence should not block the lead if phone is valid.
-
-### IMP-004 - Source
-
-Rules:
-- preserve raw source when possible;
-- normalize common source values into controlled reporting groups.
-
-Suggested normalization:
+Normalizacao sugerida:
 - facebook, facebok, faceboo, facebookk, fcebook -> facebook;
 - instagram, instagram(seguidor), instagram seguidor -> instagram;
 - trafego pago (facebook) -> trafego_pago_facebook;
@@ -69,103 +57,95 @@ Suggested normalization:
 - indicacao -> indicacao;
 - fachada -> fachada;
 - unknown, vazio, nao informado -> unknown;
-- others/outros/outro -> outro.
+- others, outros, outro -> outro.
 
-### IMP-005 - Campaign
+### IMP-005 - Campanha
 
-Rules:
-- preserve raw campaign string;
-- empty campaign is allowed;
-- campaign normalization can be added later for reporting.
+Regras:
+- preservar campanha bruta;
+- campanha vazia e permitida;
+- normalizacao pode ser adicionada depois.
 
-### IMP-006 - Entry date
+### IMP-006 - Data de entrada
 
-Rules:
-- use the original lead entry date when available and valid;
-- if invalid or empty, use import date and mark source date as missing;
-- preserve raw value in audit metadata when available.
+Regras:
+- usar data original quando valida;
+- se invalida/vazia, usar data da importacao e marcar origem ausente;
+- preservar valor bruto em auditoria quando possivel.
 
-### IMP-007 - Next action date
+### IMP-007 - Proxima acao
 
-Rules:
-- if date is valid and in the operational window, create fazer_follow_up;
-- if date is overdue up to 7 days, mark as atrasado category in operational reporting;
-- if date is overdue by more than 7 days, mark as backlog category in operational reporting;
-- if empty and the lead is active, create retomar_atendimento;
-- if the lead is final or cold, do not create a daily action item.
+Regras:
+- data valida futura/atual: criar fazer_follow_up;
+- vencida ate 7 dias: categoria atrasado;
+- vencida acima de 7 dias: categoria backlog;
+- vazia com lead ativo: criar retomar_atendimento;
+- status final/frio: nao criar acao diaria.
 
-### IMP-008 - Assigned attendant
+### IMP-008 - Responsavel
 
-Rules:
-- import assigned attendant when available;
-- if empty, leave unassigned or assign to the operational default according to future configuration;
-- do not fabricate an attendant name.
+Regras:
+- importar quando existir;
+- se vazio, manter sem responsavel ou usar padrao futuro;
+- nao inventar nome.
 
-## 4. Status mapping
+## 4. De-para de status
 
-Legacy spreadsheet values must be mapped into CRM operational states.
-
-Suggested initial mapping:
-
-| Legacy value | CRM status | Action item | Notes |
+| Valor legado | Status CRM | Item de acao | Observacoes |
 |---|---|---|---|
-| novo | novo_lead | atender_hoje | New lead requiring first contact |
-| sem retorno | aguardando_resposta | retomar_atendimento or fazer_follow_up | Depends on last attempt and date |
-| retorno agendado | em_atendimento | fazer_follow_up | Uses next action date |
-| em conversa | em_atendimento | fazer_follow_up | Requires next action |
-| aguardando resposta | aguardando_resposta | fazer_follow_up | System-owned cadence after import |
-| agendado | agendado | none or future customer journey action | Leaves daily lead handling |
-| convertido | convertido | none | Final for Lead Journey |
-| perdido | perdido | none | Requires reason when available |
-| fora do perfil | desqualificado | none | Requires reason when available |
-| frio | nutricao_campanha | none | Does not consume daily energy |
-| vazio/desconhecido | em_atendimento | retomar_atendimento | Conservative recovery behavior |
+| novo | novo_lead | atender_hoje | Primeiro contato |
+| sem retorno | aguardando_resposta | retomar_atendimento ou fazer_follow_up | Depende da ultima tentativa/data |
+| retorno agendado | em_atendimento | fazer_follow_up | Usa data de proxima acao |
+| em conversa | em_atendimento | fazer_follow_up | Exige proxima acao |
+| aguardando resposta | aguardando_resposta | fazer_follow_up | Cadencia controlada pelo sistema |
+| agendado | agendado | none | Sai da fila diaria de lead |
+| convertido | convertido | none | Final da Jornada do Lead |
+| perdido | perdido | none | Exige motivo quando disponivel |
+| fora do perfil | desqualificado | none | Exige motivo quando disponivel |
+| frio | nutricao_campanha | none | Nao consome energia diaria |
+| vazio/desconhecido | em_atendimento | retomar_atendimento | Recuperacao conservadora |
 
-## 5. Operational action generation
+## 5. Geracao de item operacional
 
-### IMP-020 - Active imported lead must not be actionless
+### IMP-020 - Lead ativo importado nao pode ficar sem acao
 
-If the imported lead maps to an active state and has no valid next action, the import must create retomar_atendimento.
-
-Active states:
+Estados ativos sem proxima acao devem criar retomar_atendimento:
 - novo_lead;
 - em_atendimento;
 - aguardando_resposta.
 
-### IMP-021 - Final imported lead must not enter daily queue
+### IMP-021 - Lead final/frio nao entra na fila diaria
 
-Final/cold states should not create daily action items:
+Estados abaixo nao criam item diario:
 - convertido;
 - perdido;
 - desqualificado;
 - nutricao_campanha.
 
-### IMP-022 - Imported leadership review
+### IMP-022 - Analise de lideranca na importacao
 
-If the spreadsheet clearly indicates the lead needs leadership decision, create revisar_lideranca.
+Se a planilha indicar claramente necessidade de lideranca, criar revisar_lideranca.
 
-If the indication is ambiguous, import as retomar_atendimento and let the team review operationally.
+Se for ambiguo, importar como retomar_atendimento.
 
-## 6. Deduplication
+## 6. Deduplicacao
 
-### IMP-030 - Active duplicate by phone
+### IMP-030 - Duplicidade ativa por telefone
 
-When importing a record whose normalized phone already has an active lead:
-- do not create another active lead;
-- attach audit/import information when needed;
-- preserve the existing active workflow.
+Se telefone normalizado ja possui lead ativo:
+- nao criar outro lead ativo;
+- anexar auditoria/importacao quando necessario;
+- preservar fluxo ativo existente.
 
-### IMP-031 - Historical duplicate by phone
+### IMP-031 - Duplicidade historica por telefone
 
-When importing a record whose normalized phone has only final/cold leads:
-- create a new lead only when the import row represents a new opportunity;
-- otherwise preserve as historical/audit information.
+Se telefone possui apenas leads finais/frios:
+- criar novo lead apenas se a linha representar nova oportunidade;
+- caso contrario, preservar como historico/auditoria.
 
-## 7. Invalid records
+## 7. Registros invalidos
 
-Invalid records should be reported with reason codes.
-
-Reason codes:
+Codigos de motivo:
 - invalid_phone;
 - missing_phone;
 - invalid_entry_date;
@@ -174,30 +154,16 @@ Reason codes:
 - unsupported_status;
 - insufficient_data.
 
-Invalid reports should be saved outside version control if they contain real customer data.
+Relatorios com dados reais devem ficar fora do Git.
 
-## 8. Import verification
+## 8. Verificacao da importacao
 
-Every future import process should produce:
-- count of rows read;
-- count of contacts created;
-- count of leads created;
-- count of duplicate active leads skipped;
-- count of invalid records;
-- count by mapped status;
-- count by action item type;
-- sample of invalid records without exposing unnecessary personal data.
-
-## 9. Current known cleanup topics
-
-Current source data may contain:
-- inconsistent source labels;
-- misspelled source values;
-- empty tutor names;
-- missing next action dates;
-- overdue active leads;
-- old active leads with long lifecycle;
-- leads that should become nutricao_campanha;
-- records that require leadership review.
-
-The import should handle these explicitly instead of letting inconsistent raw values drive operational behavior.
+Toda importacao deve produzir:
+- linhas lidas;
+- contatos criados;
+- leads criados;
+- duplicados ativos ignorados;
+- registros invalidos;
+- total por status mapeado;
+- total por item de acao;
+- amostra de invalidos sem dados pessoais desnecessarios.

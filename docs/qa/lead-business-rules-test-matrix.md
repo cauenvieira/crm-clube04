@@ -1,21 +1,21 @@
-# Lead Business Rules Test Matrix
+# Matriz de Testes das Regras da Jornada do Lead
 
-## 1. Purpose
+## 1. Objetivo
 
-This matrix connects the Lead Operational Contract and Lead Import Normalization rules to automated tests.
+Esta matriz conecta as regras dos documentos operacionais aos testes automatizados.
 
-A business rule is considered protected only when it has:
-- a rule ID;
-- an expected behavior;
-- an automated test or an explicit pending test gap.
+Uma regra so e considerada protegida quando possui:
+- ID;
+- comportamento esperado;
+- teste automatizado ou lacuna pendente explicita.
 
-Source documents:
+Documentos de origem:
 - docs/product/lead-operational-contract.md
 - docs/product/lead-import-normalization.md
 
-## 2. Current test commands
+## 2. Comandos atuais
 
-Primary commands:
+Principais:
 - npm run smoke:api
 - npm run verify:operational-summary
 - npm run verify:operational-worklist
@@ -23,85 +23,78 @@ Primary commands:
 - npm run verify:all
 - npm run verify:data-cleanliness
 
-Frontend commands when UI behavior is affected:
+Frontend quando aplicavel:
 - npm run verify:dashboard
 - npm run verify:frontend
 
-## 3. Rule coverage matrix
+## 3. Matriz de cobertura
 
-| Rule | Description | Current test | Coverage |
+| Regra | Descricao | Teste atual | Cobertura |
 |---|---|---|---|
-| LOR-001 | New lead enters operational queue | smoke:api | partial |
-| LOR-002 | Lead may exist without tutor name if phone is valid | smoke:api | partial |
-| LOR-003 | Manual lead creation should not duplicate active leads | smoke:api | covered |
-| LOR-010 | No response creates next attempt automatically | verify:lead-operational-cycle | covered |
-| LOR-011 | Attempt cadence | verify:lead-operational-cycle | partial |
-| LOR-012 | Attempt limit sends lead to leadership review | verify:lead-operational-cycle | covered |
-| LOR-020 | Leadership review requires attendant self-review | pending | not covered |
-| LOR-021 | Leadership decides next destination | pending | not covered |
-| LOR-030 | Leadership evaluates process quality | pending | not covered |
-| LOR-031 | Poor-fit lead generates marketing feedback | pending | not covered |
-| LOR-032 | Poor process generates operational feedback | pending | not covered |
-| LOR-040 | Attend today | verify:operational-worklist | partial |
-| LOR-041 | Delayed up to 7 days | pending | not covered |
-| LOR-042 | Backlog above 7 days | pending | not covered |
-| LOR-043 | Active lead older than 60 days | pending | not covered |
-| LOR-044 | Active lead without next action alert | verify:operational-summary | partial |
-| LOR-050 | Conversion rate | pending | not covered |
-| IMP-001 | Phone normalization | smoke:api | partial |
-| IMP-002 | Empty tutor name | smoke:api | partial |
-| IMP-003 | Pet name import | pending | not covered |
-| IMP-004 | Source normalization | pending | not covered |
-| IMP-005 | Campaign preservation | pending | not covered |
-| IMP-006 | Entry date normalization | pending | not covered |
-| IMP-007 | Next action date mapping | pending | not covered |
-| IMP-008 | Assigned attendant import | pending | not covered |
-| IMP-020 | Active imported lead must not be actionless | pending | not covered |
-| IMP-021 | Final imported lead must not enter daily queue | pending | not covered |
-| IMP-022 | Imported leadership review | pending | not covered |
-| IMP-030 | Active duplicate by phone | pending | not covered |
-| IMP-031 | Historical duplicate by phone | pending | not covered |
+| LOR-001 | Novo lead entra em fila operacional | smoke:api | parcial |
+| LOR-002 | Lead pode existir sem nome se telefone for valido | smoke:api | parcial |
+| LOR-003 | Criacao manual nao duplica lead ativo | smoke:api | coberto |
+| LOR-010 | Sem resposta cria proxima tentativa | verify:lead-operational-cycle | coberto |
+| LOR-011 | Cadencia de tentativas | verify:lead-operational-cycle | parcial |
+| LOR-012 | Limite de tentativas envia para lideranca | verify:lead-operational-cycle | coberto |
+| LOR-020 | Envio para lideranca exige autoanalise | pendente | nao coberto |
+| LOR-021 | Lideranca decide destino | pendente | nao coberto |
+| LOR-030 | Lideranca avalia processo | pendente | nao coberto |
+| LOR-031 | Lead fora do perfil gera feedback marketing | pendente | nao coberto |
+| LOR-032 | Processo ruim gera feedback operacional | pendente | nao coberto |
+| LOR-040 | Atender hoje | verify:operational-worklist | parcial |
+| LOR-041 | Atrasado ate 7 dias | pendente | nao coberto |
+| LOR-042 | Backlog acima de 7 dias | pendente | nao coberto |
+| LOR-043 | Lead ativo acima de 60 dias | pendente | nao coberto |
+| LOR-044 | Lead ativo sem proxima acao | verify:operational-summary | parcial |
+| LOR-050 | Taxa de conversao | pendente | nao coberto |
+| IMP-001 | Normalizacao de telefone | smoke:api | parcial |
+| IMP-002 | Nome vazio | smoke:api | parcial |
+| IMP-003 | Nome do pet | pendente | nao coberto |
+| IMP-004 | Origem | pendente | nao coberto |
+| IMP-005 | Campanha | pendente | nao coberto |
+| IMP-006 | Data de entrada | pendente | nao coberto |
+| IMP-007 | Proxima acao | pendente | nao coberto |
+| IMP-008 | Responsavel | pendente | nao coberto |
+| IMP-020 | Lead ativo importado nao fica sem acao | pendente | nao coberto |
+| IMP-021 | Lead final nao entra na fila diaria | pendente | nao coberto |
+| IMP-022 | Lideranca na importacao | pendente | nao coberto |
+| IMP-030 | Duplicidade ativa por telefone | pendente | nao coberto |
+| IMP-031 | Duplicidade historica por telefone | pendente | nao coberto |
 
-## 4. Rules that must be protected next
+## 4. Proximas coberturas prioritarias
 
-Priority 1:
-- LOR-020: leadership review self-checklist;
-- LOR-021: leadership decision outcome;
-- LOR-041: delayed up to 7 days;
-- LOR-042: backlog above 7 days;
-- LOR-043: active lead older than 60 days.
+Prioridade 1:
+- LOR-020 checklist antes da lideranca;
+- LOR-021 decisao da lideranca;
+- LOR-041 atrasado ate 7 dias;
+- LOR-042 backlog acima de 7 dias;
+- LOR-043 ciclo acima de 60 dias.
 
-Priority 2:
-- IMP-001: stricter phone normalization test;
-- IMP-004: source normalization;
-- IMP-007: next action date mapping;
-- IMP-020: imported active lead must not be actionless;
-- IMP-021: imported final/cold lead must not enter daily queue.
+Prioridade 2:
+- IMP-001 telefone;
+- IMP-004 origem;
+- IMP-007 proxima acao;
+- IMP-020 lead ativo importado com acao;
+- IMP-021 lead final fora da fila diaria.
 
-Priority 3:
-- LOR-050: conversion rate;
-- marketing feedback flow;
-- operational feedback flow.
+## 5. Regras dos testes
 
-## 5. Test design rules
+- Usar dados gerados com runId unico.
+- Limpar dados criados pelo teste.
+- Nao apagar dados reais importados.
+- Nao depender de planilha de producao.
+- Verificar banco e resposta de API quando relevante.
+- Se a regra nao puder ser testada, marcar pendente.
 
-- Business tests should use generated test data with a unique runId.
-- Tests must clean up after themselves.
-- Tests must not delete real imported data.
-- Tests must not depend on spreadsheet production data.
-- Tests should verify both database-side behavior and API response behavior when relevant.
-- If a rule cannot be tested yet, mark it as pending and explain why.
+## 6. Controle de mudanca
 
-## 6. Change control
-
-When a developer changes lifecycle behavior, they must update:
+Mudanca no ciclo de vida exige atualizar:
 - docs/product/lead-operational-contract.md;
 - docs/qa/lead-business-rules-test-matrix.md;
-- test implementation when coverage exists or is required.
+- teste correspondente quando aplicavel.
 
-When a developer changes import behavior, they must update:
+Mudanca de importacao exige atualizar:
 - docs/product/lead-import-normalization.md;
 - docs/qa/lead-business-rules-test-matrix.md;
-- import verification when available.
-
-A change that alters behavior but does not update these documents should be treated as incomplete.
+- verificacao de importacao quando existir.

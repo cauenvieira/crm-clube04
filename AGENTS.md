@@ -1,4 +1,4 @@
-# AGENTS.md - Clube04 CRM
+﻿# AGENTS.md - Clube04 CRM
 
 ## Objetivo
 
@@ -81,25 +81,25 @@ Relatorio final deve ser compacto e conter:
 
 <!-- CRM-CLUBE04-OPERATIONAL-BUSINESS-RULES -->
 
-## Operational business rules
+## Regras operacionais de negocio
 
-Before changing lead lifecycle behavior, read:
+Antes de alterar comportamento do ciclo de vida do lead, leia:
 
 - docs/product/lead-operational-contract.md
 - docs/product/lead-import-normalization.md
 - docs/qa/lead-business-rules-test-matrix.md
 
-Do not change the following unless the corresponding product rule and test matrix are updated in the same task:
+Nao altere os itens abaixo sem atualizar a regra de produto correspondente e a matriz de testes na mesma tarefa:
 
-- lead statuses;
-- action item types;
-- outcome behavior;
-- leadership review rules;
-- attempt cadence;
-- import normalization;
-- conversion, loss, and disqualification rules;
-- operational alerts;
-- dashboard indicator definitions.
+- status do lead;
+- tipos de item de acao;
+- comportamento de outcomes;
+- regras de analise da lideranca;
+- cadencia de tentativas;
+- normalizacao de importacao;
+- regras de conversao, perda e desqualificacao;
+- alertas operacionais;
+- definicoes de indicadores do dashboard.
 
-Backend owns lifecycle behavior. Critical lead movement must not be implemented as frontend-only behavior.
+O backend e dono do comportamento de ciclo de vida. Movimentacao critica de lead nao deve ser implementada apenas no frontend.
 
