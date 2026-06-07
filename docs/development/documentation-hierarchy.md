@@ -60,6 +60,7 @@ Funcao:
 - `docs/product/modules.md`
 - `docs/product/operational-flows.md`
 - `docs/product/lead-operational-contract.md`
+- `docs/product/lead-operational-technical-contract.md`
 - `docs/product/lead-import-normalization.md`
 - `docs/product/lead-operational-system.md`
 - `docs/product/lead-operational-decisions.md`
@@ -72,11 +73,13 @@ Funcao:
 
 Para Jornada do Lead, a fonte de verdade e:
 1. `docs/product/lead-operational-contract.md`
-2. `docs/product/lead-import-normalization.md`
-3. `docs/qa/lead-business-rules-test-matrix.md`
+2. `docs/product/lead-operational-technical-contract.md`
+3. `docs/product/lead-import-normalization.md`
+4. `docs/qa/lead-business-rules-test-matrix.md`
 
 Documentos complementares de especificacao M1/M2:
 - `docs/product/lead-operational-system.md`: visao funcional alvo e conceitos separados.
+- `docs/product/lead-operational-technical-contract.md`: contrato tecnico alvo de status, filas, resultados, permissoes, auditoria e transicoes.
 - `docs/product/lead-operational-decisions.md`: decisoes e pendencias controladas.
 - `docs/product/lead-operational-ui-wireframes.md`: orientacao de UX/wireframes, sem alterar regra.
 - `docs/qa/lead-operational-cycle-test-plan.md`: plano manual/funcional para mock e futura implementacao.
@@ -156,6 +159,7 @@ Ler:
 
 Ler obrigatoriamente:
 - `docs/product/lead-operational-contract.md`
+- `docs/product/lead-operational-technical-contract.md`
 - `docs/product/lead-import-normalization.md`
 - `docs/qa/lead-business-rules-test-matrix.md`
 

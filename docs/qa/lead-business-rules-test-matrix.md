@@ -11,6 +11,7 @@ Uma regra so e considerada protegida quando possui:
 
 Documentos de origem:
 - docs/product/lead-operational-contract.md
+- docs/product/lead-operational-technical-contract.md
 - docs/product/lead-import-normalization.md
 - docs/product/lead-operational-system.md
 - docs/product/lead-operational-decisions.md
@@ -43,6 +44,8 @@ Frontend quando aplicavel:
 | LOR-010 | Sem resposta cria proxima tentativa | verify:lead-operational-cycle, verify:lead-operational-scenarios | coberto |
 | LOR-011 | Cadencia de tentativas | verify:lead-operational-cycle, verify:lead-operational-scenarios | parcial |
 | LOR-012 | Limite de tentativas envia para lideranca | verify:lead-operational-cycle, verify:lead-operational-scenarios | coberto |
+| LOR-013 | Conversa/interesse/objecao incrementam apenas follow-up | plano manual CT-040 | nao automatizado |
+| LOR-014 | Follow-up longo exige motivo e alerta | plano manual CT-041 | nao automatizado |
 | LOR-020 | Envio para lideranca exige autoanalise | verify:lead-operational-scenarios registra lacuna | nao implementado |
 | LOR-021 | Lideranca decide destino | verify:lead-operational-scenarios registra lacuna | nao implementado |
 | LOR-030 | Lideranca avalia processo | pendente | nao coberto |
@@ -54,6 +57,10 @@ Frontend quando aplicavel:
 | LOR-043 | Lead ativo acima de 60 dias | verify:lead-operational-scenarios registra lacuna | nao implementado |
 | LOR-044 | Lead ativo sem proxima acao | verify:operational-summary, verify:lead-operational-scenarios | coberto |
 | LOR-050 | Taxa de conversao | pendente | nao coberto |
+| LOT-001 | Action item `validar_agendamento` para status `agendado` | plano manual CT-050 | nao automatizado |
+| LOT-002 | Status terminal `arquivado_nao_contatar` sai da Mesa | plano manual CT-070 | nao automatizado |
+| LOT-003 | Permissoes por perfil em transicoes criticas | plano manual CT-060 | nao automatizado |
+| LOT-004 | Situacao principal unica e maximo 3 tags | plano manual CT-020 | nao automatizado |
 | IMP-001 | Normalizacao de telefone | smoke:api | parcial |
 | IMP-002 | Nome vazio | smoke:api | parcial |
 | IMP-003 | Nome do pet | pendente | nao coberto |
@@ -84,11 +91,11 @@ Prioridade 2:
 - IMP-021 lead final fora da fila diaria.
 
 Pendencias M1/M2 antes de nova implementacao:
-- decidir se a cadencia de sem resposta continua conforme LOR-011 ou migra para 12 tentativas;
-- decidir se havera action item dedicado para validacao de agendamento;
-- decidir se `Follow-up` sera apenas label de UI ou novo status operacional;
-- decidir tratamento canonico de opt-out/arquivamento;
-- definir contrato de contadores separados para sem resposta e follow-up.
+- reconciliar contrato tecnico com payload/API;
+- definir persistencia fisica de status, action items, contadores e auditoria;
+- definir onde situacao principal e tags serao calculadas;
+- definir auth/permissoes reais;
+- decidir se configuracoes operacionais serao hardcoded inicialmente ou administraveis.
 
 ## 5. Regras dos testes
 

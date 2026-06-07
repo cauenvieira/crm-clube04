@@ -57,7 +57,7 @@ Nao inclui:
 - Telefone normalizado e chave operacional inicial, nao identidade perfeita.
 - Relatorios com dados reais ficam fora do Git.
 
-## Vocabulário canonico
+## Vocabulario canonico
 
 ### Status operacionais
 
@@ -72,12 +72,14 @@ Usar os status do contrato operacional:
 - `desqualificado`
 - `nutricao_campanha`
 - `revisar_lideranca`
+- `arquivado_nao_contatar`
 
 ### Tipos principais de action item
 
 - `atender_hoje`
 - `fazer_follow_up`
 - `retomar_atendimento`
+- `validar_agendamento`
 - `revisar_lideranca`
 - `nutricao_campanha`
 
@@ -100,6 +102,7 @@ Mapeamento conceitual:
 | `revisao_lideranca` | `revisar_lideranca` |
 | `revisao_manual` | invalidos/quarentena/revisao de importacao, nao status operacional |
 | `validar_conversao` | etapa tecnica de crosscheck, nao fila operacional final |
+| `nao_contatar` / `bloqueado` | `arquivado_nao_contatar`, quando houver sinal seguro de opt-out |
 
 Observacao tecnica: se o schema fisico ainda usa enums de compatibilidade, a camada de servico/adaptador deve mapear para o banco sem alterar o vocabulario operacional dos docs.
 
@@ -206,12 +209,13 @@ Motivos possiveis:
 | novo / em espera | `novo_lead` | `atender_hoje` | Primeiro atendimento. |
 | em atendimento / em conversa | `em_atendimento` | `fazer_follow_up` ou `retomar_atendimento` | Depende de data e contexto. |
 | aguardando resposta / sem retorno | `aguardando_resposta` | `fazer_follow_up` ou `retomar_atendimento` | Cadencia controlada pelo sistema. |
-| agendado / agendamento realizado | `agendado` | none | Sai da fila comum, segue rastreavel. |
+| agendado / agendamento realizado | `agendado` | `validar_agendamento` | Sai da fila comum e exige validacao de desfecho. |
 | convertido / pagamento confirmado / cliente confirmado | `convertido` | none | Exige confirmacao por regra valida. |
 | perdido / sem interesse | `perdido` | none | Exige motivo quando disponivel. |
 | fora do perfil / dados invalidos definitivos | `desqualificado` | none | Exige motivo quando disponivel. |
 | frio / campanha futura | `nutricao_campanha` | none | Nao consome fila diaria. |
 | analise lideranca com criterio critico | `revisar_lideranca` | `revisar_lideranca` | Exige justificativa. |
+| nao contatar / bloqueou / opt-out | `arquivado_nao_contatar` | none | Exige sinal seguro e motivo. |
 | vazio/desconhecido | `em_atendimento` ou invalidos | `retomar_atendimento` ou quarentena | Escolha conservadora; nao concluir automaticamente. |
 
 ## Geracao de action item
@@ -223,6 +227,7 @@ Status ativos que exigem acao:
 - `novo_lead`
 - `em_atendimento`
 - `aguardando_resposta`
+- `agendado`
 - `revisar_lideranca`
 
 Regra:
@@ -241,6 +246,7 @@ Status abaixo nao criam item diario comum:
 - `perdido`
 - `desqualificado`
 - `nutricao_campanha`
+- `arquivado_nao_contatar`
 
 ### IMP-022 - Lideranca na importacao
 

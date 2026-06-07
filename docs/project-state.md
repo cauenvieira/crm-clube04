@@ -66,6 +66,7 @@ Snapshot do estado tecnico commitado do CRM Clube04.
 
 - Regras de negocio documentadas em:
   - `docs/product/lead-operational-contract.md`
+  - `docs/product/lead-operational-technical-contract.md`
   - `docs/product/lead-import-normalization.md`
   - `docs/qa/lead-business-rules-test-matrix.md`
 - Especificacao complementar M1/M2 formalizada em:
@@ -74,6 +75,12 @@ Snapshot do estado tecnico commitado do CRM Clube04.
   - `docs/product/lead-operational-ui-wireframes.md`
   - `docs/qa/lead-operational-cycle-test-plan.md`
 - Os documentos complementares orientam Lead Operacional/Mesa Operacional, mas nao vencem o contrato operacional vigente.
+- O contrato tecnico M1/M2 resolve documentalmente:
+  - cadencia de 12 tentativas sem resposta;
+  - action item `validar_agendamento`;
+  - `Follow-up` como label de UI, nao status canonico;
+  - status terminal `arquivado_nao_contatar`;
+  - contadores separados `sem_resposta_count` e `follow_up_count`.
 - Commits de regras operacionais:
   - `65c14a1 docs: add lead operational business rules`
   - `cfd483d docs: add lead operational business rules`
@@ -128,12 +135,7 @@ Esses itens devem ser refeitos usando UI Foundation e referencia Lovable, uma te
 
 ## Proximo passo recomendado
 
-1. Decidir pendencias M1/M2 antes de implementar backend/frontend:
-   - manter cadencia atual de sem resposta ou migrar para 12 tentativas;
-   - criar ou nao fila/action item de validacao de agendamento;
-   - tratar `Follow-up` como label de UI ou novo status;
-   - definir tratamento de opt-out/arquivamento;
-   - definir contrato dos contadores separados.
+1. Antes de implementar backend/frontend, reconciliar contrato tecnico com API, schema, auth/permissoes e estrategia de calculo de situacao/tags.
 2. Fechar lacunas de testes de regras operacionais da Jornada do Lead:
    - checklist de analise da lideranca;
    - decisao da lideranca;

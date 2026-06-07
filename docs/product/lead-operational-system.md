@@ -12,12 +12,13 @@ Este documento descreve a visao funcional alvo do Lead Operacional e da Mesa Ope
 Autoridade:
 
 1. `docs/product/lead-operational-contract.md`
-2. `docs/product/lead-import-normalization.md`
-3. `docs/qa/lead-business-rules-test-matrix.md`
-4. `docs/product/lead-operational-system.md`
-5. `docs/product/lead-operational-ui-wireframes.md`
-6. `docs/product/lead-operational-decisions.md`
-7. `docs/qa/lead-operational-cycle-test-plan.md`
+2. `docs/product/lead-operational-technical-contract.md`
+3. `docs/product/lead-import-normalization.md`
+4. `docs/qa/lead-business-rules-test-matrix.md`
+5. `docs/product/lead-operational-system.md`
+6. `docs/product/lead-operational-ui-wireframes.md`
+7. `docs/product/lead-operational-decisions.md`
+8. `docs/qa/lead-operational-cycle-test-plan.md`
 
 Se este documento divergir do contrato operacional, o contrato vence. Divergencias devem virar ajuste explicito de contrato, matriz e testes antes de implementacao.
 
@@ -62,12 +63,14 @@ Status operacionais canonicos:
 - `desqualificado`
 - `nutricao_campanha`
 - `revisar_lideranca`
+- `arquivado_nao_contatar`
 
 Action items canonicos:
 
 - `atender_hoje`
 - `fazer_follow_up`
 - `retomar_atendimento`
+- `validar_agendamento`
 - `revisar_lideranca`
 - `nutricao_campanha`
 
@@ -77,10 +80,10 @@ Termos de tela podem ser mais amigaveis, mas nao devem inventar comportamento:
 |---|---|---|
 | Novo | `novo_lead` | Status inicial, nao fila. |
 | Fazer follow-up | `fazer_follow_up` ou `atender_hoje` | Fila/action item de rotina. |
-| Validar agendamento | lacuna/proposta M2 | Nao existe como action item canonico no contrato atual. |
+| Validar agendamento | `validar_agendamento` | Fila/action item canonico M1/M2. |
 | Revisar na lideranca | `revisar_lideranca` | Status/action item de analise. |
 | Nutricao | `nutricao_campanha` | Fila/visao separada da rotina diaria. |
-| Arquivado / Nao contatar | lacuna/proposta | Nao existe como status canonico atual. |
+| Arquivado / Nao contatar | `arquivado_nao_contatar` | Status terminal para opt-out/bloqueio. |
 
 ## Regras criticas
 
@@ -97,17 +100,17 @@ Termos de tela podem ser mais amigaveis, mas nao devem inventar comportamento:
 - Nutricao e fila/visao propria e nao deve poluir a rotina diaria.
 - No mock, a engine pode ser simulada no frontend. No CRM real, o backend deve ser dono do ciclo de vida.
 
-## Propostas que ainda exigem reconciliacao
+## Decisoes tecnicas resolvidas
 
-Estas propostas aparecem nos novos documentos de UX/teste, mas ainda nao devem ser tratadas como regra vigente sem atualizar contrato e matriz:
+Estas propostas foram promovidas para contrato tecnico documental em `docs/product/lead-operational-technical-contract.md`.
 
-| Proposta | Conflito/lacuna atual | Tratamento |
+| Proposta | Decisao |
 |---|---|---|
-| Cadencia de 12 tentativas sem resposta | Contrato atual usa 4 tentativas iniciais, com 4a enviando para lideranca. | Pendente de decisao e atualizacao de contrato/testes. |
-| Fila `Validar agendamento` | Contrato atual diz que `agendado` sai da fila comum e entra em analise de conversao, sem action item dedicado. | Pendente de modelagem M2/backend. |
-| Status `Follow-up` | Contrato atual usa `em_atendimento` e `aguardando_resposta`. | Usar apenas como label de tela ate decisao. |
-| Status `Arquivado / Nao contatar` | Nao existe no contrato atual. | Tratar como proposta futura para opt-out. |
-| Nutricao com proxima data de campanha | Contrato atual define `nutricao_campanha` como frio/fora da fila diaria. | Permitido como visao separada, mas sem rotina diaria comum. |
+| Cadencia de 12 tentativas sem resposta | Adotar como alvo M1/M2. |
+| Fila `Validar agendamento` | Criar action item canonico `validar_agendamento`. |
+| Status `Follow-up` | Manter como label de UI, nao status canonico. |
+| Status `Arquivado / Nao contatar` | Criar status terminal `arquivado_nao_contatar`. |
+| Nutricao com proxima data de campanha | Permitida em visao propria, fora da rotina diaria. |
 
 ## Fluxo alvo da Mesa
 

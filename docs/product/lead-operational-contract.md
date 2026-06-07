@@ -8,6 +8,9 @@ Ele define como um lead entra, evolui, fica pendente, vai para analise de lidera
 
 Nenhuma implementacao deve alterar comportamento operacional sem atualizar este documento e a matriz de testes relacionada.
 
+Contrato tecnico derivado:
+- `docs/product/lead-operational-technical-contract.md`
+
 ## 2. Principios
 
 - O CRM existe para aumentar conversao e disciplina operacional.
@@ -40,6 +43,8 @@ Campos operacionais relevantes:
 - ultima interacao;
 - proxima acao;
 - quantidade de tentativas;
+- quantidade de sem resposta;
+- quantidade de follow-ups;
 - motivo de perda;
 - motivo de desqualificacao;
 - status de analise da lideranca.
@@ -52,6 +57,7 @@ Tipos principais:
 - atender_hoje;
 - fazer_follow_up;
 - retomar_atendimento;
+- validar_agendamento;
 - revisar_lideranca;
 - nutricao_campanha.
 
@@ -96,6 +102,7 @@ Lead com agendamento realizado.
 
 Regras:
 - sai da fila comum de atendimento comercial;
+- entra no action item `validar_agendamento`;
 - permanece rastreavel para conversao;
 - entra na analise de conversao.
 
@@ -136,6 +143,17 @@ Regras:
 - sai da fila diaria;
 - pode receber campanhas futuras;
 - nao deve ficar em atender_hoje, fazer_follow_up ou retomar_atendimento.
+
+### arquivado_nao_contatar
+
+Lead terminal por opt-out, bloqueio ou pedido explicito para nao contatar.
+
+Regras:
+- exige motivo;
+- gera historico;
+- nao permanece na Mesa Operacional diaria;
+- nao pode ser reaberto por atendente;
+- reabertura exige lideranca/admin, motivo e auditoria.
 
 ### revisar_lideranca
 
@@ -194,7 +212,8 @@ Testes esperados:
 Ao registrar sem_resposta, o backend deve calcular a proxima tentativa sem exigir data manual.
 
 Resultado esperado:
-- attempts_count incrementado;
+- sem_resposta_count incrementado;
+- follow_up_count incrementado;
 - ultima interacao atualizada;
 - nova proxima acao criada/atualizada;
 - historico registrado.
@@ -204,11 +223,19 @@ Testes esperados:
 
 ### LOR-011 - Cadencia de tentativas
 
-Cadencia inicial:
-- tentativa 1: proximo contato em 1 dia util;
-- tentativa 2: proximo contato em 2 dias uteis;
-- tentativa 3: proximo contato em 3 dias uteis;
-- tentativa 4: enviar para revisar_lideranca.
+Cadencia M1/M2:
+- tentativa 1: D0 imediato;
+- tentativa 2: D0 18:00;
+- tentativa 3: D+1 09:30;
+- tentativa 4: D+1 12:30;
+- tentativa 5: D+1 16:30;
+- tentativa 6: D+3 09:30;
+- tentativa 7: D+6 09:30;
+- tentativa 8: D+6 12:30;
+- tentativa 9: D+6 16:30;
+- tentativa 10: D+7 09:30;
+- tentativa 11: D+7 16:30;
+- tentativa 12: enviar para revisar_lideranca.
 
 Qualquer mudanca nesta cadencia deve atualizar este documento e a matriz de testes.
 
@@ -223,6 +250,32 @@ Resultado esperado:
 
 Testes esperados:
 - verify:lead-operational-cycle.
+
+### LOR-013 - Conversa, interesse e objecao incrementam apenas follow-up
+
+Ao registrar conversa em andamento, demonstrou interesse ou objecao, o backend deve registrar esforco de follow-up sem incrementar sem resposta.
+
+Resultado esperado:
+- follow_up_count incrementado;
+- sem_resposta_count preservado;
+- proxima acao obrigatoria quando o lead continuar ativo;
+- historico registrado.
+
+Testes esperados:
+- pendente.
+
+### LOR-014 - Follow-up longo exige motivo e alerta
+
+Quando a proxima acao manual exceder o limite normal de follow-up, o sistema deve exigir motivo e gerar alerta para lideranca.
+
+Resultado esperado:
+- motivo obrigatorio;
+- alerta operacional visivel;
+- historico registrado;
+- atendente nao pode esconder lead ativo por prazo longo sem lideranca/nutricao.
+
+Testes esperados:
+- pendente.
 
 ## 7. Envio para lideranca
 
@@ -256,6 +309,7 @@ Conclusoes permitidas:
 - perdido;
 - desqualificado;
 - nutricao_campanha;
+- arquivado_nao_contatar;
 - feedback_marketing;
 - feedback_atendimento.
 
@@ -280,7 +334,7 @@ Pontos avaliados:
 ### LOR-031 - Lead fora do perfil gera feedback para marketing
 
 Exemplos:
-- localizacao incompatível;
+- localizacao incompativel;
 - servico nao oferecido;
 - expectativa de preco fora do perfil;
 - contato invalido ou sem pet;
@@ -327,7 +381,8 @@ Status dispensados:
 - convertido;
 - perdido;
 - desqualificado;
-- nutricao_campanha.
+- nutricao_campanha;
+- arquivado_nao_contatar.
 
 ## 10. Indicadores da Mesa Operacional
 
@@ -354,11 +409,13 @@ Acoes permitidas:
 - sem_resposta;
 - continuar_atendimento;
 - agendamento_realizado;
+- validar_agendamento;
 - cliente_convertido;
 - enviar_analise_lideranca;
 - perdido;
 - desqualificado;
 - nutricao_campanha;
+- arquivado_nao_contatar;
 - voltar_para_atendimento.
 
 Regras:
@@ -384,6 +441,7 @@ Mudancas nos itens abaixo exigem atualizacao deste contrato e da matriz de teste
 - status do lead;
 - tipos de item de acao;
 - outcomes;
+- contadores operacionais;
 - regras de lideranca;
 - cadencia de tentativas;
 - normalizacao de importacao;

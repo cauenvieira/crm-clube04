@@ -35,25 +35,26 @@ Milestones:
 7. `[done][P0][M0]` Reconciliar `docs/api/rest-api.md` apos backend operacional.
 8. `[done][P0][M0]` Reconciliar `docs/web/dashboard.md` antes de rebuild visual.
 9. `[done][P0][M1/M2]` Formalizar especificacao complementar do Lead Operacional e Mesa Operacional.
-10. `[todo][P0][M1/M2]` Decidir pendencias do pacote Lead Operacional antes da implementacao real.
-11. `[todo][P0][M1]` Adicionar cobertura automatizada para checklist de analise da lideranca.
-12. `[todo][P0][M1]` Adicionar cobertura automatizada para decisao da lideranca.
-13. `[done][P0][M1]` Adicionar cobertura automatizada para cenarios operacionais simulados da Jornada do Lead.
-14. `[todo][P0][M1]` Adicionar cobertura automatizada para backlog e ciclo longo quando houver bucket/endpoint dedicado.
-15. `[todo][P0][M3]` Adicionar verificacao de importacao para regras de de-para da planilha.
-16. `[todo][P0][M1]` Sprint 1A: Base de Leads sistematizada usando `components/ui`.
-17. `[todo][P0][M2]` Sprint 2A: Mesa Operacional usando `components/ui`.
-18. `[todo][P1][M1]` Sprint 3: Dashboard de Leads e Resumo Diario.
-19. `[todo][P0][M1]` Criar relatorio diario de operacao com base em summary + worklist.
-20. `[todo][P1][M5]` Definir arquitetura v1 da Jornada do Cliente pos-conversao.
-21. `[todo][P1][M1]` Padronizar metricas de desempenho por resultado de interacao.
-22. `[todo][P1][M4]` Preparar trilha controlada para WAHA real, somente inbound primeiro.
-23. `[todo][P1][M4]` Iniciar sincronizacao Clube04 somente leitura por etapas.
-24. `[todo][P1][M6]` Evoluir auth e auditoria para uso operacional real.
-25. `[todo][P1][M4]` Reavaliar mensagens recomendadas, templates e midias em fluxo menos intrusivo.
-26. `[todo][P2][M1]` Evoluir Base de Leads com configuracao de colunas e ordenacao.
-27. `[todo][P2][M6]` Avaliar exportacao XLSX para uso gerencial.
-28. `[todo][P2][M1]` Definir estrategia de merge real de contatos/telefones duplicados.
+10. `[done][P0][M1/M2]` Derivar contrato tecnico do Lead Operacional/Mesa Operacional.
+11. `[todo][P0][M1/M2]` Reconciliar contrato tecnico com API, schema, auth/permissoes e estrategia de calculo de situacao/tags.
+12. `[todo][P0][M1]` Adicionar cobertura automatizada para checklist de analise da lideranca.
+13. `[todo][P0][M1]` Adicionar cobertura automatizada para decisao da lideranca.
+14. `[done][P0][M1]` Adicionar cobertura automatizada para cenarios operacionais simulados da Jornada do Lead.
+15. `[todo][P0][M1]` Adicionar cobertura automatizada para backlog e ciclo longo quando houver bucket/endpoint dedicado.
+16. `[todo][P0][M3]` Adicionar verificacao de importacao para regras de de-para da planilha.
+17. `[todo][P0][M1]` Sprint 1A: Base de Leads sistematizada usando `components/ui`.
+18. `[todo][P0][M2]` Sprint 2A: Mesa Operacional usando `components/ui`.
+19. `[todo][P1][M1]` Sprint 3: Dashboard de Leads e Resumo Diario.
+20. `[todo][P0][M1]` Criar relatorio diario de operacao com base em summary + worklist.
+21. `[todo][P1][M5]` Definir arquitetura v1 da Jornada do Cliente pos-conversao.
+22. `[todo][P1][M1]` Padronizar metricas de desempenho por resultado de interacao.
+23. `[todo][P1][M4]` Preparar trilha controlada para WAHA real, somente inbound primeiro.
+24. `[todo][P1][M4]` Iniciar sincronizacao Clube04 somente leitura por etapas.
+25. `[todo][P1][M6]` Evoluir auth e auditoria para uso operacional real.
+26. `[todo][P1][M4]` Reavaliar mensagens recomendadas, templates e midias em fluxo menos intrusivo.
+27. `[todo][P2][M1]` Evoluir Base de Leads com configuracao de colunas e ordenacao.
+28. `[todo][P2][M6]` Avaliar exportacao XLSX para uso gerencial.
+29. `[todo][P2][M1]` Definir estrategia de merge real de contatos/telefones duplicados.
 
 ## Divida tecnica prioritaria
 
@@ -73,7 +74,8 @@ Milestones:
 - `[done][P0][M3]` Criar regras de normalizacao da importacao de leads.
 - `[done][P0][M1]` Criar matriz de testes das regras da Jornada do Lead.
 - `[done][P0][M1/M2]` Formalizar especificacao complementar do Lead Operacional e Mesa Operacional.
-- `[todo][P0][M1/M2]` Decidir cadencia de sem resposta, validacao de agendamento, label/status Follow-up, opt-out e contadores separados antes de alterar contrato/API.
+- `[done][P0][M1/M2]` Derivar contrato tecnico de status, fila, resultados, permissoes, auditoria e transicoes.
+- `[todo][P0][M1/M2]` Reconciliar contrato tecnico com API, schema, auth/permissoes e estrategia de calculo de situacao/tags.
 - `[todo][P0][M1]` Adicionar cobertura automatizada para checklist de analise da lideranca.
 - `[todo][P0][M1]` Adicionar cobertura automatizada para decisao da lideranca.
 - `[done][P0][M1]` Adicionar cobertura automatizada para cenarios operacionais simulados da Jornada do Lead.
@@ -98,7 +100,7 @@ Milestones:
 
 Com a governanca documental concluida, priorizar:
 
-1. Decidir as pendencias M1/M2 do pacote Lead Operacional antes de implementar backend/frontend.
+1. Reconciliar contrato tecnico M1/M2 com API, schema, auth/permissoes e estrategia de calculo de situacao/tags.
 2. Fechar lacunas de testes de regras operacionais prioritarias da Jornada do Lead.
 3. Iniciar Sprint 1A: Base de Leads visual usando UI Foundation.
 4. Planejar Sprint 2A: Mesa Operacional.

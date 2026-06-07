@@ -12,6 +12,7 @@ Este plano complementa `docs/qa/lead-business-rules-test-matrix.md`.
 - A matriz registra regras protegidas e lacunas automatizadas.
 - Este plano orienta validacao manual/funcional de mock, prototipo frontend e futura implementacao.
 - Nenhum teste automatizado e criado nesta tarefa.
+- O contrato tecnico alvo esta em `docs/product/lead-operational-technical-contract.md`.
 
 ## Objetivo
 
@@ -61,7 +62,7 @@ Resultado esperado:
 ```text
 status canonico valido
 fila/action item aberto
-proxima_acao = hoje/agora ou regra vigente
+proxima_acao = hoje/agora ou regra do contrato tecnico
 responsavel definido
 lead aparece na Mesa
 ```
@@ -112,7 +113,7 @@ Resultado esperado:
 ```text
 contador_sem_resposta +1
 contador_follow_up +1
-proxima_acao calculada pela cadencia vigente
+proxima_acao calculada pela cadencia M1/M2 de 12 tentativas
 historico/auditoria registrado
 ```
 
@@ -120,7 +121,7 @@ historico/auditoria registrado
 
 Resultado esperado:
 
-- ao atingir limite vigente, lead vai para lideranca;
+- ao atingir a 12a tentativa sem resposta, lead vai para lideranca;
 - action items antigos sao fechados, cancelados ou deduplicados;
 - historico/auditoria registra a movimentacao.
 
@@ -145,7 +146,7 @@ Resultado esperado:
 
 Resultado esperado:
 
-- agendamento segue status/action item aprovado em contrato/API;
+- agendamento usa status `agendado` e action item `validar_agendamento`;
 - cadastro incompleto gera alerta, sem bloquear no mock;
 - conversao remove lead da Mesa diaria.
 

@@ -62,9 +62,9 @@ Hoje | Atrasados | Backlog | Lideranca | Tentativa alta
 
 Colunas/visoes:
 - Fazer follow-up
+- Validar agendamento
 - Revisar lideranca
 - Nutricao em visao propria ou recolhida
-- Validar agendamento somente se o contrato/API criarem fila dedicada
 ```
 
 ## Mesa Operacional mobile

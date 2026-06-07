@@ -9,6 +9,7 @@ Status: decisoes e pendencias controladas
 Este documento registra decisoes de produto/UX e lacunas para M1/M2. Ele nao substitui:
 
 - `docs/product/lead-operational-contract.md`
+- `docs/product/lead-operational-technical-contract.md`
 - `docs/product/lead-import-normalization.md`
 - `docs/qa/lead-business-rules-test-matrix.md`
 
@@ -30,17 +31,24 @@ Decisao que muda regra operacional deve ser promovida para contrato, matriz e te
 | Follow-up longo | Exige motivo e gera alerta de lideranca. |
 | Mock/frontend | Pode simular engine para validacao, mas CRM real depende do backend como dono do ciclo de vida. |
 
-## Pendencias que exigem mudanca formal
+## Pendencias resolvidas no contrato tecnico
+
+| Tema | Decisao M1/M2 |
+|---|---|
+| Cadencia de 12 tentativas sem resposta | Adotar como alvo M1/M2. |
+| Fila `Validar agendamento` | Criar action item canonico `validar_agendamento`. |
+| Status `Follow-up` | Manter como label de UX, nao status canonico. |
+| Status `Arquivado / Nao contatar` | Criar status terminal `arquivado_nao_contatar`. |
+| Contadores separados `sem_resposta` e `follow_up` | Adotar contrato documental com `sem_resposta_count` e `follow_up_count`. |
+
+## Pendencias tecnicas ainda abertas
 
 | Pendencia | Motivo |
 |---|---|
-| Cadencia de 12 tentativas sem resposta | Diverge do contrato atual, que documenta cadencia inicial de 4 tentativas. |
-| Fila `Validar agendamento` | Nao existe como action item canonico atual. |
-| Status `Follow-up` | Deve ser label de UX ou exigir mudanca de status canonico. |
-| Status `Arquivado / Nao contatar` | Nao existe no contrato atual. |
-| Contadores separados `sem_resposta` e `follow_up` | Alinhado conceitualmente, mas precisa contrato/API/teste antes de implementacao real. |
 | Configuracoes operacionais editaveis | Exigem auth, permissoes, auditoria, schema/API e testes. |
 | Ranking persistido de situacao/tags | Exige contrato de API ou configuracao backend. |
+| Payload/API final | Ainda exige reconciliacao em `docs/api/rest-api.md`. |
+| Persistencia fisica | Ainda exige decisao de schema/migration. |
 
 ## Riscos controlados
 
@@ -57,10 +65,10 @@ Decisao que muda regra operacional deve ser promovida para contrato, matriz e te
 
 Antes de implementar backend/frontend M1/M2, decidir explicitamente:
 
-1. Manter cadencia atual de 4 tentativas ou migrar para 12.
-2. Criar ou nao action item `validar_agendamento`.
-3. Tratar `Follow-up` como label de UI ou novo status.
-4. Criar status de opt-out/arquivamento ou mapear para desqualificacao/nutricao com motivo.
-5. Definir contrato dos contadores separados.
+1. nomes finais de payload/API;
+2. persistencia fisica de status, action items, contadores, tags e situacao principal;
+3. onde situacao principal e tags serao calculadas;
+4. estrategia de auth/permissao real;
+5. se configuracoes serao hardcoded inicialmente ou administraveis.
 
-Sem essas decisoes, o mock pode evoluir, mas o CRM real nao deve alterar comportamento operacional vigente.
+Sem essas decisoes tecnicas, o mock pode evoluir, mas o CRM real nao deve alterar schema/API.
