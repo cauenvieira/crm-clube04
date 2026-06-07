@@ -36,25 +36,27 @@ Milestones:
 8. `[done][P0][M0]` Reconciliar `docs/web/dashboard.md` antes de rebuild visual.
 9. `[done][P0][M1/M2]` Formalizar especificacao complementar do Lead Operacional e Mesa Operacional.
 10. `[done][P0][M1/M2]` Derivar contrato tecnico do Lead Operacional/Mesa Operacional.
-11. `[todo][P0][M1/M2]` Reconciliar contrato tecnico com API, schema, auth/permissoes e estrategia de calculo de situacao/tags.
-12. `[todo][P0][M1]` Adicionar cobertura automatizada para checklist de analise da lideranca.
-13. `[todo][P0][M1]` Adicionar cobertura automatizada para decisao da lideranca.
-14. `[done][P0][M1]` Adicionar cobertura automatizada para cenarios operacionais simulados da Jornada do Lead.
-15. `[todo][P0][M1]` Adicionar cobertura automatizada para backlog e ciclo longo quando houver bucket/endpoint dedicado.
-16. `[todo][P0][M3]` Adicionar verificacao de importacao para regras de de-para da planilha.
-17. `[todo][P0][M1]` Sprint 1A: Base de Leads sistematizada usando `components/ui`.
-18. `[todo][P0][M2]` Sprint 2A: Mesa Operacional usando `components/ui`.
-19. `[todo][P1][M1]` Sprint 3: Dashboard de Leads e Resumo Diario.
-20. `[todo][P0][M1]` Criar relatorio diario de operacao com base em summary + worklist.
-21. `[todo][P1][M5]` Definir arquitetura v1 da Jornada do Cliente pos-conversao.
-22. `[todo][P1][M1]` Padronizar metricas de desempenho por resultado de interacao.
-23. `[todo][P1][M4]` Preparar trilha controlada para WAHA real, somente inbound primeiro.
-24. `[todo][P1][M4]` Iniciar sincronizacao Clube04 somente leitura por etapas.
-25. `[todo][P1][M6]` Evoluir auth e auditoria para uso operacional real.
-26. `[todo][P1][M4]` Reavaliar mensagens recomendadas, templates e midias em fluxo menos intrusivo.
-27. `[todo][P2][M1]` Evoluir Base de Leads com configuracao de colunas e ordenacao.
-28. `[todo][P2][M6]` Avaliar exportacao XLSX para uso gerencial.
-29. `[todo][P2][M1]` Definir estrategia de merge real de contatos/telefones duplicados.
+11. `[done][P1][M0]` Padronizar dev server Vite do frontend web em Docker.
+12. `[todo][P0][M1/M2]` Reconciliar contrato tecnico com API, schema, auth/permissoes e estrategia de calculo de situacao/tags.
+13. `[todo][P0][M1]` Adicionar cobertura automatizada para checklist de analise da lideranca.
+14. `[todo][P0][M1]` Adicionar cobertura automatizada para decisao da lideranca.
+15. `[done][P0][M1]` Adicionar cobertura automatizada para cenarios operacionais simulados da Jornada do Lead.
+16. `[todo][P0][M1]` Adicionar cobertura automatizada para backlog e ciclo longo quando houver bucket/endpoint dedicado.
+17. `[todo][P0][M3]` Adicionar verificacao de importacao para regras de de-para da planilha.
+18. `[todo][P0][M1]` Sprint 1A: Base de Leads sistematizada usando `components/ui`.
+19. `[done][P0][M2]` Sprint 2A: primeira versao visual mockada da Mesa Operacional usando `components/ui`.
+20. `[todo][P0][M2]` Conectar Mesa Operacional ao backend real apos reconciliar API/schema/auth.
+21. `[todo][P1][M1]` Sprint 3: Dashboard de Leads e Resumo Diario.
+22. `[todo][P0][M1]` Criar relatorio diario de operacao com base em summary + worklist.
+23. `[todo][P1][M5]` Definir arquitetura v1 da Jornada do Cliente pos-conversao.
+24. `[todo][P1][M1]` Padronizar metricas de desempenho por resultado de interacao.
+25. `[todo][P1][M4]` Preparar trilha controlada para WAHA real, somente inbound primeiro.
+26. `[todo][P1][M4]` Iniciar sincronizacao Clube04 somente leitura por etapas.
+27. `[todo][P1][M6]` Evoluir auth e auditoria para uso operacional real.
+28. `[todo][P1][M4]` Reavaliar mensagens recomendadas, templates e midias em fluxo menos intrusivo.
+29. `[todo][P2][M1]` Evoluir Base de Leads com configuracao de colunas e ordenacao.
+30. `[todo][P2][M6]` Avaliar exportacao XLSX para uso gerencial.
+31. `[todo][P2][M1]` Definir estrategia de merge real de contatos/telefones duplicados.
 
 ## Divida tecnica prioritaria
 
@@ -103,5 +105,5 @@ Com a governanca documental concluida, priorizar:
 1. Reconciliar contrato tecnico M1/M2 com API, schema, auth/permissoes e estrategia de calculo de situacao/tags.
 2. Fechar lacunas de testes de regras operacionais prioritarias da Jornada do Lead.
 3. Iniciar Sprint 1A: Base de Leads visual usando UI Foundation.
-4. Planejar Sprint 2A: Mesa Operacional.
+4. Conectar a Mesa Operacional visual ao backend real somente apos reconciliar API/schema/auth.
 5. Manter WAHA real, sync Clube04, Jornada do Cliente e IA como backlog controlado ate estabilizar M1/M2.

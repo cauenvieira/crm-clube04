@@ -1,12 +1,16 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
-import { resolve } from "node:path";
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
-  define: {
-    "process.env.NODE_ENV": JSON.stringify("production")
+  server: {
+    host: "0.0.0.0",
+    port: 5173,
+    watch: {
+      usePolling: process.env.CHOKIDAR_USEPOLLING === "true",
+      interval: Number(process.env.CHOKIDAR_INTERVAL ?? 300)
+    }
   },
   publicDir: false,
   build: {
@@ -14,14 +18,10 @@ export default defineConfig({
     emptyOutDir: true,
     minify: false,
     cssCodeSplit: false,
-    lib: {
-      entry: resolve(__dirname, "src/main.tsx"),
-      formats: ["es"],
-      fileName: () => "app.js"
-    },
     rollupOptions: {
       output: {
-        inlineDynamicImports: true
+        entryFileNames: "app.js",
+        assetFileNames: "style.css"
       }
     }
   }

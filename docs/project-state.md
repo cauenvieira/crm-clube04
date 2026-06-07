@@ -17,10 +17,11 @@ Snapshot do estado tecnico commitado do CRM Clube04.
 ### Fundacao tecnica
 
 - Monorepo Node.js/TypeScript com `apps/api`, `apps/web`, `apps/worker` e `packages/shared`.
-- Docker local com `crm-api`, `crm-worker`, `postgres`, `redis`, `n8n`.
+- Docker local com `crm-api`, `crm-worker`, `crm-web`, `postgres`, `redis`, `n8n`.
 - API Fastify com `GET /health`.
 - API key interna para `/api/*` via `x-crm-api-key`.
 - Dashboard React/Vite servido em `/dashboard`.
+- Dev server Vite do frontend padronizado no Docker em `http://localhost:5173`.
 - Smoke e verifies operacionais com bateria sequencial (`npm run verify:all`).
 - Scripts de higiene de dados dev (cleanup/seed) para ambiente local.
 
@@ -29,6 +30,9 @@ Snapshot do estado tecnico commitado do CRM Clube04.
 - UI Foundation commitada em `676f0e3 chore: add frontend ui foundation`.
 - Tailwind CSS, Radix essencial, lucide, `components/ui` e tokens Clube04.
 - Frontend futuro deve usar `apps/web/src/components/ui`.
+- Primeira versao visual mockada da Mesa Operacional implementada em `apps/web/src/features/lead-operational`.
+- A Mesa visual inclui filtros superiores, colunas por fila operacional, LeadCard, drawer, estados vazios, situacao principal, tags, contadores SR/FU e acoes visuais simuladas.
+- Essa versao nao implementa transicoes reais, backend novo, schema, API, WhatsApp, ERP, IA, dashboard novo ou automacoes.
 
 ### Documentacao especializada e governanca documental
 
@@ -87,7 +91,7 @@ Snapshot do estado tecnico commitado do CRM Clube04.
 
 ## Rejeitado ou refazer
 
-- Redesenho pendente da Mesa Operacional.
+- Mesa Operacional ainda precisa ser conectada ao backend real e validada contra API/schema/auth.
 - Drawer pendente de acompanhamento do lead.
 - Base de Leads visual pendente.
 - Kanban/lista pendentes.
@@ -101,7 +105,7 @@ Esses itens devem ser refeitos usando UI Foundation e referencia Lovable, uma te
 - Lacunas de teste ainda existem para checklist de lideranca, decisao da lideranca, backlog e ciclo longo.
 - Importacao robusta da planilha ainda precisa de verificacoes automatizadas especificas.
 - Base de Leads visual ainda nao foi refeita com UI Foundation.
-- Mesa Operacional ainda nao foi refeita com UI Foundation.
+- Mesa Operacional tem primeira versao visual mockada com UI Foundation; integracao real com backend/API segue pendente.
 - Auth de usuario, permissoes e auditoria seguem pendentes antes de uso operacional real.
 - WAHA real e sincronizacao Clube04 somente leitura continuam fora do escopo imediato.
 
@@ -123,6 +127,7 @@ Esses itens devem ser refeitos usando UI Foundation e referencia Lovable, uma te
 
 - API health: `http://localhost:3000/health`
 - Dashboard: `http://localhost:3000/dashboard`
+- Frontend Vite dev: `http://localhost:5173`
 - n8n editor: `http://localhost:5678`
 
 ## Comandos base

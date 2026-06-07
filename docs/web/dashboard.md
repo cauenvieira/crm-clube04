@@ -21,6 +21,12 @@ O frontend existe como dashboard local/dev servido em:
 http://localhost:3000/dashboard
 ```
 
+O dev server Vite do workspace `apps/web` tambem roda em Docker:
+
+```text
+http://localhost:5173
+```
+
 Ele deve ser tratado como base tecnica e operacional, nao como tela final aprovada para operacao real.
 
 A tentativa visual anterior de Base de Leads, Mesa Operacional e drawer foi rejeitada e deve ser refeita em sprints pequenas, usando UI Foundation e referencia Lovable apenas como inspiracao visual.
@@ -30,6 +36,8 @@ A tentativa visual anterior de Base de Leads, Mesa Operacional e drawer foi reje
 - React + TypeScript.
 - Vite.
 - Bundle gerado em `apps/web/dist`.
+- Dev server Docker no servico `crm-web`, executando `npm run dev -w @clube04/web -- --host 0.0.0.0`.
+- `apps/web/index.html` e o entrypoint HTML usado pelo Vite em desenvolvimento.
 - API Fastify serve:
   - `/dashboard`
   - `/dashboard/app.js`
@@ -231,6 +239,18 @@ Comandos principais:
 ```powershell
 npm run verify:dashboard
 npm run verify:frontend
+```
+
+Para subir somente o dev server web:
+
+```powershell
+docker compose up -d --build crm-web
+```
+
+Para parar somente o dev server web:
+
+```powershell
+docker compose stop crm-web
 ```
 
 `verify:dashboard` deve validar:

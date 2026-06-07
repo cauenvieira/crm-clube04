@@ -61,6 +61,7 @@ npm run verify:all
 
 - API health: `http://localhost:3000/health`
 - Dashboard: `http://localhost:3000/dashboard`
+- Frontend Vite dev: `http://localhost:5173`
 - n8n: `http://localhost:5678`
 
 ## Comandos principais
@@ -75,6 +76,20 @@ npm run verify:all
 - `npm run dev:cleanup-test-data`
 - `npm run dev:cleanup-test-data:apply`
 - `npm run dev:seed-dashboard`
+
+## Frontend em Docker
+
+O servico `crm-web` roda o Vite de `apps/web` dentro do Docker:
+
+```bash
+docker compose up -d --build crm-web
+```
+
+Ele expoe `http://localhost:5173` e executa:
+
+```bash
+npm run dev -w @clube04/web -- --host 0.0.0.0
+```
 
 ## Hierarquia documental
 
