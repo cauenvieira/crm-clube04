@@ -12,6 +12,11 @@ Uma regra so e considerada protegida quando possui:
 Documentos de origem:
 - docs/product/lead-operational-contract.md
 - docs/product/lead-import-normalization.md
+- docs/product/lead-operational-system.md
+- docs/product/lead-operational-decisions.md
+- docs/qa/lead-operational-cycle-test-plan.md
+
+Os documentos complementares orientam mock, UX e validacao manual. Eles nao alteram cobertura automatizada nem vencem o contrato operacional.
 
 ## 2. Comandos atuais
 
@@ -77,6 +82,13 @@ Prioridade 2:
 - IMP-007 proxima acao;
 - IMP-020 lead ativo importado com acao;
 - IMP-021 lead final fora da fila diaria.
+
+Pendencias M1/M2 antes de nova implementacao:
+- decidir se a cadencia de sem resposta continua conforme LOR-011 ou migra para 12 tentativas;
+- decidir se havera action item dedicado para validacao de agendamento;
+- decidir se `Follow-up` sera apenas label de UI ou novo status operacional;
+- decidir tratamento canonico de opt-out/arquivamento;
+- definir contrato de contadores separados para sem resposta e follow-up.
 
 ## 5. Regras dos testes
 

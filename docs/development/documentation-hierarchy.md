@@ -61,7 +61,10 @@ Funcao:
 - `docs/product/operational-flows.md`
 - `docs/product/lead-operational-contract.md`
 - `docs/product/lead-import-normalization.md`
+- `docs/product/lead-operational-system.md`
+- `docs/product/lead-operational-decisions.md`
 - `docs/qa/lead-business-rules-test-matrix.md`
+- `docs/qa/lead-operational-cycle-test-plan.md`
 
 Funcao:
 - Roadmap e modulos definem direcao.
@@ -71,6 +74,14 @@ Para Jornada do Lead, a fonte de verdade e:
 1. `docs/product/lead-operational-contract.md`
 2. `docs/product/lead-import-normalization.md`
 3. `docs/qa/lead-business-rules-test-matrix.md`
+
+Documentos complementares de especificacao M1/M2:
+- `docs/product/lead-operational-system.md`: visao funcional alvo e conceitos separados.
+- `docs/product/lead-operational-decisions.md`: decisoes e pendencias controladas.
+- `docs/product/lead-operational-ui-wireframes.md`: orientacao de UX/wireframes, sem alterar regra.
+- `docs/qa/lead-operational-cycle-test-plan.md`: plano manual/funcional para mock e futura implementacao.
+
+Esses documentos complementares nao vencem contrato, normalizacao ou matriz. Se trouxerem proposta de novo status, action item, cadencia ou permissao, a mudanca deve ser promovida para contrato e matriz antes de implementacao.
 
 ### Nivel 4 - Contratos tecnicos
 
@@ -147,6 +158,12 @@ Ler obrigatoriamente:
 - `docs/product/lead-operational-contract.md`
 - `docs/product/lead-import-normalization.md`
 - `docs/qa/lead-business-rules-test-matrix.md`
+
+Para trabalho de Lead Operacional/Mesa Operacional M1/M2, ler tambem:
+- `docs/product/lead-operational-system.md`
+- `docs/product/lead-operational-decisions.md`
+- `docs/product/lead-operational-ui-wireframes.md`
+- `docs/qa/lead-operational-cycle-test-plan.md`
 
 ### Backend/API
 

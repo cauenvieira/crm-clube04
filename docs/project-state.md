@@ -68,6 +68,12 @@ Snapshot do estado tecnico commitado do CRM Clube04.
   - `docs/product/lead-operational-contract.md`
   - `docs/product/lead-import-normalization.md`
   - `docs/qa/lead-business-rules-test-matrix.md`
+- Especificacao complementar M1/M2 formalizada em:
+  - `docs/product/lead-operational-system.md`
+  - `docs/product/lead-operational-decisions.md`
+  - `docs/product/lead-operational-ui-wireframes.md`
+  - `docs/qa/lead-operational-cycle-test-plan.md`
+- Os documentos complementares orientam Lead Operacional/Mesa Operacional, mas nao vencem o contrato operacional vigente.
 - Commits de regras operacionais:
   - `65c14a1 docs: add lead operational business rules`
   - `cfd483d docs: add lead operational business rules`
@@ -122,13 +128,19 @@ Esses itens devem ser refeitos usando UI Foundation e referencia Lovable, uma te
 
 ## Proximo passo recomendado
 
-1. Fechar lacunas de testes de regras operacionais da Jornada do Lead:
+1. Decidir pendencias M1/M2 antes de implementar backend/frontend:
+   - manter cadencia atual de sem resposta ou migrar para 12 tentativas;
+   - criar ou nao fila/action item de validacao de agendamento;
+   - tratar `Follow-up` como label de UI ou novo status;
+   - definir tratamento de opt-out/arquivamento;
+   - definir contrato dos contadores separados.
+2. Fechar lacunas de testes de regras operacionais da Jornada do Lead:
    - checklist de analise da lideranca;
    - decisao da lideranca;
    - alertas de atrasado, backlog e ciclo longo.
-2. Iniciar Sprint 1A: Base de Leads sistematizada usando UI Foundation.
-3. Depois seguir para Mesa Operacional e Dashboard/Resumo Diario.
-4. Manter API, schema, importacao, frontend e docs sincronizados a cada tarefa.
+3. Iniciar Sprint 1A: Base de Leads sistematizada usando UI Foundation.
+4. Depois seguir para Mesa Operacional e Dashboard/Resumo Diario.
+5. Manter API, schema, importacao, frontend e docs sincronizados a cada tarefa.
 
 ## Regra de atualizacao
 
