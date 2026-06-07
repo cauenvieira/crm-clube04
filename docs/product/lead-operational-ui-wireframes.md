@@ -1,183 +1,546 @@
 # Lead Operational UI Wireframes
 
-Projeto: CRM Clube04 Mogi das Cruzes
-Data: 2026-06-07
-Status: especificacao UX complementar M1/M2
-Milestone: M1 Jornada do Lead / M2 Mesa Operacional
+Project: CRM Clube04 Mogi das Cruzes
+Area: Product UX
+Milestone: M2 - Mesa Operacional
+Status: Draft for UI validation
+Format: ASCII-only
 
-## Papel na hierarquia
+---
 
-Este documento orienta UX e mock da Mesa Operacional. Ele nao altera regra de negocio por si so.
+## 1. Purpose
 
-Fontes de regra:
+This document describes screen positioning and component composition for the Lead Operational module.
 
-- `docs/product/lead-operational-contract.md`
-- `docs/product/lead-import-normalization.md`
-- `docs/qa/lead-business-rules-test-matrix.md`
+It must be read with:
+
+- `docs/frontend/lead-operational-ui-contract.md`
 - `docs/product/lead-operational-system.md`
+- `docs/product/lead-operational-technical-contract.md`
 
-Se um wireframe sugerir status, fila ou permissao fora do contrato, tratar como proposta pendente.
+Wireframes are structural references. The visual contract defines typography, colors, spacing and interaction details.
 
-## Principios de UX
+---
 
-- A Mesa deve mostrar a fila operacional/action item, nao apenas status.
-- O card deve ser compacto e priorizar tutor, doguinho, telefone, situacao principal, tags e proxima acao.
-- A lideranca deve enxergar excecoes: atrasado, backlog, follow-up longo, tentativa alta, caso sensivel e erro operacional.
-- O drawer deve conduzir a acao operacional, nao apenas exibir cadastro.
-- Finalizacoes criticas nao devem aparecer para atendente.
-- Nutricao deve ter visao propria ou filtro separado da rotina diaria.
-- Mobile deve usar lista/seletor de fila, nao colunas lado a lado.
+## 2. Navigation map
 
-## Navegacao alvo
+```mermaid
+flowchart TD
+    A["Mesa Operacional"] --> B["LeadCard"]
+    B --> C["LeadDrawer"]
+    C --> D["Registrar resultado"]
+    C --> E["Cadastro"]
+    C --> F["Historico"]
 
-```text
-Operacao
-- Mesa Operacional
-- Novo Lead
-- Base de Leads
-- Analise da Lideranca
+    A --> G["Novo Lead"]
+    D --> H["Completar cadastro para agendar"]
+    D --> I["Enviar para lideranca"]
+    D --> J["Validar agendamento"]
 
-Apoio
-- Modelos de Mensagem
-- Motivos / Objecoes
-
-Sistema
-- Usuarios e Permissoes
-- Configuracoes Operacionais
-- Auditoria
+    K["Revisao da Lideranca"] --> C
+    L["Nutricao"] --> C
+    M["Configuracoes Operacionais"] --> N["Auditoria"]
+    O["Usuarios e Permissoes"] --> N
 ```
 
-## Mesa Operacional desktop
+---
+
+## 3. App shell - Desktop
 
 ```text
-Header: Mesa Operacional
-[Buscar] [+ Novo Lead] [Filtros]
-
-Filtros:
-[Todos ativos] [Hoje] [Atrasados] [Backlog] [Proximos 7 dias]
-[Lideranca] [Nutricao] [Tentativa alta]
-
-Resumo:
-Hoje | Atrasados | Backlog | Lideranca | Tentativa alta
-
-Colunas/visoes:
-- Fazer follow-up
-- Validar agendamento
-- Revisar lideranca
-- Nutricao em visao propria ou recolhida
++----------------------------------------------------------------------------------+
+| Sidebar                 | Header                                                  |
+|                         | [Menu] Mesa Operacional       Visualizando como: Lider |
+| Mesa Operacional        +---------------------------------------------------------+
+| Novo Lead               |                                                         |
+| Revisao da Lideranca    | Page content                                            |
+| Nutricao                |                                                         |
+| Configuracoes           |                                                         |
+| Usuarios e Permissoes   |                                                         |
+| Auditoria               |                                                         |
++----------------------------------------------------------------------------------+
 ```
 
-## Mesa Operacional mobile
+Rules:
+
+- Sidebar can collapse.
+- Header remains visible.
+- Header includes profile selector.
+- Main content handles scroll.
+
+---
+
+## 4. Mesa Operacional - Desktop
 
 ```text
-Mesa Operacional
-[+ Novo Lead]
-[Busca]
-[Hoje] [Atrasados] [Backlog] [Lideranca] [Nutricao]
-Fila: [seletor]
-LeadCard
-LeadCard
-LeadCard
++------------------------------------------------------------------------------------------------+
+| Mesa Operacional                                                        [+ Novo Lead]          |
+| Operacao diaria dos leads de WhatsApp, agendamento, lideranca e nutricao.                      |
++------------------------------------------------------------------------------------------------+
+| [Todos ativos] [Hoje] [Atrasados] [Backlog] [Prox. 7 dias] [Validar] [Lideranca] [Nutricao]   |
++------------------------------------------------------------------------------------------------+
+|                                                                                                |
+| +--------------------------+ +--------------------------+ +--------------------------+         |
+| | Fazer follow-up       42 | | Validar agendamento   8  | | Revisar lideranca     5  |         |
+| | Atendimento ativo        | | Confirmar desfecho       | | Excecoes e decisoes      |         |
+| +--------------------------+ +--------------------------+ +--------------------------+         |
+| | LeadCard                 | | LeadCard                 | | LeadCard                 |         |
+| | LeadCard                 | | LeadCard                 | | LeadCard                 |         |
+| | LeadCard                 | |                          | |                          |         |
+| | LeadCard                 | |                          | |                          |         |
+| +--------------------------+ +--------------------------+ +--------------------------+         |
+|                                                                                                |
+| +--------------------------------------------------------------------------------------------+ |
+| | Nutricao recolhida 12 leads                                             [Abrir Nutricao]   | |
+| +--------------------------------------------------------------------------------------------+ |
++------------------------------------------------------------------------------------------------+
 ```
 
-## LeadCard
+Behavior:
 
-Campos visiveis:
+- Lead terminal does not appear.
+- Queue columns are based on action item/fila operacional.
+- Nutricao is collapsed by default.
+- `/nutricao` is the main nutrition view.
 
-| Campo | Regra |
-|---|---|
-| Tutor | Se ausente, mostrar label operacional neutro. |
-| Doguinho | Mostrar resumo curto. |
-| Telefone | Expor WhatsApp e copiar telefone. |
-| Situacao principal | Apenas uma, por ranking. |
-| Tags secundarias | Maximo 3. |
-| Ultimo resultado | Ultimo evento operacional relevante. |
-| Proxima acao | Obrigatoria para lead ativo. |
-| Contadores | Separar sem resposta e follow-up quando existirem. |
+---
 
-Acoes rapidas:
+## 5. Mesa Operacional - Mobile
 
-- abrir lead;
-- abrir WhatsApp;
-- copiar telefone;
-- registrar `sem_resposta` com confirmacao quando estiver perto do envio para lideranca.
+```text
++--------------------------------------+
+| Mesa Operacional                     |
+| Visualizando como: Atendente         |
++--------------------------------------+
+| [Todos] [Hoje] [Atrasados] [Backlog] |
+| [Prox. 7] [Lideranca] [Nutricao]     |
++--------------------------------------+
+| Fila operacional                     |
+| [Fazer follow-up              v]     |
++--------------------------------------+
+| LeadCard                             |
++--------------------------------------+
+| LeadCard                             |
++--------------------------------------+
+| LeadCard                             |
++--------------------------------------+
+```
 
-## Drawer do lead
+Alternative with tabs:
 
-Ordem recomendada:
+```text
++--------------------------------------+
+| [Follow-up] [Agend.] [Lider.] [Nut.] |
++--------------------------------------+
+| LeadCard                             |
+| LeadCard                             |
++--------------------------------------+
+```
 
-1. Identificacao: tutor, doguinho, telefone.
-2. Situacao operacional: fila atual, proxima acao, responsavel, contadores e tags.
-3. Acao principal conforme fila/action item.
-4. Campos dinamicos obrigatorios.
-5. Historico/auditoria.
-6. Detalhes tecnicos somente para admin.
+Do not render four columns side by side on mobile.
 
-Validacoes de UX:
+---
 
-- O botao de salvar fica bloqueado ate cumprir campos obrigatorios.
-- Atendente nao ve acoes finais de `perdido` e `desqualificado`.
-- Envio para lideranca exige checklist e motivo.
-- Follow-up longo exige motivo antes de salvar.
+## 6. LeadCard - Normal
 
-## Formularios por fila
+```text
++------------------------------------------------+
+| Maria Souza                         Hoje       |
+| Nina, Thor                                      |
+| (11) 99999-0000      [WhatsApp] [Copiar]       |
+| Prox.: hoje 16:30      SR 3/12   FU 5          |
+| [Sem resposta] [Tentativa 3/12] [Banho]        |
+| Ult.: Sem resposta                             |
+| Obs.: pediu valores de banho e tosa            |
++------------------------------------------------+
+```
 
-### Fazer follow-up
+Clickable behavior:
 
-Resultados esperados:
+- Body opens drawer.
+- WhatsApp opens `wa.me`.
+- Copiar copies phone.
+- Tags are not primary buttons.
 
-- sem resposta;
-- conversa em andamento;
-- demonstrou interesse;
-- objecao;
-- agendamento combinado;
-- enviar para lideranca.
+---
 
-Regras:
+## 7. LeadCard - Backlog / critical
 
-- `sem_resposta` agenda automaticamente pela cadencia vigente do backend.
-- conversa/interesse/objecao exigem proxima data.
-- objecao permanece em follow-up, salvo excecao explicita.
-- agendamento combinado segue a regra vigente do contrato/API.
-- enviar lideranca exige checklist e motivo.
+```text
++------------------------------------------------+
+| Carla Mendes                     Backlog 12d   |
+| Bento                                          |
+| (11) 98888-0000      [WhatsApp] [Copiar]       |
+| Prox.: atrasado ha 12d  SR 10/12   FU 14       |
+| [Sem resposta] [Tentativa 10/12] [Meta Ads]    |
+| Ult.: Sem resposta                             |
+| Obs.: lead frio, sem retorno desde D+6         |
++------------------------------------------------+
+```
 
-### Revisar lideranca
+Rules:
 
-Decisoes esperadas:
+- Backlog dominates primary situation.
+- Tags show reason and attempt.
+- Do not add multiple red badges.
 
-- retomar atendimento;
-- finalizar como perdido;
-- finalizar como desqualificado;
-- enviar para nutricao;
-- corrigir erro operacional;
-- gerar acao secundaria.
+---
 
-Somente lideranca/admin finalizam perdido/desqualificado, enviam para nutricao ou reabrem terminal.
+## 8. LeadCard - Follow-up longo
 
-### Nutricao
+```text
++------------------------------------------------+
+| Ana Paula                      FU longo 10d    |
+| Mel                                            |
+| (11) 97777-0000      [WhatsApp] [Copiar]       |
+| Prox.: 20/06 09:30     SR 1/12   FU 2          |
+| [Follow-up longo] [Motivo informado] [Pacote]  |
+| Ult.: Demonstrou interesse                     |
+| Obs.: pediu para retomar apos viagem           |
++------------------------------------------------+
+```
 
-Nutricao deve ser separada da rotina diaria. Reativacao volta para fila/action item ativo com responsavel e proxima acao.
+Drawer must show the reason.
 
-## Situacao principal e tags
+---
 
-O card deve mostrar uma situacao principal e ate 3 tags.
+## 9. LeadDrawer - Follow-up
 
-Ranking inicial de situacao principal:
+```text
++------------------------------------------------------------+
+| Maria Souza                                           [X]  |
+| Nina, Thor                                                 |
+| (11) 99999-0000              [WhatsApp] [Copiar]           |
+| Fila: Fazer follow-up                                      |
+| Proxima acao: Hoje 16:30          SR 3/12   FU 5           |
+| [Hoje] [Sem resposta] [Tentativa 3/12]                     |
++------------------------------------------------------------+
+| Acao principal                                             |
+| Resultado do atendimento                                   |
+| [Sem resposta                                      v]       |
+|                                                            |
+| Campos condicionais                                        |
+| Proxima data: calculada pela cadencia                      |
+| Observacao: [________________________________________]      |
+|                                                            |
+| [Registrar sem resposta] [Cancelar]                        |
++------------------------------------------------------------+
+| [Resumo] [Historico] [Cadastro]                            |
++------------------------------------------------------------+
+| Resumo                                                     |
+| Origem: Meta Ads Instagram                                 |
+| Responsavel: Atendente                                     |
+| Ultima interacao: hoje 10:32                               |
+| Observacao inicial: pediu valores de banho e tosa          |
++------------------------------------------------------------+
+```
 
-1. Erro de consistencia.
-2. Caso sensivel.
-3. Revisao da lideranca.
-4. Backlog.
-5. Atrasado.
-6. Hoje.
-7. Follow-up longo.
-8. Tentativa alta.
-9. Cadastro incompleto.
-10. Nutricao.
-11. Futuro.
+---
 
-Tags secundarias devem priorizar ultimo resultado, tentativa sem resposta, follow-up longo, interesse, alerta do doguinho, motivo de lideranca e cadastro incompleto.
+## 10. LeadDrawer - Follow-up with long date
 
-## Estado dos wireframes
+```text
++------------------------------------------------------------+
+| Resultado: Demonstrou interesse                            |
+| Proxima data: [30/06/2026 09:30]                           |
+|                                                            |
+| ALERTA                                                     |
+| Este follow-up esta acima do prazo normal para esta etapa. |
+| Informe o motivo. A lideranca vera este alerta.            |
+|                                                            |
+| Motivo: [Tutor pediu retorno apos viagem_____________]      |
+|                                                            |
+| [Salvar proximo follow-up] [Cancelar]                      |
++------------------------------------------------------------+
+```
 
-Este documento e suficiente para orientar mock e validacao visual. A implementacao real deve consumir regras do backend e nao codificar transicoes criticas apenas no frontend.
+If attendant selects date above 15 days:
+
+```text
++------------------------------------------------------------+
+| BLOQUEADO                                                  |
+| Follow-up acima de 15 dias nao e permitido para atendente. |
+| Envie para lideranca ou mova para Nutricao.                |
+|                                                            |
+| [Enviar para lideranca] [Ir para Nutricao] [Cancelar]      |
++------------------------------------------------------------+
+```
+
+---
+
+## 11. LeadDrawer - Agendamento combinado
+
+```text
++------------------------------------------------------------+
+| Resultado: Agendamento combinado                           |
+| Data do agendamento: [12/06/2026 10:00]                    |
+| Servico previsto: [Banho v]                                |
+|                                                            |
+| [Registrar agendamento]                                    |
++------------------------------------------------------------+
+| Modal abre: Completar cadastro para agendar                |
++------------------------------------------------------------+
+```
+
+---
+
+## 12. Modal - Completar cadastro para agendar
+
+```text
++------------------------------------------------------------+
+| Completar cadastro para agendar                       [X]  |
++------------------------------------------------------------+
+| Tutor                                                      |
+| Nome completo: [____________________________]              |
+| Data nascimento: [__/__/____] CPF: [____________]          |
+| Email: [_____________________________________]             |
+| CEP: [_________] Endereco: [__________________]            |
+| Como conheceu: [Meta Ads v] Indicacao: [_______]           |
++------------------------------------------------------------+
+| Doguinho                                                   |
+| Nome: [________________]                                   |
+| Tem raca definida? [Sim v] Raca: [___________]             |
+| Peso aprox.: [____] Data/idade: [_____________]            |
+| Castrado? [Sim v] Frequencia banho: [________]             |
+| Saude/manejo: [____________________________________]       |
++------------------------------------------------------------+
+| [Salvar cadastro] [Salvar incompleto] [Cancelar]           |
++------------------------------------------------------------+
+```
+
+If incomplete:
+
+```text
+Tag on card: [Cadastro incompleto]
+Lead remains in fila: Validar agendamento
+```
+
+---
+
+## 13. LeadDrawer - Validar agendamento
+
+```text
++------------------------------------------------------------+
+| Fila: Validar agendamento                                  |
+| Agendamento: 12/06/2026 10:00                              |
++------------------------------------------------------------+
+| Resultado da validacao                                     |
+| ( ) Cliente compareceu                                     |
+| ( ) Cliente nao compareceu                                 |
+| ( ) Cancelou                                               |
+| ( ) Remarcou                                               |
+| ( ) Agendamento nao localizado                             |
+| ( ) Erro operacional                                       |
+|                                                            |
+| Campos condicionais                                        |
+| Observacao: [________________________________________]      |
+| Nova data se remarcou: [__/__/____ __:__]                  |
+|                                                            |
+| [Registrar validacao] [Cancelar]                           |
++------------------------------------------------------------+
+```
+
+---
+
+## 14. LeadDrawer - Enviar para lideranca
+
+```text
++------------------------------------------------------------+
+| Enviar para lideranca                                      |
++------------------------------------------------------------+
+| Checklist                                                  |
+| [ ] Houve tentativa real pelo WhatsApp                     |
+| [ ] O telefone parece valido                               |
+| [ ] Existe observacao suficiente                           |
+| [ ] Nao pode ser resolvido apenas com novo follow-up       |
+| [ ] Motivo operacional em 3 niveis selecionado             |
++------------------------------------------------------------+
+| Motivo                                                     |
+| Categoria: [Caso sensivel v]                               |
+| Motivo:    [Pet exige cuidado v]                           |
+| Detalhe:   [Reativo/agressivo v]                           |
+|                                                            |
+| Observacao para lideranca                                  |
+| [____________________________________________________]     |
+|                                                            |
+| [Enviar para lideranca] [Cancelar]                         |
++------------------------------------------------------------+
+```
+
+---
+
+## 15. Revisao da Lideranca page
+
+```text
++--------------------------------------------------------------------------------+
+| Revisao da Lideranca                                                            |
+| Leads que exigem decisao de lideranca.                                          |
++--------------------------------------------------------------------------------+
+| [Todos] [Caso sensivel] [Erro operacional] [Trafego] [Desqualificacao]          |
++--------------------------------------------------------------------------------+
+| LeadCard compact / ReviewCard                                                   |
+| Tutor: Maria Souza          Motivo: Caso sensivel > Pet exige cuidado > Reativo |
+| Prox.: hoje                 Responsavel: Lider                                  |
+| [Abrir lead] [Retomar] [Perdido] [Desqualificar] [Nutricao]                    |
++--------------------------------------------------------------------------------+
+```
+
+For Atendente profile:
+
+```text
+[Perdido] disabled
+[Desqualificar] disabled
+Tooltip: Somente lideranca/admin pode finalizar.
+```
+
+---
+
+## 16. Nutricao page
+
+```text
++--------------------------------------------------------------------------------+
+| Nutricao                                                                        |
+| Leads fora da rotina diaria, usados para campanhas, eventos e reativacao.       |
++--------------------------------------------------------------------------------+
+| [Origem v] [Motivo v] [Proxima campanha v]                                      |
++--------------------------------------------------------------------------------+
+| NutritionCard                                                                   |
+| Tutor: Ana Paula                         [Nutricao]                             |
+| Doguinho: Mel                                                                  |
+| Motivo: Sem resposta apos ciclo completo                                        |
+| Proxima campanha: Arraia / Rebranding                                          |
+| [Reativar atendimento] [Manter] [Remover] [Bloqueou/pediu parar]                |
++--------------------------------------------------------------------------------+
+```
+
+Opt-out confirmation:
+
+```text
++------------------------------------------------+
+| Confirmar nao contatar                         |
+| Este lead sera arquivado como nao contatar.    |
+| Motivo obrigatorio: [____________________]     |
+| [Confirmar] [Cancelar]                         |
++------------------------------------------------+
+```
+
+---
+
+## 17. Novo Lead page
+
+```text
++------------------------------------------------------------+
+| Novo Lead                                                  |
+| Cadastro leve para entrada rapida de WhatsApp.             |
++------------------------------------------------------------+
+| Telefone:       [+55] [(11) 99999-9999]                    |
+| Origem:         [Meta Ads Instagram v]                     |
+| Data entrada:   [Hoje]                                     |
+| Atendente:      [Atendente v]                              |
+| Observacao:     [____________________________________]     |
++------------------------------------------------------------+
+| [Mais opcoes v]                                            |
+| Tutor:          [____________________]                     |
+| Doguinho:       [____________________]                     |
+| CEP:            [________]                                 |
+| Bairro/Cidade:  [____________________]                     |
+| Endereco:       [____________________________________]     |
+| Interesse:      [Banho] [Tosa] [Pacote]                    |
++------------------------------------------------------------+
+| [Salvar lead] [Cancelar]                                   |
++------------------------------------------------------------+
+```
+
+After save:
+
+```text
+status: Novo
+fila: Fazer follow-up
+proxima acao: agora/hoje
+```
+
+---
+
+## 18. Configuracoes Operacionais
+
+```text
++--------------------------------------------------------------------------------+
+| Configuracoes Operacionais                                                      |
+| Parametros que controlam a rotina de leads.                                     |
++--------------------------------------------------------------------------------+
+| [Cadencia] [Follow-up longo] [Motivos] [Origens] [Atendentes] [Rankings]        |
++--------------------------------------------------------------------------------+
+| Cadencia sem resposta                                                           |
+| Passo | Quando      | Acao                         | Editar                       |
+| 1     | D0 agora    | Mensagem inicial             | [Editar]                     |
+| 2     | D0 18:00    | Reforco curto                | [Editar]                     |
+| ...                                                                            |
+| 12    | ciclo fim   | Enviar para lideranca        | [Editar]                     |
++--------------------------------------------------------------------------------+
+```
+
+For Atendente:
+
+```text
+Campos bloqueados.
+Mensagem: Somente lideranca/admin pode alterar configuracoes operacionais.
+```
+
+---
+
+## 19. Usuarios e Permissoes
+
+```text
++--------------------------------------------------------------------------------+
+| Usuarios e Permissoes                                                           |
++--------------------------------------------------------------------------------+
+| Usuario      Perfil       Status       Acoes                                    |
+| Etiene       Lider        Ativo        [Editar]                                 |
+| Atendente 1  Atendente    Ativo        [Editar]                                 |
++--------------------------------------------------------------------------------+
+| Matriz de permissoes                                                            |
+| Acao                                  Admin Lider Atendente                     |
+| Registrar follow-up                   [x]   [x]   [x]                           |
+| Finalizar perdido/desqualificado      [x]   [x]   [ ]                           |
+| Alterar configuracoes                 [x]   [x]   [ ]                           |
+| Alterar permissoes                    [x]   [ ]   [ ]                           |
++--------------------------------------------------------------------------------+
+```
+
+---
+
+## 20. Auditoria
+
+```text
++--------------------------------------------------------------------------------+
+| Auditoria                                                                       |
++--------------------------------------------------------------------------------+
+| [Tipo v] [Perfil v] [Data v] [Lead v]                                           |
++--------------------------------------------------------------------------------+
+| Data/hora        Usuario    Perfil      Lead          Evento                    |
+| 06/06 10:32      Atendente  Atendente   Maria Souza   Resultado registrado      |
+| 06/06 10:33      Sistema    Sistema     Maria Souza   Proxima acao alterada     |
+| 06/06 10:35      Lider      Lider       Ana Paula     Decisao lideranca         |
++--------------------------------------------------------------------------------+
+| [Ver detalhes]                                                                  |
++--------------------------------------------------------------------------------+
+```
+
+Raw payload only for Admin.
+
+---
+
+## 21. Final acceptance checklist
+
+The screen design is acceptable only if:
+
+- Queue names match the operational contract.
+- No result appears as a queue.
+- LeadCard shows one primary situation and max 3 tags.
+- Cards are compact and readable.
+- WhatsApp/copy are visible.
+- Drawer starts with current queue and next action.
+- Long follow-up warning is visible.
+- Attendant cannot finalize terminal cases.
+- Nutrition is visually separated from daily routine.
+- Mobile is not a horizontal Kanban.
